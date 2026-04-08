@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0f0e0d;
+  --paper: #f5f2ec;
+  --accent: #c84b2f;
+  --muted: #8a8278;
+  --border: rgba(15, 14, 13, 0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+.cursor {
+  position: fixed;
+  width: 10px; height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s, background 0.2s;
+}
+.cursor.big {
+  width: 44px; height: 44px;
+  background: transparent;
+  border: 1.5px solid var(--ink);
+}
+@media (max-width: 768px) {
+  body { cursor: auto; }
+  .cursor { display: none; }
+}
+
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity: 1; transform: none; }
+
+.prose-ujjal h1, .prose-ujjal h2, .prose-ujjal h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--ink);
+}
+.prose-ujjal h1 { font-size: clamp(1.75rem, 3vw, 2.5rem); }
+.prose-ujjal h2 { font-size: clamp(1.4rem, 2.5vw, 1.9rem); }
+.prose-ujjal h3 { font-size: clamp(1.1rem, 2vw, 1.4rem); }
+.prose-ujjal p { font-size: 16px; line-height: 1.85; color: var(--muted); margin-bottom: 1.5rem; }
+.prose-ujjal blockquote {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic; font-size: 1.2rem; line-height: 1.6;
+  border-left: 3px solid var(--accent);
+  padding-left: 1.5rem; margin: 2rem 0; color: var(--ink);
+}
+.prose-ujjal a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.prose-ujjal ul, .prose-ujjal ol { padding-left: 1.5rem; margin-bottom: 1.5rem; color: var(--muted); line-height: 1.8; }
+.prose-ujjal li { margin-bottom: 0.4rem; }
+.prose-ujjal code { font-family: 'DM Mono', monospace; font-size: 13px; background: rgba(15,14,13,0.06); padding: 2px 6px; border-radius: 3px; }
+.prose-ujjal pre { background: var(--ink); color: var(--paper); padding: 1.5rem; overflow-x: auto; margin: 2rem 0; font-family: 'DM Mono', monospace; font-size: 13px; line-height: 1.7; }
+.prose-ujjal img { width: 100%; height: auto; margin: 2rem 0; }
+.prose-ujjal hr { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
