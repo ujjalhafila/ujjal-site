@@ -1,54 +1,73 @@
+// Converts Notion markdown to HTML with clickable media placeholders.
+// Images and videos are NOT rendered as iframes server-side;
+// instead they become data-* elements that ProseContent.tsx hydrates into
+// interactive cards with modal support.
+
+function escAttr(s: string) { return s.replace(/"/g, "&quot;"); }
+
+function ytId(url: string) {
+  return url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] || null;
+}
+function vimeoId(url: string) { return url.match(/vimeo\.com\/(\d+)/)?.[1] || null; }
+function loomId(url: string) { return url.match(/loom\.com\/share\/([a-zA-Z0-9]+)/)?.[1] || null; }
+function isFigma(url: string) { return url.includes("figma.com"); }
+function isVideo(url: string) { return !!(ytId(url) || vimeoId(url) || loomId(url)); }
+function isImageUrl(url: string) { return /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(url) || url.includes("prod-files-secure") || url.includes("notion.so/image"); }
+
+function videoThumb(url: string): string | null {
+  const id = ytId(url);
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+}
+
+function videoPlatform(url: string): string {
+  if (ytId(url)) return "YouTube";
+  if (loomId(url)) return "Loom";
+  if (vimeoId(url)) return "Vimeo";
+  if (isFigma(url)) return "Figma";
+  return "Video";
+}
+
+// Emits a server-rendered placeholder div.
+// ProseContent.tsx picks these up by data-media-type and makes them interactive.
+function mediaCard(url: string, alt = "", type: "image" | "video" | "figma") {
+  const thumb = videoThumb(url) || "";
+  const platform = type === "video" ? videoPlatform(url) : type === "figma" ? "Figma" : "";
+  return `<div class="media-placeholder" data-media-type="${type}" data-src="${escAttr(url)}" data-alt="${escAttr(alt)}" data-thumb="${escAttr(thumb)}" data-platform="${platform}" tabindex="0" role="button" aria-label="Open ${alt || platform || "media"} in viewer">${
+    type === "image"
+      ? `<img src="${escAttr(url)}" alt="${escAttr(alt)}" loading="lazy" class="media-thumb-img"/><div class="media-zoom-badge">⊕ View</div>`
+      : thumb
+      ? `<img src="${escAttr(thumb)}" alt="${escAttr(platform)} preview" loading="lazy" class="media-thumb-img"/><div class="media-play-overlay"><div class="media-play-btn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#c84b2f"><polygon points="6,3 20,12 6,21"/></svg></div><span class="media-platform-label">${platform}</span></div>`
+      : `<div class="media-no-thumb"><div class="media-play-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></div><span class="media-platform-label">${platform}</span></div>`
+  }</div>`;
+}
+
 export function markdownToHtml(md: string): string {
   if (!md) return "<p>Content coming soon.</p>";
   let html = md;
 
-  // ── Video embeds ──────────────────────────────────────────────────────────
+  // ── Strip markdown image wrappers around video URLs ──────────────────────
+  html = html.replace(/!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g, (_, alt, url) => {
+    if (isVideo(url)) return mediaCard(url, alt, "video");
+    if (isFigma(url)) return mediaCard(url, alt, "figma");
+    return mediaCard(url, alt, "image");
+  });
 
-  // YouTube: both watch?v= and youtu.be/ and embed/ forms
+  // ── Bare video URLs ───────────────────────────────────────────────────────
   html = html.replace(
-    /(?:!\[.*?\]\()?https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})[^\s)"]*/g,
-    (_, id) => `<div class="embed-video"><iframe src="https://www.youtube.com/embed/${id}" allowfullscreen loading="lazy" title="Video"></iframe></div>`
+    /(^|[\s\n])(https?:\/\/(?:(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)[a-zA-Z0-9_-]{11}|(?:www\.)?loom\.com\/share\/[a-zA-Z0-9]+|(?:www\.)?vimeo\.com\/\d+)[^\s<"]*)/gm,
+    (_, pre, url) => `${pre}${mediaCard(url, "", "video")}`
   );
 
-  // Loom
+  // ── Figma bare URLs ───────────────────────────────────────────────────────
   html = html.replace(
-    /(?:!\[.*?\]\()?https?:\/\/(?:www\.)?loom\.com\/share\/([a-zA-Z0-9]+)[^\s)""]*/g,
-    (_, id) => `<div class="embed-video"><iframe src="https://www.loom.com/embed/${id}" allowfullscreen loading="lazy" title="Loom video"></iframe></div>`
+    /(^|[\s\n])(https?:\/\/(?:www\.)?figma\.com\/(?:file|proto|design)\/[^\s<"]+)/gm,
+    (_, pre, url) => `${pre}${mediaCard(url, "Figma prototype", "figma")}`
   );
 
-  // Vimeo
+  // ── Notion S3 image URLs (bare) ───────────────────────────────────────────
   html = html.replace(
-    /(?:!\[.*?\]\()?https?:\/\/(?:www\.)?vimeo\.com\/(\d+)[^\s)""]*/g,
-    (_, id) => `<div class="embed-video"><iframe src="https://player.vimeo.com/video/${id}" allowfullscreen loading="lazy" title="Vimeo video"></iframe></div>`
-  );
-
-  // ── Figma embeds ──────────────────────────────────────────────────────────
-  html = html.replace(
-    /(?:!\[.*?\]\()?https?:\/\/(?:www\.)?figma\.com\/(file|proto|design)\/([^)\s"'\n]+)/g,
-    (_, type, rest) => {
-      const raw = `https://www.figma.com/${type}/${rest}`.split(")")[0].split(" ")[0];
-      const embedUrl = `https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(raw)}`;
-      return `<div class="embed-figma"><iframe src="${embedUrl}" allowfullscreen loading="lazy" title="Figma prototype"></iframe><a href="${raw}" target="_blank" rel="noopener" class="embed-link">Open in Figma ↗</a></div>`;
-    }
-  );
-
-  // ── Image markdown (must come AFTER video/embed patterns) ─────────────────
-  html = html.replace(
-    /!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g,
-    (_, alt, src) => `<figure class="embed-image"><img src="${src}" alt="${alt}" loading="lazy"/>${alt ? `<figcaption>${alt}</figcaption>` : ""}</figure>`
-  );
-
-  // ── Notion-style image blocks (bare URLs that are images) ─────────────────
-  html = html.replace(
-    /^(https?:\/\/[^\s]+\.(?:png|jpg|jpeg|gif|webp|svg))(\s*)$/gm,
-    (_, src) => `<figure class="embed-image"><img src="${src}" alt="" loading="lazy"/></figure>`
-  );
-
-  // ── Notion S3/file URLs wrapped in markdown image syntax ──────────────────
-  // Notion often outputs: ![](https://prod-files-secure.s3...)
-  html = html.replace(
-    /!\[\]\((https?:\/\/prod-files[^)]+)\)/g,
-    (_, src) => `<figure class="embed-image"><img src="${src}" alt="" loading="lazy"/></figure>`
+    /^(https?:\/\/prod-files[^\s]+|https?:\/\/[^\s]+notion[^\s]*\.(?:png|jpg|jpeg|gif|webp))(\s*)$/gm,
+    (_, url) => mediaCard(url, "", "image")
   );
 
   // ── Text formatting ───────────────────────────────────────────────────────
@@ -63,17 +82,26 @@ export function markdownToHtml(md: string): string {
   html = html.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>");
   html = html.replace(/^---+$/gm, "<hr/>");
 
-  // Lists
+  // ── Lists ─────────────────────────────────────────────────────────────────
   html = html.replace(/^[ \t]*[-*+] (.+)$/gm, "<li>$1</li>");
-  html = html.replace(/(<li>[\s\S]*?<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`);
+  html = html.replace(/(<li>[\s\S]*?<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
   html = html.replace(/^\d+\. (.+)$/gm, "<oli>$1</oli>");
-  html = html.replace(/(<oli>[\s\S]*?<\/oli>\n?)+/g, (m) => `<ol>${m.replace(/<\/?oli>/g, (t) => t.replace("oli", "li"))}</ol>`);
+  html = html.replace(/(<oli>[\s\S]*?<\/oli>\n?)+/g, m => `<ol>${m.replace(/<\/?oli>/g, t => t.replace("oli","li"))}</ol>`);
 
-  // Links (after embed patterns so URLs aren't double-processed)
-  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  // ── Links (after media patterns) ─────────────────────────────────────────
+  // Video/Figma links in text → clickable media cards
+  html = html.replace(
+    /\[([^\]]+)\]\((https?:\/\/(?:(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)[a-zA-Z0-9_-]{11}|(?:www\.)?loom\.com\/share\/[a-zA-Z0-9]+|(?:www\.)?vimeo\.com\/\d+|(?:www\.)?figma\.com\/[^\s)]+)[^)]*)\)/g,
+    (_, label, url) => {
+      const type = isFigma(url) ? "figma" : "video";
+      return mediaCard(url, label, type);
+    }
+  );
+  // Regular links
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="prose-link">$1 ↗</a>');
 
-  // Paragraphs
-  const BLOCK = /^<(h[1-6]|ul|ol|li|blockquote|figure|div|hr|iframe|pre)/;
+  // ── Paragraphs ────────────────────────────────────────────────────────────
+  const BLOCK = /^<(h[1-6]|ul|ol|li|blockquote|div|hr|iframe|pre|figure)/;
   const lines = html.split("\n");
   const out: string[] = [];
   let inP = false;

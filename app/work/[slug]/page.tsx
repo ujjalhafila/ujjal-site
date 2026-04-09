@@ -2,6 +2,7 @@ import Link from "next/link";
 import Nav from "../../../components/Nav";
 import Footer from "../../../components/Footer";
 import WorkGallery from "../../../components/WorkGallery";
+import ProseContent from "../../../components/ProseContent";
 import { getWorkItem, getWorkItems } from "../../../lib/notion";
 import { markdownToHtml } from "../../../lib/markdown";
 import { notFound } from "next/navigation";
@@ -72,17 +73,20 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
           </div>
         </div>
 
-        {/* Gallery: thumbnail + video/figma — clickable modal */}
+        {/* Gallery: thumbnail + video side by side — both clickable */}
         {(item.thumbnailUrl || item.videoDemo) && (
-          <div style={{ maxWidth:"780px", margin:"0 auto", padding:"2.5rem 2rem 0" }}>
+          <div style={{ maxWidth:"900px", margin:"0 auto", padding:"2.5rem 2rem 0" }}>
+            <div style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.12em", textTransform:"uppercase", color:"var(--muted)", marginBottom:"0.75rem" }}>
+              Preview — click to expand
+            </div>
             <WorkGallery thumbnailUrl={item.thumbnailUrl} videoDemo={item.videoDemo} title={item.title} />
           </div>
         )}
 
-        {/* Main content */}
+        {/* Main content — all images/videos in prose are clickable via ProseContent */}
         <div style={{ maxWidth:"780px", margin:"0 auto", padding:"2rem 2rem 5rem" }}>
           {html ? (
-            <div className="prose-ujjal" dangerouslySetInnerHTML={{ __html: html }} />
+            <ProseContent html={html} />
           ) : (
             <p style={{ fontFamily:S.serif, fontStyle:"italic", fontSize:"1.1rem", color:"var(--muted)" }}>
               Open this project in Notion and add your case study content — it appears here automatically.

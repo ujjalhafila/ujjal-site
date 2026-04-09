@@ -193,3 +193,104 @@ input:focus, textarea:focus { border-color: var(--accent); outline: none; }
 html.dark .portrait-img {
   filter: brightness(0.88) contrast(1.05);
 }
+
+/* ── Media placeholders (ProseContent / markdown) ──────────────────────── */
+.media-placeholder {
+  display: block;
+  width: 100%;
+  margin: 2rem 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  background: var(--surface);
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.media-placeholder:hover,
+.media-placeholder:focus-visible {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.media-placeholder:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.media-thumb-img {
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  object-fit: cover;
+  display: block;
+}
+/* Zoom badge on images */
+.media-zoom-badge {
+  position: absolute;
+  bottom: 0.6rem;
+  right: 0.6rem;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 6px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.media-placeholder:hover .media-zoom-badge { opacity: 1; }
+
+/* Video play overlay */
+.media-play-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.32);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  transition: background 0.2s;
+}
+.media-placeholder:hover .media-play-overlay { background: rgba(0,0,0,0.52); }
+
+.media-play-btn {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.92);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.35);
+  transition: transform 0.2s;
+}
+.media-placeholder:hover .media-play-btn { transform: scale(1.08); }
+
+.media-platform-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+/* No-thumb video card */
+.media-no-thumb {
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--accent);
+  background: var(--surface);
+}
+
+/* Prose links */
+.prose-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
