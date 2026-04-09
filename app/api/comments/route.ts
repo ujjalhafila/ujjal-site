@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Lazy-init: don't crash at build time if env vars aren't set yet
+function getClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  const { createClient } = require("@supabase/supabase-js");
+  return createClient(url, key);
+}
 
 export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get("slug") || "";
   if (!slug) return NextResponse.json({ comments: [] });
+
+  const supabase = getClient();
+  if (!supabase) return NextResponse.json({ comments: [] });
 
   const { data, error } = await supabase
     .from("comments")
@@ -26,26 +32,24 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const { slug, name, body } = await req.json();
-
   if (!slug || !name?.trim() || !body?.trim()) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
-  const clean = {
-    slug,
-    name: name.trim().slice(0, 80),
-    body: body.trim().slice(0, 1000),
-  };
+  const supabase = getClient();
+  if (!supabase) {
+    return NextResponse.json({ error: "Storage not configured" }, { status: 503 });
+  }
 
   const { data, error } = await supabase
     .from("comments")
-    .insert(clean)
+    .insert({ slug, name: name.trim().slice(0, 80), body: body.trim().slice(0, 1000) })
     .select("id, name, body, created_at")
     .single();
 
   if (error) {
     console.error("Comments POST error:", error.message);
-    return NextResponse.json({ error: "Failed to save comment" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to save" }, { status: 500 });
   }
 
   return NextResponse.json({ comment: data }, { status: 201 });
