@@ -1,54 +1,68 @@
 "use client";
 
-// When Ujjal uploads his vector portrait, replace the content of /public/portrait.svg
-// and set HAS_PORTRAIT = true below.
-const HAS_PORTRAIT = false;
-
 export default function Portrait({ className = "" }: { className?: string }) {
-  if (HAS_PORTRAIT) {
-    return (
-      <div className={`portrait-wrap ${className}`} style={{ width: "100%", height: "100%", position: "relative" }}>
-        {/* SVG portrait — adapts via CSS filter for dark mode */}
-        <img
-          src="/portrait.svg"
-          alt="Ujjal Hafila"
-          style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
-          className="portrait-img"
-        />
-        <style>{`
-          html.dark .portrait-img {
-            filter: brightness(0.92) contrast(1.05);
-          }
-        `}</style>
-      </div>
-    );
-  }
-
-  // Fallback — decorative typographic placeholder
   return (
-    <div className={`portrait-placeholder ${className}`}
-      style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-      <div style={{
-        width: "clamp(160px, 28vw, 320px)",
-        height: "clamp(160px, 28vw, 320px)",
-        borderRadius: "50%",
-        border: "1px solid var(--border)",
-        display: "flex", alignItems: "center", justifyContent: "center",
+    <div
+      className={`portrait-container ${className}`}
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
         position: "relative",
-      }}>
-        <div style={{
-          width: "85%", height: "85%", borderRadius: "50%",
-          border: "1px solid var(--accent)", opacity: 0.3,
-          position: "absolute",
-        }} />
-        <span style={{
-          fontFamily: "'Playfair Display', Georgia, serif",
-          fontSize: "clamp(3rem, 8vw, 6rem)",
-          fontWeight: 900, fontStyle: "italic",
-          color: "var(--accent)", opacity: 0.6,
-          lineHeight: 1,
-        }}>U</span>
-      </div>
+        overflow: "hidden",
+        minHeight: "320px",
+      }}
+    >
+      {/* Subtle accent ring behind portrait */}
+      <div style={{
+        position: "absolute",
+        bottom: "0",
+        left: "50%",
+        transform: "translateX(-50%)",
+        width: "clamp(200px, 60%, 380px)",
+        aspectRatio: "1",
+        borderRadius: "50%",
+        border: "1px solid var(--accent)",
+        opacity: 0.15,
+        pointerEvents: "none",
+      }} />
+
+      {/* Portrait SVG — landscape 1254×836, subject is roughly centred */}
+      <img
+        src="/portrait.svg"
+        alt="Ujjal Hafila"
+        className="portrait-img"
+        style={{
+          width: "clamp(260px, 90%, 520px)",
+          height: "auto",
+          display: "block",
+          position: "relative",
+          zIndex: 1,
+          // Slight translate up so portrait sits better in the hero panel
+          transform: "translateY(8px)",
+        }}
+        loading="eager"
+      />
+
+      <style>{`
+        /* Light mode — portrait reads naturally on warm paper */
+        .portrait-img {
+          transition: filter 0.3s ease;
+        }
+
+        /* Dark mode — boost contrast slightly so portrait pops on dark bg */
+        html.dark .portrait-img {
+          filter: brightness(0.90) contrast(1.08) saturate(1.1);
+        }
+
+        /* Hover: very subtle lift */
+        .portrait-container:hover .portrait-img {
+          transform: translateY(4px);
+          transition: transform 0.4s ease;
+        }
+      `}</style>
     </div>
   );
 }
