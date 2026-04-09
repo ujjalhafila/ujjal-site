@@ -6,12 +6,10 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Work" };
 export const revalidate = 60;
-
 const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace" };
 
 export default async function WorkPage() {
   const items = await getWorkItems();
-
   return (
     <main>
       <Nav />
@@ -41,8 +39,8 @@ export default async function WorkPage() {
                 className="work-card card-flip"
                 style={{ padding:"2rem", textDecoration:"none", color:"inherit", display:"block", borderBottom:"1px solid var(--border)" }}>
                 {item.thumbnailUrl && (
-                  <div style={{ width:"100%", height:"200px", marginBottom:"1.25rem", overflow:"hidden", background:"var(--surface)" }}>
-                    <img src={item.thumbnailUrl} alt={item.title} style={{ width:"100%", height:"100%", objectFit:"cover" }} loading="lazy"/>
+                  <div style={{ width:"100%", height:"200px", marginBottom:"1.25rem", overflow:"hidden", background:"var(--surface)", borderRadius:"10px", border:"1px solid var(--border)" }}>
+                    <img src={item.thumbnailUrl} alt={item.title} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", borderRadius:"9px" }} loading="lazy"/>
                   </div>
                 )}
                 <div style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.1em", color:"var(--muted)", marginBottom:"1rem", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -62,12 +60,8 @@ export default async function WorkPage() {
         )}
       </div>
       <Footer />
-
       <style>{`
-        .work-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-        }
+        .work-grid { display: grid; grid-template-columns: 1fr 1fr; }
         .work-card:nth-child(odd) { border-right: 1px solid var(--border); }
         @media (max-width: 700px) {
           .work-grid { grid-template-columns: 1fr !important; }
