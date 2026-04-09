@@ -12,28 +12,47 @@ export default function ProseContent({ html }: { html: string }) {
     const container = ref.current;
     if (!container) return;
 
-    // Find every server-rendered placeholder and wire up click handlers
-    const placeholders = container.querySelectorAll<HTMLElement>(".media-placeholder");
-    const handlers: Array<{ el: HTMLElement; fn: () => void }> = [];
+    // Single delegated listener — survives modal open/close cycles without re-wiring
+    function handleClick(e: MouseEvent) {
+      const target = (e.target as HTMLElement).closest(".media-placeholder") as HTMLElement | null;
+      if (!target) return;
+      const src = target.dataset.src || "";
+      const alt = target.dataset.alt || "";
+      const type = (target.dataset.mediaType as "image" | "video" | "figma") || "image";
+      if (src) setModal({ src, alt, type });
+    }
 
-    placeholders.forEach(el => {
-      const src = el.dataset.src || "";
-      const alt = el.dataset.alt || "";
-      const type = (el.dataset.mediaType as "image" | "video" | "figma") || "image";
+    function handleKey(e: KeyboardEvent) {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const target = (e.target as HTMLElement).closest(".media-placeholder") as HTMLElement | null;
+      if (!target) return;
+      e.preventDefault();
+      const src = target.dataset.src || "";
+      const alt = target.dataset.alt || "";
+      const type = (target.dataset.mediaType as "image" | "video" | "figma") || "image";
+      if (src) setModal({ src, alt, type });
+    }
 
-      const fn = () => setModal({ src, alt, type });
-      el.addEventListener("click", fn);
-      el.addEventListener("keydown", (e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") fn(); });
-      handlers.push({ el, fn });
-    });
-
-    return () => handlers.forEach(({ el, fn }) => el.removeEventListener("click", fn));
-  }, [html]);
+    container.addEventListener("click", handleClick);
+    container.addEventListener("keydown", handleKey);
+    return () => {
+      container.removeEventListener("click", handleClick);
+      container.removeEventListener("keydown", handleKey);
+    };
+  }, []); // Empty deps — attach once on mount, never re-wire
 
   return (
     <>
       <div ref={ref} className="prose-ujjal" dangerouslySetInnerHTML={{ __html: html }} />
-      {modal && <MediaModal src={modal.src} type={modal.type} alt={modal.alt} onClose={() => setModal(null)} />}
+      {modal && (
+        <MediaModal
+          key={`${modal.src}-${Date.now()}`}
+          src={modal.src}
+          type={modal.type}
+          alt={modal.alt}
+          onClose={() => setModal(null)}
+        />
+      )}
     </>
   );
 }

@@ -30,19 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeProvider>
-          <div className="cursor" id="cursor" />
           {children}
         </ThemeProvider>
         <script dangerouslySetInnerHTML={{ __html: `
-var cur=document.getElementById('cursor');
-if(window.matchMedia('(pointer:fine)').matches&&cur){
-  document.body.classList.add('has-cursor');
-  document.addEventListener('mousemove',function(e){cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';});
-  document.querySelectorAll('a,button').forEach(function(el){
-    el.addEventListener('mouseenter',function(){cur.classList.add('big');});
-    el.addEventListener('mouseleave',function(){cur.classList.remove('big');});
-  });
-}
 var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.08});
 document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
         `}} />
