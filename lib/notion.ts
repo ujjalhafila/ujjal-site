@@ -22,7 +22,9 @@ export type ThinkItem = {
 };
 export type AchievementItem = {
   id: string; title: string; type: string; subtitle: string;
-  year: number | null; description: string; url: string | null; featured: boolean;
+  year: number | null; description: string;
+  url: string | null; linkLabel: string;
+  featured: boolean; imageUrl: string | null;
 };
 
 function slugify(t: string) { return t.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""); }
@@ -110,8 +112,9 @@ export async function getAchievements(): Promise<AchievementItem[]> {
   return results.map((p:any) => ({
     id:p.id, title:pageTitle(p), type:sel(p,"Type"),
     subtitle:richText(p,"Subtitle"), year:num(p,"Year"),
-    description:richText(p,"Description"), url:pUrl(p,"userDefined:URL"),
-    featured:chk(p,"Featured"),
+    description:richText(p,"Description"),
+    url:pUrl(p,"userDefined:URL"), linkLabel:richText(p,"Link Label"),
+    featured:chk(p,"Featured"), imageUrl:fileUrl(p,"Image"),
   }));
 }
 
