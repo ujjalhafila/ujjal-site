@@ -159,9 +159,8 @@ export default async function Home() {
               ["Phone","+91 70861 16844 →","tel:+917086116844"],
             ].map(([label,text,href])=>(
               <a key={label} href={href} target={href.startsWith("http")?"_blank":undefined}
-                style={{ display:"flex", alignItems:"center", gap:"1rem", textDecoration:"none", color:"var(--ink)", fontSize:"14px", borderBottom:"1px solid var(--border)", paddingBottom:"0.6rem", transition:"padding-left 0.2s, color 0.2s" }}
-                onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.paddingLeft="0.5rem";(e.currentTarget as HTMLElement).style.color="var(--accent)";}}
-                onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.paddingLeft="";(e.currentTarget as HTMLElement).style.color="var(--ink)";}}>
+    className="contact-link"
+                style={{ display:"flex", alignItems:"center", gap:"1rem", textDecoration:"none", color:"var(--ink)", fontSize:"14px", borderBottom:"1px solid var(--border)", paddingBottom:"0.6rem" }}>
                 <span style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.1em", textTransform:"uppercase", color:"var(--muted)", minWidth:"70px" }}>{label}</span>
                 <span>{text}</span>
               </a>
@@ -216,6 +215,8 @@ export default async function Home() {
           .hero-portrait-col { border-right:none !important; border-bottom:1px solid var(--border); min-height:320px !important; padding:2.5rem 2rem !important; }
           .contact-grid { grid-template-columns: 1fr !important; }
         }
+        .contact-link { transition: padding-left 0.2s, color 0.2s; }
+        .contact-link:hover { padding-left: 0.5rem; color: var(--accent); }
         @media (max-width: 600px) {
           .grid-2 { grid-template-columns: 1fr !important; }
           .card-flip { border-right: none !important; }
