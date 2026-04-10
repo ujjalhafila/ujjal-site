@@ -36,7 +36,7 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
   return (
     <main>
       <Nav />
-      <div style={{ paddingTop:"5rem" }}>
+      <div style={{ paddingTop:"5rem", animation:"fadeUp 0.5s ease" }}>
 
         {/* Header */}
         <div style={{ borderBottom:"1px solid var(--border)",padding:"3rem 2rem 2.5rem" }}>

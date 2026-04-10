@@ -7,7 +7,12 @@ function LinkedInIcon() { return <svg width="16" height="16" viewBox="0 0 24 24"
 function GitHubIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>; }
 function MailIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>; }
 
-const M = { mono:"'DM Mono',monospace", sans:"'DM Sans',sans-serif" };
+function LogoCircle() {
+  return (
+    <div style={{ width:28, height:28, borderRadius:"50%", background:"var(--accent)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"transform 0.2s, box-shadow 0.2s" }}
+      className="logo-circle" aria-label="Home" />
+  );
+}
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
@@ -20,78 +25,48 @@ export default function Nav() {
 
   return (
     <>
-      <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:100,
-        display:"flex", alignItems:"center", justifyContent:"space-between",
-        padding:"0.85rem 2rem", backdropFilter:"blur(12px)",
-        background:"var(--nav-bg)", borderBottom:"1px solid var(--border)", gap:"1rem" }}>
-
-        {/* Logo — circle with glow on hover + "Home" affordance */}
-        <Link href="/" className="nav-logo-link" style={{ display:"flex", alignItems:"center", gap:"0.5rem", textDecoration:"none" }}>
-          <div className="nav-logo-circle" style={{
-            width:28, height:28, borderRadius:"50%",
-            background:"var(--accent)", flexShrink:0,
-            transition:"box-shadow 0.3s ease, transform 0.3s ease",
-          }} />
-          <span className="nav-home-label" style={{
-            fontFamily:M.mono, fontSize:"11px", letterSpacing:"0.1em",
-            textTransform:"uppercase", color:"var(--muted)",
-            opacity:0, transform:"translateX(-6px)",
-            transition:"opacity 0.25s ease, transform 0.25s ease",
-            whiteSpace:"nowrap",
-          }}>Home</span>
+      <nav style={{ position:"fixed", top:0, left:0, right:0, zIndex:100, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0.85rem 2rem", backdropFilter:"blur(12px)", background:"var(--nav-bg)", borderBottom:"1px solid var(--border)", gap:"1rem" }}>
+        <Link href="/" style={{ display:"flex", alignItems:"center", textDecoration:"none" }}>
+          <LogoCircle />
         </Link>
-
-        {/* Desktop links */}
         <div style={{ display:"flex", alignItems:"center", gap:"2rem", flex:1, justifyContent:"center" }} className="desktop-nav">
           {links.map(([label,href])=>(
-            <Link key={href} href={href} className="nav-link" style={{
-              fontFamily:M.mono, fontSize:"11px", letterSpacing:"0.1em",
-              color:"var(--muted)", textDecoration:"none", textTransform:"uppercase",
-              transition:"color 0.2s", position:"relative",
-            }}>
-              {label}
-            </Link>
+            <Link key={href} href={href} className="nav-link">{label}</Link>
           ))}
         </div>
-
         <div style={{ display:"flex", alignItems:"center", gap:"0.75rem" }}>
           <div style={{ display:"flex", alignItems:"center", gap:"0.5rem" }} className="desktop-nav">
             {socials.map(({href,Icon,label})=>(
-              <a key={label} href={href} target={href.startsWith("http")?"_blank":undefined}
-                rel="noopener" aria-label={label} className="social-icon-link"
-                style={{ color:"var(--muted)", display:"flex", alignItems:"center",
-                  transition:"color 0.2s, transform 0.2s", padding:"4px" }}>
+              <a key={label} href={href} target={href.startsWith("http")?"_blank":undefined} rel="noopener" aria-label={label}
+                style={{ color:"var(--muted)", display:"flex", alignItems:"center", transition:"color 0.2s, transform 0.2s", padding:"4px" }}
+                onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.color="var(--ink)";(e.currentTarget as HTMLElement).style.transform="translateY(-2px)";}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.color="var(--muted)";(e.currentTarget as HTMLElement).style.transform="";}}>
                 <Icon />
               </a>
             ))}
           </div>
           <ThemeToggle />
           <button onClick={()=>setOpen(o=>!o)} className="mobile-menu-btn"
-            style={{ background:"none", border:"none", cursor:"pointer",
-              color:"var(--ink)", padding:"4px", display:"none", fontSize:"18px", lineHeight:1 }}
+            style={{ background:"none", border:"none", cursor:"pointer", color:"var(--ink)", padding:"4px", display:"none", fontSize:"18px", lineHeight:1, transition:"transform 0.2s" }}
             aria-label="Menu">
             {open ? "✕" : "☰"}
           </button>
         </div>
       </nav>
 
-      {/* Mobile dropdown */}
       {open && (
-        <div style={{ position:"fixed", top:"57px", left:0, right:0, zIndex:99,
-          background:"var(--paper)", borderBottom:"1px solid var(--border)",
-          padding:"1rem 2rem", display:"flex", flexDirection:"column", gap:"0" }}>
+        <div style={{ position:"fixed", top:"57px", left:0, right:0, zIndex:99, background:"var(--paper)", borderBottom:"1px solid var(--border)", padding:"1rem 2rem", display:"flex", flexDirection:"column", gap:"0", animation:"fadeUp 0.2s ease" }}>
           {links.map(([label,href])=>(
             <Link key={href} href={href} onClick={()=>setOpen(false)}
-              style={{ fontFamily:M.mono, fontSize:"13px", letterSpacing:"0.1em",
-                color:"var(--ink)", textDecoration:"none", textTransform:"uppercase",
-                padding:"0.85rem 0", borderBottom:"1px solid var(--border)" }}>
+              style={{ fontFamily:"'DM Mono',monospace", fontSize:"13px", letterSpacing:"0.1em", color:"var(--ink)", textDecoration:"none", textTransform:"uppercase", padding:"0.85rem 0", borderBottom:"1px solid var(--border)", transition:"padding-left 0.2s" }}
+              onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.paddingLeft="0.5rem";}}
+              onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.paddingLeft="";}}>
               {label}
             </Link>
           ))}
           <div style={{ display:"flex", gap:"1.25rem", paddingTop:"1rem" }}>
             {socials.map(({href,Icon,label})=>(
-              <a key={label} href={href} target={href.startsWith("http")?"_blank":undefined}
-                rel="noopener" aria-label={label}
+              <a key={label} href={href} target={href.startsWith("http")?"_blank":undefined} rel="noopener" aria-label={label}
                 style={{ color:"var(--muted)", display:"flex", alignItems:"center" }}>
                 <Icon />
               </a>
@@ -101,36 +76,8 @@ export default function Nav() {
       )}
 
       <style>{`
-        /* Logo hover: glow + reveal "Home" */
-        .nav-logo-link:hover .nav-logo-circle {
-          box-shadow: 0 0 0 4px rgba(200,75,47,0.2), 0 0 16px rgba(200,75,47,0.35);
-          transform: scale(1.08);
-        }
-        .nav-logo-link:hover .nav-home-label {
-          opacity: 1;
-          transform: translateX(0);
-        }
-
-        /* Nav links underline on hover */
-        .nav-link::after {
-          content: '';
-          position: absolute;
-          bottom: -2px; left: 0; right: 0;
-          height: 1px;
-          background: var(--accent);
-          transform: scaleX(0);
-          transition: transform 0.2s ease;
-        }
-        .nav-link:hover { color: var(--ink) !important; }
-        .nav-link:hover::after { transform: scaleX(1); }
-
-        /* Social icon hover */
-        .social-icon-link:hover { color: var(--ink) !important; transform: translateY(-2px); }
-
-        @media (max-width: 768px) {
-          .desktop-nav { display: none !important; }
-          .mobile-menu-btn { display: flex !important; }
-        }
+        .logo-circle:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(200,75,47,0.3); }
+        @media (max-width: 768px) { .desktop-nav { display:none !important; } .mobile-menu-btn { display:flex !important; } }
       `}</style>
     </>
   );
