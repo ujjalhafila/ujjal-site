@@ -5,9 +5,9 @@ import { getThinkItems } from "../../lib/notion";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Think Space" };
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
-const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace" };
+const S = { sans:"'DM Sans',sans-serif", mono:"'DM Mono',monospace" };
 const TYPE_COLORS: Record<string,string> = {
   "Essay":"var(--accent)", "Lab Experiment":"#1a6b4a", "Concept Flow":"#1a3a7a", "Quick Thought":"#7a5a1a"
 };
@@ -29,7 +29,7 @@ export default async function ThinkPage() {
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"3rem", alignItems:"end" }} className="think-header-grid">
             <div>
-              <h1 style={{ fontFamily:S.serif, fontSize:"clamp(2.5rem,7vw,5.5rem)", fontWeight:900, lineHeight:0.92, letterSpacing:"-0.03em" }}>
+              <h1 style={{ fontFamily:S.sans, fontSize:"clamp(2.5rem,7vw,5.5rem)", fontWeight:900, lineHeight:0.92, letterSpacing:"-0.03em" }}>
                 The <em style={{ fontStyle:"italic", color:"var(--accent)" }}>Why</em>
               </h1>
             </div>
@@ -50,7 +50,7 @@ export default async function ThinkPage() {
 
         {items.length === 0 ? (
           <div style={{ padding:"5rem 2rem", textAlign:"center" }}>
-            <p style={{ fontFamily:S.serif, fontStyle:"italic", fontSize:"1.25rem", color:"var(--muted)", marginBottom:"1rem" }}>No published thoughts yet.</p>
+            <p style={{ fontFamily:S.sans, fontStyle:"italic", fontSize:"1.25rem", color:"var(--muted)", marginBottom:"1rem" }}>No published thoughts yet.</p>
             <p style={{ fontFamily:S.mono, fontSize:"12px", color:"var(--muted)", letterSpacing:"0.08em" }}>
               Open Think Space in Notion → set any entry Status to "Published" → it appears here within 60 s.
             </p>
@@ -72,7 +72,7 @@ export default async function ThinkPage() {
                       <div style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.12em", textTransform:"uppercase", color:TYPE_COLORS[item.type]||"var(--accent)", border:`1px solid ${TYPE_COLORS[item.type]||"var(--accent)"}`, padding:"0.2rem 0.6rem", display:"inline-block", marginBottom:"1.25rem" }}>
                         {item.type}
                       </div>
-                      <h2 style={{ fontFamily:S.serif, fontSize:"clamp(1.5rem,3vw,2.25rem)", fontWeight:700, lineHeight:1.15, letterSpacing:"-0.02em", marginBottom:"0.75rem" }}>
+                      <h2 style={{ fontFamily:S.sans, fontSize:"clamp(1.5rem,3vw,2.25rem)", fontWeight:700, lineHeight:1.15, letterSpacing:"-0.02em", marginBottom:"0.75rem" }}>
                         {item.title}
                       </h2>
                       <div style={{ fontFamily:S.mono, fontSize:"11px", color:"var(--muted)" }}>
@@ -81,7 +81,7 @@ export default async function ThinkPage() {
                     </div>
                     {item.whyQuestion && (
                       <div style={{ display:"flex", alignItems:"center" }}>
-                        <blockquote style={{ fontFamily:S.serif, fontStyle:"italic", fontSize:"1.15rem", lineHeight:1.65, borderLeft:"3px solid var(--accent)", paddingLeft:"1.5rem", color:"var(--ink)", margin:0 }}>
+                        <blockquote style={{ fontFamily:S.sans, fontStyle:"italic", fontSize:"1.15rem", lineHeight:1.65, borderLeft:"3px solid var(--accent)", paddingLeft:"1.5rem", color:"var(--ink)", margin:0 }}>
                           "{item.whyQuestion}"
                         </blockquote>
                       </div>
@@ -110,7 +110,7 @@ export default async function ThinkPage() {
                         <span style={{ fontFamily:S.mono, fontSize:"9px", letterSpacing:"0.12em", textTransform:"uppercase", color:TYPE_COLORS[item.type]||"var(--muted)", border:`1px solid ${TYPE_COLORS[item.type]||"var(--border)"}`, padding:"0.15rem 0.5rem" }}>{item.type}</span>
                         <span style={{ fontFamily:S.mono, fontSize:"10px", color:"var(--muted)" }}>{item.readTime}</span>
                       </div>
-                      <h3 style={{ fontFamily:S.serif, fontSize:"clamp(1rem,2vw,1.15rem)", fontWeight:700, lineHeight:1.25, letterSpacing:"-0.01em" }}>
+                      <h3 style={{ fontFamily:S.sans, fontSize:"clamp(1rem,2vw,1.15rem)", fontWeight:700, lineHeight:1.25, letterSpacing:"-0.01em" }}>
                         {item.title}
                       </h3>
                       {item.whyQuestion && (

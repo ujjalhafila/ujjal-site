@@ -9,7 +9,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
-const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace" };
+const S = { sans:"'DM Sans',sans-serif", mono:"'DM Mono',monospace" };
 
 export async function generateStaticParams() {
   const items = await getWorkItems();
@@ -45,7 +45,7 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
                   {item.type}
                 </div>
               )}
-              <h1 style={{ fontFamily:S.serif, fontSize:"clamp(1.8rem,5vw,3.25rem)", fontWeight:900, lineHeight:1.05, letterSpacing:"-0.03em", marginBottom:"1.25rem" }}>
+              <h1 style={{ fontFamily:S.sans, fontSize:"clamp(1.8rem,5vw,3.25rem)", fontWeight:900, lineHeight:1.05, letterSpacing:"-0.03em", marginBottom:"1.25rem" }}>
                 {item.title}
               </h1>
               {item.description && (
@@ -88,7 +88,7 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
           {html ? (
             <ProseContent html={html} />
           ) : (
-            <p style={{ fontFamily:S.serif, fontStyle:"italic", fontSize:"1.1rem", color:"var(--muted)" }}>
+            <p style={{ fontFamily:S.sans, fontStyle:"italic", fontSize:"1.1rem", color:"var(--muted)" }}>
               Open this project in Notion and add your case study content — it appears here automatically.
             </p>
           )}

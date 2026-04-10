@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 
 type Comment = { id: string; name: string; body: string; createdAt: string; };
-const S = { mono:"'DM Mono',monospace", serif:"'Playfair Display',Georgia,serif" };
+const S = { mono:"'DM Mono',monospace", sans:"'DM Sans',sans-serif" };
 
 export default function Comments({ slug }: { slug: string }) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -35,7 +35,7 @@ export default function Comments({ slug }: { slug: string }) {
 
   return (
     <div style={{ borderTop:"1px solid var(--border)",marginTop:"4rem",paddingTop:"3rem" }}>
-      <h3 style={{ fontFamily:S.serif,fontSize:"1.5rem",fontWeight:700,letterSpacing:"-0.01em",marginBottom:"2rem" }}>
+      <h3 style={{ fontFamily:S.sans,fontSize:"1.5rem",fontWeight:700,letterSpacing:"-0.01em",marginBottom:"2rem" }}>
         Discussion ({comments.length})
       </h3>
 
@@ -57,7 +57,7 @@ export default function Comments({ slug }: { slug: string }) {
       {loading ? (
         <p style={{ fontFamily:S.mono,fontSize:"12px",color:"var(--muted)" }}>Loading...</p>
       ) : comments.length === 0 ? (
-        <p style={{ fontFamily:S.serif,fontStyle:"italic",color:"var(--muted)" }}>Be the first to share a thought.</p>
+        <p style={{ fontFamily:S.sans,fontStyle:"italic",color:"var(--muted)" }}>Be the first to share a thought.</p>
       ) : (
         <div style={{ display:"flex",flexDirection:"column",gap:"1.5rem" }}>
           {comments.map(c => (

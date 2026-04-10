@@ -4,8 +4,8 @@ import Footer from "../components/Footer";
 import Portrait from "../components/Portrait";
 import { getFeaturedWork, getFeaturedThink } from "../lib/notion";
 
-export const revalidate = 60;
-const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace" };
+export const dynamic = 'force-dynamic';
+const S = { sans:"'DM Sans',sans-serif", mono:"'DM Mono',monospace" };
 
 const QUOTES = [
   { text: "Simplicity is not the absence of complexity — it's the mastery of it.", attr: "— on design craft" },
@@ -23,12 +23,8 @@ export default async function Home() {
 
       {/* HERO */}
       <section style={{ minHeight:"100vh", display:"grid", gridTemplateColumns:"1fr 1fr",
-        paddingTop:"56px", position:"relative", overflow:"hidden" }}
+        paddingTop:"56px", position:"relative" }}
         className="hero-grid" id="hero-section">
-
-        {/* Interactive colour bg canvas */}
-        <canvas id="hero-bg" style={{ position:"absolute", inset:0, width:"100%",
-          height:"100%", pointerEvents:"none", zIndex:0 }} aria-hidden />
 
         {/* LEFT: Portrait — centred, visible on all sizes */}
         <div className="hero-portrait-col" style={{
@@ -45,14 +41,14 @@ export default async function Home() {
         {/* RIGHT: Text */}
         <div style={{ display:"flex", flexDirection:"column", justifyContent:"flex-end",
           padding:"clamp(2rem,5vw,5rem) clamp(1.5rem,3vw,3rem)",
-          position:"relative", zIndex:1 }}>
+          }}>
           <div style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.15em",
             textTransform:"uppercase", color:"var(--accent)", marginBottom:"2rem",
             display:"flex", alignItems:"center", gap:"0.75rem" }}>
             <span style={{ display:"block", width:"32px", height:"1px", background:"var(--accent)" }}/>
             Product Designer · Bengaluru
           </div>
-          <h1 style={{ fontFamily:S.serif, fontSize:"clamp(3rem,7vw,6.5rem)", fontWeight:900,
+          <h1 style={{ fontFamily:S.sans, fontSize:"clamp(3rem,7vw,6.5rem)", fontWeight:900,
             lineHeight:0.92, letterSpacing:"-0.02em", color:"var(--ink)", marginBottom:"2rem" }}>
             Ujjal<br/><em style={{ fontStyle:"italic", color:"var(--accent)" }}>Hafila</em>
           </h1>
@@ -63,15 +59,10 @@ export default async function Home() {
           </p>
           <div style={{ display:"flex", gap:"1rem", alignItems:"center",
             flexWrap:"wrap", marginBottom:"3rem" }}>
-            <Link href="/work" style={{ display:"inline-flex", alignItems:"center", gap:"0.5rem",
-              padding:"0.85rem 1.75rem", background:"var(--ink)", color:"var(--paper)",
-              fontFamily:S.mono, fontSize:"12px", letterSpacing:"0.08em",
-              textTransform:"uppercase", textDecoration:"none" }}>
-              View Work →
+            <Link href="/work" className="cta-primary">
+              <span>View Work →</span>
             </Link>
-            <Link href="/think" style={{ fontFamily:S.mono, fontSize:"12px", letterSpacing:"0.08em",
-              color:"var(--muted)", textDecoration:"none", textTransform:"uppercase",
-              borderBottom:"1px solid var(--border)", paddingBottom:"2px" }}>
+            <Link href="/think" className="cta-secondary">
               Think Space →
             </Link>
           </div>
@@ -80,7 +71,7 @@ export default async function Home() {
             {[["8+","Years designing"],["∞","Systems built"]].map(([n,l],i)=>(
               <div key={l} style={{ padding:"1rem 0.75rem",
                 borderRight:i===0?"1px solid var(--border)":"none" }}>
-                <div style={{ fontFamily:S.serif, fontSize:"1.75rem", fontWeight:700,
+                <div style={{ fontFamily:S.sans, fontSize:"1.75rem", fontWeight:700,
                   lineHeight:1, color:"var(--ink)", marginBottom:"0.25rem" }}>{n}</div>
                 <div style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.1em",
                   textTransform:"uppercase", color:"var(--muted)" }}>{l}</div>
@@ -112,7 +103,7 @@ export default async function Home() {
           <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-between",
             padding:"2.5rem 2rem 1.5rem", borderBottom:"1px solid var(--border)",
             flexWrap:"wrap", gap:"1rem" }}>
-            <h2 style={{ fontFamily:S.serif, fontSize:"clamp(2rem,5vw,3.5rem)", fontWeight:900,
+            <h2 style={{ fontFamily:S.sans, fontSize:"clamp(2rem,5vw,3.5rem)", fontWeight:900,
               lineHeight:1, letterSpacing:"-0.03em" }}>
               Featured <em style={{ fontStyle:"italic", color:"var(--accent)" }}>Works</em>
             </h2>
@@ -140,7 +131,7 @@ export default async function Home() {
                   display:"flex", justifyContent:"space-between" }}>
                   <span>0{i+1}</span><span>↗</span>
                 </div>
-                <h3 style={{ fontFamily:S.serif, fontSize:"clamp(1.2rem,2vw,1.6rem)", fontWeight:700,
+                <h3 style={{ fontFamily:S.sans, fontSize:"clamp(1.2rem,2vw,1.6rem)", fontWeight:700,
                   lineHeight:1.15, letterSpacing:"-0.02em", marginBottom:"0.6rem" }}>{item.title}</h3>
                 <p style={{ fontSize:"14px", lineHeight:1.7, color:"var(--muted)",
                   marginBottom:"1rem", maxWidth:"42ch" }}>{item.description}</p>
@@ -168,9 +159,9 @@ export default async function Home() {
               <span style={{ display:"block", width:"24px", height:"1px", background:"var(--accent)" }}/>
               Think Space
             </div>
-            <h2 style={{ fontFamily:S.serif, fontSize:"clamp(1.75rem,4vw,3rem)", fontWeight:900,
+            <h2 style={{ fontFamily:S.sans, fontSize:"clamp(1.75rem,4vw,3rem)", fontWeight:900,
               lineHeight:1.1, letterSpacing:"-0.03em" }}>
-              The <em style={{ fontStyle:"italic", color:"var(--accent)" }}>Why</em> behind the work
+              The <em style={{ fontStyle:"italic", color:"var(--accent)" }}>Why</em>
             </h2>
           </div>
           <Link href="/think" style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.1em",
@@ -187,10 +178,10 @@ export default async function Home() {
                   textTransform:"uppercase", color:"var(--accent)", marginBottom:"1rem",
                   border:"1px solid var(--accent)", padding:"0.2rem 0.6rem",
                   display:"inline-block" }}>{item.type}</div>
-                <h3 style={{ fontFamily:S.serif, fontSize:"clamp(1.1rem,2vw,1.45rem)",
+                <h3 style={{ fontFamily:S.sans, fontSize:"clamp(1.1rem,2vw,1.45rem)",
                   fontWeight:700, lineHeight:1.2, letterSpacing:"-0.01em",
                   marginBottom:"0.6rem" }}>{item.title}</h3>
-                {item.whyQuestion && (<p style={{ fontFamily:S.serif, fontStyle:"italic",
+                {item.whyQuestion && (<p style={{ fontFamily:S.sans, fontStyle:"italic",
                   fontSize:"0.95rem", color:"var(--muted)", lineHeight:1.6,
                   marginBottom:"0.75rem" }}>"{item.whyQuestion}"</p>)}
                 <div style={{ fontFamily:S.mono, fontSize:"11px", color:"var(--muted)" }}>{item.readTime}</div>
@@ -199,7 +190,7 @@ export default async function Home() {
           </div>
         ) : (
           <div style={{ padding:"3rem 2rem", textAlign:"center" }}>
-            <p style={{ fontFamily:S.serif, fontStyle:"italic", fontSize:"1.1rem", color:"var(--muted)" }}>
+            <p style={{ fontFamily:S.sans, fontStyle:"italic", fontSize:"1.1rem", color:"var(--muted)" }}>
               Essays and experiments coming soon.
             </p>
           </div>
@@ -219,9 +210,9 @@ export default async function Home() {
               <span style={{ width:"24px", height:"1px", background:"var(--accent)", display:"block" }}/>
               Let's talk
             </div>
-            <h2 style={{ fontFamily:S.serif, fontSize:"clamp(2rem,5vw,4rem)", fontWeight:900,
+            <h2 style={{ fontFamily:S.sans, fontSize:"clamp(2rem,5vw,4rem)", fontWeight:900,
               lineHeight:1.05, letterSpacing:"-0.03em" }}>
-              Got something<br/><em style={{ fontStyle:"italic", color:"var(--accent)" }}>interesting?</em>
+              Let's <em style={{ fontStyle:"italic", color:"var(--accent)" }}>connect</em>
             </h2>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:"0.75rem", marginTop:"2rem" }}>
@@ -246,13 +237,13 @@ export default async function Home() {
         {/* Rotating quotes panel */}
         <div style={{ padding:"clamp(2rem,5vw,5rem) clamp(1.5rem,3vw,2.5rem)",
           background:"var(--ink)", color:"var(--paper)", display:"flex",
-          flexDirection:"column", justifyContent:"space-between", overflow:"hidden" }}
+          flexDirection:"column", justifyContent:"space-between" }}
           id="quotes-panel">
           <div id="quote-display">
             {QUOTES.map((q, i) => (
               <div key={i} className="quote-slide"
                 style={{ display: i === 0 ? "block" : "none" }}>
-                <p style={{ fontFamily:S.serif, fontSize:"clamp(1.2rem,2.8vw,1.85rem)",
+                <p style={{ fontFamily:S.sans, fontSize:"clamp(1.2rem,2.8vw,1.85rem)",
                   fontStyle:"italic", fontWeight:700, lineHeight:1.45,
                   color:"var(--paper)", opacity:0.9, maxWidth:"32ch" }}>
                   "{q.text}"
@@ -280,75 +271,7 @@ export default async function Home() {
       <Footer />
 
       {/* Hero interactive colour background — soft glowing orbs that drift */}
-      <script dangerouslySetInnerHTML={{ __html: `
-(function(){
-  var canvas = document.getElementById('hero-bg');
-  if (!canvas) return;
-  var section = document.getElementById('hero-section');
-  var ctx = canvas.getContext('2d');
-  var W, H;
-  var mx = -999, my = -999;
-
-  function resize() {
-    W = section.offsetWidth; H = section.offsetHeight;
-    canvas.width = W; canvas.height = H;
-  }
-  resize();
-  new ResizeObserver(resize).observe(section);
-
-  section.addEventListener('mousemove', function(e) {
-    var r = section.getBoundingClientRect();
-    mx = e.clientX - r.left; my = e.clientY - r.top;
-  });
-  section.addEventListener('mouseleave', function() { mx = W/2; my = H/2; });
-
-  // Orbs — slow drifting coloured blobs
-  var dark = document.documentElement.classList.contains('dark');
-  var ORBS = [
-    { x:0.2, y:0.3, r:0.28, hue:20,  speed:0.00012, phase:0 },
-    { x:0.75, y:0.6, r:0.32, hue:200, speed:0.00009, phase:1.5 },
-    { x:0.5, y:0.85, r:0.22, hue:300, speed:0.00015, phase:3 },
-    { x:0.85, y:0.2, r:0.20, hue:160, speed:0.00011, phase:4.5 },
-    { x:0.35, y:0.65, r:0.18, hue:50, speed:0.00013, phase:2 },
-  ];
-
-  var t = 0;
-  function draw(ts) {
-    t = ts;
-    dark = document.documentElement.classList.contains('dark');
-    ctx.clearRect(0,0,W,H);
-
-    var cursor_influence_x = (mx - W/2) / W;
-    var cursor_influence_y = (my - H/2) / H;
-
-    ORBS.forEach(function(orb) {
-      // Drift
-      var ox = (orb.x + Math.sin(t * orb.speed + orb.phase) * 0.12
-                + cursor_influence_x * 0.04) * W;
-      var oy = (orb.y + Math.cos(t * orb.speed * 1.3 + orb.phase) * 0.10
-                + cursor_influence_y * 0.04) * H;
-      var radius = orb.r * Math.min(W, H);
-
-      var alpha = dark ? 0.13 : 0.10;
-      var sat   = dark ? '70%' : '80%';
-      var light = dark ? '55%' : '65%';
-
-      var g = ctx.createRadialGradient(ox, oy, 0, ox, oy, radius);
-      g.addColorStop(0, 'hsla('+orb.hue+','+sat+','+light+','+alpha+')');
-      g.addColorStop(0.5, 'hsla('+orb.hue+','+sat+','+light+','+(alpha*0.4)+')');
-      g.addColorStop(1, 'hsla('+orb.hue+','+sat+','+light+',0)');
-
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(ox, oy, radius, 0, Math.PI*2);
-      ctx.fill();
-    });
-
-    requestAnimationFrame(draw);
-  }
-  requestAnimationFrame(draw);
-})();
-      `}} />
+      
 
       {/* Rotating quotes script */}
       <script dangerouslySetInnerHTML={{ __html: `

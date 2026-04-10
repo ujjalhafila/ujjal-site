@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 
 export const revalidate = 60;
 
-const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace" };
+const S = { sans:"'DM Sans',sans-serif", mono:"'DM Mono',monospace" };
 const TYPE_COLORS: Record<string,string> = {
   "Essay":"var(--accent)","Lab Experiment":"#1a6b4a","Concept Flow":"#1a3a7a","Quick Thought":"#7a5a1a"
 };
@@ -51,12 +51,12 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
                 {item.readTime}{item.publishedOn && ` · ${new Date(item.publishedOn).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}`}
               </span>
             </div>
-            <h1 style={{ fontFamily:S.serif,fontSize:"clamp(2rem,5vw,3.5rem)",fontWeight:900,lineHeight:1.05,letterSpacing:"-0.03em",marginBottom:"1.5rem" }}>
+            <h1 style={{ fontFamily:S.sans,fontSize:"clamp(2rem,5vw,3.5rem)",fontWeight:900,lineHeight:1.05,letterSpacing:"-0.03em",marginBottom:"1.5rem" }}>
               {item.title}
             </h1>
             {item.whyQuestion && (
               <div style={{ borderLeft:`3px solid ${color}`,paddingLeft:"1.5rem" }}>
-                <p style={{ fontFamily:S.serif,fontStyle:"italic",fontSize:"1.2rem",lineHeight:1.65,color:"var(--ink)" }}>
+                <p style={{ fontFamily:S.sans,fontStyle:"italic",fontSize:"1.2rem",lineHeight:1.65,color:"var(--ink)" }}>
                   "{item.whyQuestion}"
                 </p>
               </div>
@@ -116,7 +116,7 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
             {html ? (
               <div className="prose-ujjal" dangerouslySetInnerHTML={{ __html: html }} />
             ) : (
-              <p style={{ fontFamily:S.serif,fontStyle:"italic",fontSize:"1.1rem",color:"var(--muted)" }}>
+              <p style={{ fontFamily:S.sans,fontStyle:"italic",fontSize:"1.1rem",color:"var(--muted)" }}>
                 Open this entry in Notion and write your content — it appears here automatically once published.
               </p>
             )}
