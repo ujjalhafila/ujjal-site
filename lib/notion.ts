@@ -106,7 +106,7 @@ export async function getThinkItem(slug: string) {
 export async function getAchievements(): Promise<AchievementItem[]> {
   if (!ACHIEVEMENTS_DS) return [];
   const results = await queryDS(ACHIEVEMENTS_DS,
-    { property:"Status",select:{equals:"Published"} },
+    undefined,
     [{property:"Year",direction:"descending"}]
   );
   return results.map((p:any) => ({
@@ -123,4 +123,13 @@ export async function getFeaturedThink() {
   const items = await getThinkItems();
   const f = items.filter(i=>i.featured);
   return f.length>0 ? f.slice(0,2) : items.slice(0,2);
+}
+
+export async function getAboutMarkdown(): Promise<string> {
+  const pageId = process.env.NOTION_ABOUT_PAGE_ID;
+  if (!pageId) return "";
+  try {
+    const blocks = await n2m.pageToMarkdown(pageId);
+    return n2m.toMarkdownString(blocks).parent;
+  } catch { return ""; }
 }
