@@ -54,43 +54,33 @@ function parseColumns(md: string): string {
   });
 }
 
-// ── Notion <table> blocks → styled HTML table ──────────────────────────────
-// Notion API returns tables as <table><colgroup>...</colgroup><tr><td>...</td></tr></table>
-// The first <tr> is treated as the header row.
+// ── Notion/GFM pipe tables → styled HTML table ──────────────────────────────
+// notion-to-md converts Notion table blocks to GFM pipe tables:
+//   | H1 | H2 |
+//   | -- | -- |
+//   | A  | B  |
 function parseTables(md: string): string {
-  return md.replace(/<table>([\s\S]*?)<\/table>/g, (_, inner) => {
-    // Strip <colgroup>...</colgroup> — we don't need width hints
-    const body = inner.replace(/<colgroup>[\s\S]*?<\/colgroup>/g, "").trim();
+  // Match: header row | separator row (--) | one or more data rows
+  return md.replace(
+    /^(\|.+\|\n)([ \t]*\|[ \t]*[-:]+[ \t]*(?:\|[ \t]*[-:]+[ \t]*)*\|?\n)((?:\|.+\|\n?)*)/gm,
+    (_, headerRow, _sep, bodyRows) => {
+      const parseRow = (row: string) =>
+        row.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
 
-    // Extract all rows
-    const rowMatches = [...body.matchAll(/<tr>([\s\S]*?)<\/tr>/g)];
-    if (!rowMatches.length) return `<div class="notion-table-wrap"><table class="notion-table">${inner}</table></div>`;
+      const headers = parseRow(headerRow);
+      const rows = bodyRows
+        .split("\n")
+        .filter((r: string) => r.trim() && r.includes("|"))
+        .map((r: string) => parseRow(r));
 
-    const renderCell = (raw: string, tag: "th" | "td") => {
-      // Clean up cell content: strip outer <td>...</td> or <th>...</th> tags,
-      // convert <br> variants, strip remaining tags we can't handle
-      let content = raw
-        .replace(/<br\s*\/?>/gi, " · ")   // <br> → separator
-        .replace(/<\/?[a-z][^>]*>/g, "")  // strip other tags
-        .trim();
-      return `<${tag}>${content}</${tag}>`;
-    };
+      const thead = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr></thead>`;
+      const tbody = rows.length
+        ? `<tbody>${rows.map((r: string[]) => `<tr>${r.map((c: string) => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>`
+        : "";
 
-    const rows = rowMatches.map((m) => {
-      const cells = [...m[1].matchAll(/<td>([\s\S]*?)<\/td>/g)].map(c => c[1]);
-      return cells;
-    });
-
-    if (!rows.length) return `<div class="notion-table-wrap"><table class="notion-table">${inner}</table></div>`;
-
-    // First row = header
-    const thead = `<thead><tr>${rows[0].map(c => renderCell(c, "th")).join("")}</tr></thead>`;
-    const tbody = rows.length > 1
-      ? `<tbody>${rows.slice(1).map(r => `<tr>${r.map(c => renderCell(c, "td")).join("")}</tr>`).join("")}</tbody>`
-      : "";
-
-    return `<div class="notion-table-wrap"><table class="notion-table">${thead}${tbody}</table></div>`;
-  });
+      return `<div class="notion-table-wrap"><table class="notion-table">${thead}${tbody}</table></div>\n`;
+    }
+  );
 }
 
 export function markdownToHtml(md: string): string {
@@ -157,7 +147,7 @@ export function markdownToHtml(md: string): string {
   html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="prose-link">$1 ↗</a>');
 
   // ── Paragraphs ────────────────────────────────────────────────────────────
-  const BLOCK = /^<(h[1-6]|ul|ol|li|blockquote|div|hr|iframe|pre|figure|table|thead|tbody|tr|td|th)/;
+  const BLOCK = /^<(h[1-6]|ul|ol|li|blockquote|div|hr|iframe|pre|figure)/;
   const lines = html.split("\n");
   const out: string[] = [];
   let inP = false;
