@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "Think Space" };
 export const dynamic = 'force-dynamic';
 
-const S = { serif:"'Playfair Display',Georgia,serif", sans:"'DM Sans',sans-serif", mono:"'DM Mono',monospace" };
+const S = { sans:"'DM Sans',sans-serif", mono:"'DM Mono',monospace" };
 const TYPE_COLORS: Record<string,string> = {
   "Essay":"var(--accent)", "Lab Experiment":"#1a6b4a", "Concept Flow":"#1a3a7a", "Quick Thought":"#7a5a1a"
 };

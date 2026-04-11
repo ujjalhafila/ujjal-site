@@ -106,7 +106,7 @@ export async function getThinkItem(slug: string) {
 export async function getAchievements(): Promise<AchievementItem[]> {
   if (!ACHIEVEMENTS_DS) return [];
   const results = await queryDS(ACHIEVEMENTS_DS,
-    undefined,
+    { or:[{property:"Status",select:{equals:"Published"}},{property:"Status",select:{is_empty:true}}] },
     [{property:"Year",direction:"descending"}]
   );
   return results.map((p:any) => ({

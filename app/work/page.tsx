@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Work" };
 export const dynamic = 'force-dynamic';
-const S = { serif:"'Playfair Display',Georgia,serif", sans:"'DM Sans',sans-serif", mono:"'DM Mono',monospace" };
+const S = { sans:"'DM Sans',sans-serif", mono:"'DM Mono',monospace" };
 
 export default async function WorkPage() {
   const items = await getWorkItems();
