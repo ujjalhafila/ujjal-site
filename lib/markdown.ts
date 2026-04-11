@@ -63,29 +63,49 @@ function parseTables(md: string): string {
     return `<div class="notion-table-wrap"><table>${inner}</table></div>`;
   });
 
-  // Handle GFM pipe tables from notion-to-md.
-  // The key issue: cells can contain newlines (multi-line cell content).
-  // Strategy: find the separator line (| --- | --- |) and work outward.
-  // Split into lines, find separator line indices, then group header+sep+body.
-  const lines = result.split("\n");
+  // notion-to-md outputs GFM pipe tables, but cells can contain newlines.
+  // A table row STARTS with | but continuation lines of a multiline cell may not.
+  // Strategy: join any non-pipe line that immediately follows a pipe-starting line
+  // into a single line (treating it as continuation of the previous cell), then parse.
+
+  // Step 1: Collapse multiline cells — join continuation lines into their row
+  const joinedLines = result.split("\n");
+  const collapsed: string[] = [];
+  for (let i = 0; i < joinedLines.length; i++) {
+    const line = joinedLines[i];
+    if (!line.trim().startsWith("|") && collapsed.length > 0) {
+      const prev = collapsed[collapsed.length - 1];
+      // If previous line looks like a table row or separator, append to it
+      if (prev.trim().startsWith("|")) {
+        collapsed[collapsed.length - 1] = prev.trimEnd() + " " + line.trim();
+        continue;
+      }
+    }
+    collapsed.push(line);
+  }
+
+  // Step 2: Line-by-line separator detection on the collapsed content
+  const lines = collapsed;
   const out: string[] = [];
   let i = 0;
 
   while (i < lines.length) {
     const line = lines[i];
-    // Detect a separator line: | --- | --- | (only dashes, spaces, colons, pipes)
+    // Separator: only pipes, dashes, spaces, colons
     if (/^\|[-| :]+\|$/.test(line.trim()) && i > 0 && lines[i - 1]?.trim().startsWith("|")) {
-      // Found separator at index i. Header is at i-1.
-      // Remove the header we already pushed
+      // Header was already pushed — remove it and rebuild as <table>
       out.pop();
 
-      const headerCells = lines[i - 1].replace(/^\||\|$/g, "").split("|").map(c => c.trim()).filter(Boolean);
+      const parseRow = (row: string) =>
+        row.replace(/^\||\|$/g, "").split("|").map(c => c.trim()).filter(Boolean);
 
-      // Collect body rows (consecutive lines starting with |)
+      const headerCells = parseRow(lines[i - 1]);
+
+      // Collect body rows
       const bodyRows: string[][] = [];
       let j = i + 1;
       while (j < lines.length && lines[j].trim().startsWith("|")) {
-        bodyRows.push(lines[j].replace(/^\||\|$/g, "").split("|").map(c => c.trim()).filter(Boolean));
+        bodyRows.push(parseRow(lines[j]));
         j++;
       }
 
@@ -95,7 +115,7 @@ function parseTables(md: string): string {
         : "";
 
       out.push(`<div class="notion-table-wrap"><table>${thead}${tbody}</table></div>`);
-      i = j; // skip past body rows
+      i = j;
     } else {
       out.push(line);
       i++;
