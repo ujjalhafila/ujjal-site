@@ -160,7 +160,7 @@ export default async function Home() {
             ].map(([label,text,href])=>(
               <a key={label} href={href} target={href.startsWith("http")?"_blank":undefined}
     className="contact-link"
-                style={{ display:"flex", alignItems:"center", gap:"1rem", textDecoration:"none", color:"var(--ink)", fontSize:"14px", borderBottom:"1px solid var(--border)", paddingBottom:"0.6rem" }}>
+                className="contact-link" style={{ display:"flex", alignItems:"center", gap:"1rem", textDecoration:"none", color:"var(--ink)", fontSize:"14px", borderBottom:"1px solid var(--border)", paddingBottom:"0.6rem" }}>
                 <span style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.1em", textTransform:"uppercase", color:"var(--muted)", minWidth:"70px" }}>{label}</span>
                 <span>{text}</span>
               </a>
