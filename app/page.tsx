@@ -39,13 +39,13 @@ export default async function Home() {
         <div style={{ display:"flex", flexDirection:"column", justifyContent:"flex-end", padding:"clamp(2rem,5vw,5rem) clamp(1.5rem,3vw,3rem)" }}>
           <div style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.15em", textTransform:"uppercase", color:"var(--accent)", marginBottom:"2rem", display:"flex", alignItems:"center", gap:"0.75rem", animation:"slideIn 0.6s ease 0.1s both" }}>
             <span style={{ display:"block", width:"32px", height:"1px", background:"var(--accent)" }}/>
-            Product Designer · Bengaluru
+            Product Designer · Systems Thinker · Bengaluru
           </div>
           <h1 style={{ fontFamily:S.serif, fontSize:"clamp(3rem,7vw,6.5rem)", fontWeight:900, lineHeight:0.92, letterSpacing:"-0.02em", color:"var(--ink)", marginBottom:"2rem", animation:"fadeUp 0.7s ease 0.15s both" }}>
             Ujjal<br/><em style={{ fontStyle:"italic", color:"var(--accent)" }}>Hafila</em>
           </h1>
           <p style={{ fontFamily:S.sans, fontSize:"clamp(14px,1.8vw,17px)", lineHeight:1.8, color:"var(--muted)", maxWidth:"38ch", marginBottom:"2.5rem", animation:"fadeUp 0.7s ease 0.25s both" }}>
-            I design systems that think — working at the intersection of product strategy, interaction design, and AI. I start with <em>why</em> before building what.
+            I design systems that think - working at the intersection of product strategy, interaction design, and AI. I start with <em>why</em> before building what.
           </p>
           <div style={{ display:"flex", gap:"1rem", alignItems:"center", flexWrap:"wrap", marginBottom:"3rem", animation:"fadeUp 0.7s ease 0.35s both" }}>
             <Link href="/work" className="btn-primary">
@@ -153,7 +153,7 @@ export default async function Home() {
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:"0.75rem", marginTop:"2rem" }}>
             {[
-              ["Portfolio","Notion Portfolio →","https://ujjalhafila-portfolio.notion.site"],
+              ["Portfolio","Notion Portfolio →","https://ujjalhafila-portfolio.notion.site/2478afe624ae80cc8e60ed2ccaa171ef?v=2478afe624ae813bb226000cb8044eb0"],
               ["LinkedIn","linkedin.com/in/ujjalhafila →","https://www.linkedin.com/in/ujjalhafila/"],
               ["Email","ujjalhafila@gmail.com →","mailto:ujjalhafila@gmail.com"],
               ["Phone","+91 70861 16844 →","tel:+917086116844"],
