@@ -50,7 +50,7 @@ export default async function Home() {
             textTransform:"uppercase", color:"var(--accent)", marginBottom:"2rem",
             display:"flex", alignItems:"center", gap:"0.75rem" }}>
             <span style={{ display:"block", width:"32px", height:"1px", background:"var(--accent)" }}/>
-            Product Designer · Bengaluru
+            Product Designer · Systems Thinker · Bengaluru
           </div>
           <h1 style={{ fontFamily:S.serif, fontSize:"clamp(3rem,7vw,6.5rem)", fontWeight:900,
             lineHeight:0.92, letterSpacing:"-0.02em", color:"var(--ink)", marginBottom:"2rem" }}>
@@ -58,7 +58,7 @@ export default async function Home() {
           </h1>
           <p style={{ fontSize:"clamp(14px,1.8vw,17px)", lineHeight:1.8, color:"var(--muted)",
             maxWidth:"38ch", marginBottom:"2.5rem" }}>
-            I design systems that think — working at the intersection of product strategy,
+            I design systems that think - working at the intersection of product strategy,
             interaction design, and AI. I start with <em>why</em> before building what.
           </p>
           <div style={{ display:"flex", gap:"1rem", alignItems:"center",
@@ -170,7 +170,7 @@ export default async function Home() {
             </div>
             <h2 style={{ fontFamily:S.serif, fontSize:"clamp(1.75rem,4vw,3rem)", fontWeight:900,
               lineHeight:1.1, letterSpacing:"-0.03em" }}>
-              The <em style={{ fontStyle:"italic", color:"var(--accent)" }}>Why</em> behind the work
+              The <em style={{ fontStyle:"italic", color:"var(--accent)" }}>Why</em> behind things
             </h2>
           </div>
           <Link href="/think" style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.1em",
@@ -221,12 +221,12 @@ export default async function Home() {
             </div>
             <h2 style={{ fontFamily:S.serif, fontSize:"clamp(2rem,5vw,4rem)", fontWeight:900,
               lineHeight:1.05, letterSpacing:"-0.03em" }}>
-              Got something<br/><em style={{ fontStyle:"italic", color:"var(--accent)" }}>interesting?</em>
+              Let's<br/><em style={{ fontStyle:"italic", color:"var(--accent)" }}>connect</em>
             </h2>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:"0.75rem", marginTop:"2rem" }}>
             {[
-              ["Portfolio","Notion Portfolio →","https://ujjalhafila-portfolio.notion.site"],
+              ["Portfolio","Notion Portfolio →","https://ujjalhafila-portfolio.notion.site/2478afe624ae80cc8e60ed2ccaa171ef?v=2478afe624ae813bb226000cb8044eb0"],
               ["LinkedIn","linkedin.com/in/ujjalhafila →","https://www.linkedin.com/in/ujjalhafila/"],
               ["Email","ujjalhafila@gmail.com →","mailto:ujjalhafila@gmail.com"],
               ["Phone","+91 70861 16844 →","tel:+917086116844"],
