@@ -41,9 +41,46 @@ function mediaCard(url: string, alt = "", type: "image" | "video" | "figma") {
   }</div>`;
 }
 
+// ── Notion <columns> → CSS grid ─────────────────────────────────────────────
+function parseColumns(md: string): string {
+  return md.replace(/<columns>([\s\S]*?)<\/columns>/g, (_, inner) => {
+    const cells = [...inner.matchAll(/<column>([\s\S]*?)<\/column>/g)];
+    if (!cells.length) return inner;
+    const count = cells.length;
+    const cellsHtml = cells
+      .map(([, content]) => `<div class="notion-col">${markdownToHtml(content.trim())}</div>`)
+      .join("");
+    return `<div class="notion-columns notion-columns-${count}">${cellsHtml}</div>`;
+  });
+}
+
+// ── Markdown / Notion pipe tables → styled HTML table ───────────────────────
+function parseTables(md: string): string {
+  return md.replace(
+    /((?:^|\n)\|.+\|[ \t]*\n\|[-| :]+\|[ \t]*\n(?:\|.+\|[ \t]*\n?)+)/g,
+    (block) => {
+      const rows = block.trim().split("\n").filter(r => r.trim());
+      if (rows.length < 2) return block;
+      const parseRow = (row: string) =>
+        row.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+      const headerCells = parseRow(rows[0]);
+      const bodyRows = rows.slice(2);
+      const thead = `<thead><tr>${headerCells.map(c => `<th>${c}</th>`).join("")}</tr></thead>`;
+      const tbody = `<tbody>${bodyRows
+        .map(r => `<tr>${parseRow(r).map(c => `<td>${c}</td>`).join("")}</tr>`)
+        .join("")}</tbody>`;
+      return `<div class="notion-table-wrap"><table class="notion-table">${thead}${tbody}</table></div>`;
+    }
+  );
+}
+
 export function markdownToHtml(md: string): string {
   if (!md) return "<p>Content coming soon.</p>";
   let html = md;
+
+  // ── Columns and tables first ──────────────────────────────────────────────
+  html = parseColumns(html);
+  html = parseTables(html);
 
   // ── Strip markdown image wrappers around video URLs ──────────────────────
   html = html.replace(/!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g, (_, alt, url) => {
