@@ -121,7 +121,7 @@ body {
 /* ── Prose ───────────────────────────────────────────────── */
 /* Headings stay Playfair Display */
 .prose-ujjal h1,.prose-ujjal h2,.prose-ujjal h3,.prose-ujjal h4 {
-  font-family:'Playfair Display',sans-serif; font-weight:700;
+  font-family:'Playfair Display',Georgia,serif; font-weight:700;
   letter-spacing:-0.02em; margin-top:2.5rem; margin-bottom:1rem; color:var(--ink);
 }
 .prose-ujjal h1 { font-size:clamp(1.75rem,3vw,2.5rem); }
@@ -131,7 +131,7 @@ body {
 /* Body uses DM Sans (not Georgia) */
 .prose-ujjal p { font-family:'DM Sans',sans-serif; font-size:16px; line-height:0.5; color:var(--muted); margin-bottom:1.5rem; }
 .prose-ujjal blockquote {
-  font-family:'Playfair Display',sans-serif; font-style:italic; font-size:1.2rem;
+  font-family:'Playfair Display',Georgia,serif; font-style:italic; font-size:1.2rem;
   line-height:0.8; border-left:3px solid var(--accent);
   padding-left:1.5rem; margin:2rem 0; color:var(--ink);
 }
@@ -326,3 +326,8 @@ a.btn-cta-secondary:hover, .btn-cta-secondary:hover {
 /* ── Footer links ────────────────────────────────────────────────────────── */
 footer a { transition: color 0.2s, transform 0.2s; display: inline-flex; align-items: center; }
 footer a:hover { color: var(--ink) !important; transform: translateY(-1px); }
+
+/* ── Global heading typeface — Playfair Display everywhere ──────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', Georgia, serif;
+}

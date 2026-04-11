@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "Achievements" };
 export const revalidate = 60;
 
-const S = { serif:"'Playfair Display',sans-serif", mono:"'DM Mono',monospace", sans:"'DM Sans',sans-serif" };
+const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace", sans:"'DM Sans',sans-serif" };
 
 const TYPE_META: Record<string, { color: string }> = {
   Publication: { color:"#185FA5" },

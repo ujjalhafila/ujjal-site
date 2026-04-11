@@ -16,7 +16,7 @@ function LogoCircle() {
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
-  const links = [["Work","/work"],["Think","/think"],["Achievements","/achievements"]];
+  const links = [["Work","/work"],["Think","/think"],["About","/about"]];
   const socials = [
     { href:"https://www.linkedin.com/in/ujjalhafila/", Icon:LinkedInIcon, label:"LinkedIn" },
     { href:"https://github.com/ujjalhafila", Icon:GitHubIcon, label:"GitHub" },

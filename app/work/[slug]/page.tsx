@@ -9,7 +9,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
-const S = { sans:"'DM Sans',sans-serif", mono:"'DM Mono',monospace" };
+const S = { serif:"'Playfair Display',Georgia,serif", sans:"'DM Sans',sans-serif", mono:"'DM Mono',monospace" };
 
 export async function generateStaticParams() {
   const items = await getWorkItems();

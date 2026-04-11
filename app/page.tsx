@@ -7,7 +7,7 @@ import { getFeaturedWork, getFeaturedThink } from "../lib/notion";
 // force-dynamic ensures fresh data on every navigation, not just full reload
 export const dynamic = "force-dynamic";
 
-const S = { serif:"'Playfair Display',sans-serif", mono:"'DM Mono',monospace", sans:"'DM Sans',sans-serif" };
+const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace", sans:"'DM Sans',sans-serif" };
 
 const QUOTES = [
   { text:"Simplicity is not the absence of complexity — it's the mastery of it.", attr:"— on design craft" },
