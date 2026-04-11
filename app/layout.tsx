@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeProvider";
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: { default: "Ujjal Hafila — Product Designer", template: "%s | Ujjal Hafila" },
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           {children}
         </ThemeProvider>
+        <Analytics />
         <script dangerouslySetInnerHTML={{ __html: `
 var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.08});
 document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
