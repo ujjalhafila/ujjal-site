@@ -54,24 +54,43 @@ function parseColumns(md: string): string {
   });
 }
 
-// ── Markdown / Notion pipe tables → styled HTML table ───────────────────────
+// ── Notion <table> blocks → styled HTML table ──────────────────────────────
+// Notion API returns tables as <table><colgroup>...</colgroup><tr><td>...</td></tr></table>
+// The first <tr> is treated as the header row.
 function parseTables(md: string): string {
-  return md.replace(
-    /((?:^|\n)\|.+\|[ \t]*\n\|[-| :]+\|[ \t]*\n(?:\|.+\|[ \t]*\n?)+)/g,
-    (block) => {
-      const rows = block.trim().split("\n").filter(r => r.trim());
-      if (rows.length < 2) return block;
-      const parseRow = (row: string) =>
-        row.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
-      const headerCells = parseRow(rows[0]);
-      const bodyRows = rows.slice(2);
-      const thead = `<thead><tr>${headerCells.map(c => `<th>${c}</th>`).join("")}</tr></thead>`;
-      const tbody = `<tbody>${bodyRows
-        .map(r => `<tr>${parseRow(r).map(c => `<td>${c}</td>`).join("")}</tr>`)
-        .join("")}</tbody>`;
-      return `<div class="notion-table-wrap"><table class="notion-table">${thead}${tbody}</table></div>`;
-    }
-  );
+  return md.replace(/<table>([\s\S]*?)<\/table>/g, (_, inner) => {
+    // Strip <colgroup>...</colgroup> — we don't need width hints
+    const body = inner.replace(/<colgroup>[\s\S]*?<\/colgroup>/g, "").trim();
+
+    // Extract all rows
+    const rowMatches = [...body.matchAll(/<tr>([\s\S]*?)<\/tr>/g)];
+    if (!rowMatches.length) return `<div class="notion-table-wrap"><table class="notion-table">${inner}</table></div>`;
+
+    const renderCell = (raw: string, tag: "th" | "td") => {
+      // Clean up cell content: strip outer <td>...</td> or <th>...</th> tags,
+      // convert <br> variants, strip remaining tags we can't handle
+      let content = raw
+        .replace(/<br\s*\/?>/gi, " · ")   // <br> → separator
+        .replace(/<\/?[a-z][^>]*>/g, "")  // strip other tags
+        .trim();
+      return `<${tag}>${content}</${tag}>`;
+    };
+
+    const rows = rowMatches.map((m) => {
+      const cells = [...m[1].matchAll(/<td>([\s\S]*?)<\/td>/g)].map(c => c[1]);
+      return cells;
+    });
+
+    if (!rows.length) return `<div class="notion-table-wrap"><table class="notion-table">${inner}</table></div>`;
+
+    // First row = header
+    const thead = `<thead><tr>${rows[0].map(c => renderCell(c, "th")).join("")}</tr></thead>`;
+    const tbody = rows.length > 1
+      ? `<tbody>${rows.slice(1).map(r => `<tr>${r.map(c => renderCell(c, "td")).join("")}</tr>`).join("")}</tbody>`
+      : "";
+
+    return `<div class="notion-table-wrap"><table class="notion-table">${thead}${tbody}</table></div>`;
+  });
 }
 
 export function markdownToHtml(md: string): string {
@@ -79,8 +98,8 @@ export function markdownToHtml(md: string): string {
   let html = md;
 
   // ── Columns and tables first ──────────────────────────────────────────────
+  html = parseTables(html);   // must run before columns (tables can't be inside columns)
   html = parseColumns(html);
-  html = parseTables(html);
 
   // ── Strip markdown image wrappers around video URLs ──────────────────────
   html = html.replace(/!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g, (_, alt, url) => {
@@ -138,7 +157,7 @@ export function markdownToHtml(md: string): string {
   html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="prose-link">$1 ↗</a>');
 
   // ── Paragraphs ────────────────────────────────────────────────────────────
-  const BLOCK = /^<(h[1-6]|ul|ol|li|blockquote|div|hr|iframe|pre|figure)/;
+  const BLOCK = /^<(h[1-6]|ul|ol|li|blockquote|div|hr|iframe|pre|figure|table|thead|tbody|tr|td|th)/;
   const lines = html.split("\n");
   const out: string[] = [];
   let inP = false;
