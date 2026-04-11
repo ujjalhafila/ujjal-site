@@ -55,17 +55,23 @@ function parseColumns(md: string): string {
 }
 
 // ── Notion/GFM pipe tables → styled HTML table ──────────────────────────────
-// notion-to-md converts Notion table blocks to GFM pipe tables:
-//   | H1 | H2 |
-//   | -- | -- |
-//   | A  | B  |
+// notion-to-md converts Notion table blocks to GFM pipe tables via markdown-table
+// Format: | H1 | H2 |\n| - | - |\n| A | B |
 function parseTables(md: string): string {
-  // Match: header row | separator row (--) | one or more data rows
-  return md.replace(
-    /^(\|.+\|\n)([ \t]*\|[ \t]*[-:]+[ \t]*(?:\|[ \t]*[-:]+[ \t]*)*\|?\n)((?:\|.+\|\n?)*)/gm,
+  // Handle raw <table> HTML tags (fallback - wrap with our styles)
+  let result = md.replace(/<table>([\s\S]*?)<\/table>/g, (_, inner) => {
+    return `<div class="notion-table-wrap"><table>${inner}</table></div>`;
+  });
+
+  // Handle GFM pipe tables
+  result = result.replace(
+    /^(\|.+\|\n)([ \t]*\|[ \t]*[-: ]+[ \t]*(?:\|[ \t]*[-: ]+[ \t]*)*\|?\n)((?:\|.+\|\n?)*)/gm,
     (_, headerRow, _sep, bodyRows) => {
       const parseRow = (row: string) =>
-        row.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+        row.replace(/^\||\|$/g, "")
+           .split("|")
+           .map(c => c.trim())
+           .filter((_, i, arr) => i < arr.length - 1 || _.length > 0); // strip trailing empty cell
 
       const headers = parseRow(headerRow);
       const rows = bodyRows
@@ -75,12 +81,16 @@ function parseTables(md: string): string {
 
       const thead = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr></thead>`;
       const tbody = rows.length
-        ? `<tbody>${rows.map((r: string[]) => `<tr>${r.map((c: string) => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>`
+        ? `<tbody>${rows.map((r: string[]) =>
+            `<tr>${r.map((c: string) => `<td>${c}</td>`).join("")}</tr>`
+          ).join("")}</tbody>`
         : "";
 
-      return `<div class="notion-table-wrap"><table class="notion-table">${thead}${tbody}</table></div>\n`;
+      return `<div class="notion-table-wrap"><table>${thead}${tbody}</table></div>\n`;
     }
   );
+
+  return result;
 }
 
 export function markdownToHtml(md: string): string {
