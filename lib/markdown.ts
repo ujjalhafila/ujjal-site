@@ -58,39 +58,51 @@ function parseColumns(md: string): string {
 // notion-to-md converts Notion table blocks to GFM pipe tables via markdown-table
 // Format: | H1 | H2 |\n| - | - |\n| A | B |
 function parseTables(md: string): string {
-  // Handle raw <table> HTML tags (fallback - wrap with our styles)
+  // Handle raw <table> HTML tags — wrap with our styles
   let result = md.replace(/<table>([\s\S]*?)<\/table>/g, (_, inner) => {
     return `<div class="notion-table-wrap"><table>${inner}</table></div>`;
   });
 
-  // Handle GFM pipe tables
-  result = result.replace(
-    /^(\|.+\|\n)([ \t]*\|[ \t]*[-: ]+[ \t]*(?:\|[ \t]*[-: ]+[ \t]*)*\|?\n)((?:\|.+\|\n?)*)/gm,
-    (_, headerRow, _sep, bodyRows) => {
-      const parseRow = (row: string) =>
-        row.replace(/^\||\|$/g, "")
-           .split("|")
-           .map(c => c.trim())
-           .filter((_, i, arr) => i < arr.length - 1 || _.length > 0); // strip trailing empty cell
+  // Handle GFM pipe tables from notion-to-md.
+  // The key issue: cells can contain newlines (multi-line cell content).
+  // Strategy: find the separator line (| --- | --- |) and work outward.
+  // Split into lines, find separator line indices, then group header+sep+body.
+  const lines = result.split("\n");
+  const out: string[] = [];
+  let i = 0;
 
-      const headers = parseRow(headerRow);
-      const rows = bodyRows
-        .split("\n")
-        .filter((r: string) => r.trim() && r.includes("|"))
-        .map((r: string) => parseRow(r));
+  while (i < lines.length) {
+    const line = lines[i];
+    // Detect a separator line: | --- | --- | (only dashes, spaces, colons, pipes)
+    if (/^\|[-| :]+\|$/.test(line.trim()) && i > 0 && lines[i - 1]?.trim().startsWith("|")) {
+      // Found separator at index i. Header is at i-1.
+      // Remove the header we already pushed
+      out.pop();
 
-      const thead = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr></thead>`;
-      const tbody = rows.length
-        ? `<tbody>${rows.map((r: string[]) =>
-            `<tr>${r.map((c: string) => `<td>${c}</td>`).join("")}</tr>`
-          ).join("")}</tbody>`
+      const headerCells = lines[i - 1].replace(/^\||\|$/g, "").split("|").map(c => c.trim()).filter(Boolean);
+
+      // Collect body rows (consecutive lines starting with |)
+      const bodyRows: string[][] = [];
+      let j = i + 1;
+      while (j < lines.length && lines[j].trim().startsWith("|")) {
+        bodyRows.push(lines[j].replace(/^\||\|$/g, "").split("|").map(c => c.trim()).filter(Boolean));
+        j++;
+      }
+
+      const thead = `<thead><tr>${headerCells.map(h => `<th>${h}</th>`).join("")}</tr></thead>`;
+      const tbody = bodyRows.length
+        ? `<tbody>${bodyRows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>`
         : "";
 
-      return `<div class="notion-table-wrap"><table>${thead}${tbody}</table></div>\n`;
+      out.push(`<div class="notion-table-wrap"><table>${thead}${tbody}</table></div>`);
+      i = j; // skip past body rows
+    } else {
+      out.push(line);
+      i++;
     }
-  );
+  }
 
-  return result;
+  return out.join("\n");
 }
 
 export function markdownToHtml(md: string): string {
