@@ -36,7 +36,7 @@ export default async function WorkPage() {
         ) : (
           <div className="work-grid">
             {items.map((item, i) => (
-              <div key={item.id} className="work-card" style={{ padding:"2rem", borderBottom:"1px solid var(--border)" }}>
+              <div key={item.id} className="work-card reveal" style={{ padding:"2rem", borderBottom:"1px solid var(--border)" }}>
                 {/* Thumbnail — clickable for preview, card navigates to detail */}
                 {item.thumbnailUrl && (
                   <ClickableThumb src={item.thumbnailUrl} alt={item.title} title={item.title} />
