@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "About — Ujjal Hafila",
   description: "Product designer working at the intersection of strategy, interaction design, and emerging AI systems.",
 };
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const S = {
   serif: "'Playfair Display',Georgia,serif",

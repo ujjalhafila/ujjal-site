@@ -5,7 +5,7 @@ import { getThinkItems } from "../../lib/notion";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Think Space" };
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace" };
 const TYPE_COLORS: Record<string,string> = {

@@ -4,7 +4,7 @@ import Footer from "../components/Footer";
 import Portrait from "../components/Portrait";
 import { getFeaturedWork, getFeaturedThink } from "../lib/notion";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace" };
 
 const QUOTES = [

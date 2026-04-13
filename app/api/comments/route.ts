@@ -27,7 +27,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ comments: [] });
   }
 
-  return NextResponse.json({ comments: data ?? [] });
+  const mapped = (data ?? []).map((r: any) => ({ id: r.id, name: r.name, body: r.body, createdAt: r.created_at }));
+  return NextResponse.json({ comments: mapped });
 }
 
 export async function POST(req: NextRequest) {
@@ -52,5 +53,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to save" }, { status: 500 });
   }
 
-  return NextResponse.json({ comment: data }, { status: 201 });
+  const c = data as any;
+  const comment = { id: c.id, name: c.name, body: c.body, createdAt: c.created_at };
+  return NextResponse.json({ comment }, { status: 201 });
 }

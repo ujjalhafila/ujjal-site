@@ -6,7 +6,7 @@ import { getWorkItems } from "../../lib/notion";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Work" };
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace" };
 
 export default async function WorkPage() {
