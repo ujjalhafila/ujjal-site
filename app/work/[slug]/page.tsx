@@ -3,6 +3,7 @@ import Nav from "../../../components/Nav";
 import Footer from "../../../components/Footer";
 import WorkGallery from "../../../components/WorkGallery";
 import ProseContent from "../../../components/ProseContent";
+import TableOfContents from "../../../components/TableOfContents";
 import { getWorkItem, getWorkItems } from "../../../lib/notion";
 import { markdownToHtml } from "../../../lib/markdown";
 import { notFound } from "next/navigation";
@@ -83,15 +84,23 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
           </div>
         )}
 
-        {/* Main content — all images/videos in prose are clickable via ProseContent */}
-        <div style={{ maxWidth:"780px", margin:"0 auto", padding:"2rem 2rem 5rem" }}>
-          {html ? (
-            <ProseContent html={html} />
-          ) : (
-            <p style={{ fontFamily:S.serif, fontStyle:"italic", fontSize:"1.1rem", color:"var(--muted)" }}>
-              Open this project in Notion and add your case study content — it appears here automatically.
-            </p>
-          )}
+        {/* Mobile: sticky pill TOC — visible only below 900px */}
+        {html && <div className="toc-mobile-strip"><TableOfContents html={html} /></div>}
+
+        {/* Content area: TOC sidebar (desktop) + prose */}
+        <div className="work-content-layout">
+          <aside className="work-toc-aside" aria-label="Page sections">
+            {html && <TableOfContents html={html} />}
+          </aside>
+          <div style={{ minWidth:0, padding:"2rem 2rem 5rem" }}>
+            {html ? (
+              <ProseContent html={html} />
+            ) : (
+              <p style={{ fontFamily:S.serif, fontStyle:"italic", fontSize:"1.1rem", color:"var(--muted)" }}>
+                Open this project in Notion and add your case study content — it appears here automatically.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -99,7 +108,55 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
         @media (max-width: 700px) {
           .work-detail-header { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
         }
+
+        /* ── Content layout ──────────────────────────────────────────── */
+        .work-content-layout {
+          display: grid;
+          grid-template-columns: 210px 1fr;
+          max-width: 1140px;
+          margin: 0 auto;
+          align-items: start;
+        }
+
+        /* ── Desktop sidebar ─────────────────────────────────────────── */
+        .work-toc-aside {
+          position: sticky;
+          top: 5.5rem;
+          padding: 2.5rem 1rem 2rem 2rem;
+          max-height: calc(100vh - 6rem);
+          overflow-y: auto;
+          scrollbar-width: none;
+        }
+        .work-toc-aside::-webkit-scrollbar { display: none; }
+
+        /* toc-sidebar visible inside aside; toc-pills hidden */
+        .work-toc-aside .toc-sidebar { display: block; }
+        .work-toc-aside .toc-pills   { display: none !important; }
+
+        /* ── Mobile pill strip ───────────────────────────────────────── */
+        .toc-mobile-strip {
+          display: none;
+          position: sticky;
+          top: 4.25rem;
+          z-index: 50;
+          background: var(--nav-bg);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid var(--border);
+        }
+        .toc-mobile-strip .toc-sidebar { display: none !important; }
+        .toc-mobile-strip .toc-pills   { display: block !important; border-bottom: none; }
+
+        /* Global defaults (overridden per context above) */
+        .toc-sidebar { display: none; }
+        .toc-pills   { display: none; }
+
+        @media (max-width: 900px) {
+          .work-content-layout { grid-template-columns: 1fr; }
+          .work-toc-aside      { display: none !important; }
+          .toc-mobile-strip    { display: block; }
+        }
       `}</style>
+
       <Footer />
     </main>
   );
