@@ -65,7 +65,7 @@ export default function Comments({ slug }: { slug: string }) {
               <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.5rem" }}>
                 <span style={{ fontFamily:S.mono,fontSize:"12px",fontWeight:500,color:"var(--ink)" }}>{c.name}</span>
                 <span style={{ fontFamily:S.mono,fontSize:"10px",color:"var(--muted)",letterSpacing:"0.06em" }}>
-                  {new Date(c.createdAt).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}
+                  {new Date(c.createdAt).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}{" · "}{new Date(c.createdAt).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
                 </span>
               </div>
               <p style={{ fontSize:"14px",lineHeight:1.7,color:"var(--muted)",margin:0 }}>{c.body}</p>

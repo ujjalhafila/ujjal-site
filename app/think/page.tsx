@@ -5,7 +5,7 @@ import { getThinkItems } from "../../lib/notion";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Think Space" };
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace" };
 const TYPE_COLORS: Record<string,string> = {
@@ -67,7 +67,7 @@ export default async function ThinkPage() {
                     style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"2.5rem", padding:"2.5rem 2rem",
                       borderBottom: i<featured.length-1?"1px solid var(--border)":"none",
                       textDecoration:"none", color:"inherit" }}
-                    className="think-featured-row card-flip reveal">
+                    className="think-featured-row card-flip">
                     <div>
                       <div style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.12em", textTransform:"uppercase", color:TYPE_COLORS[item.type]||"var(--accent)", border:`1px solid ${TYPE_COLORS[item.type]||"var(--accent)"}`, padding:"0.2rem 0.6rem", display:"inline-block", marginBottom:"1.25rem" }}>
                         {item.type}
@@ -101,7 +101,7 @@ export default async function ThinkPage() {
                     style={{ display:"grid", gridTemplateColumns:"40px 1fr auto", gap:"1.5rem", alignItems:"center",
                       padding:"1.5rem 2rem", borderBottom:"1px solid var(--border)",
                       textDecoration:"none", color:"inherit" }}
-                    className="think-list-row reveal">
+                    className="think-list-row">
                     <div style={{ fontFamily:S.mono, fontSize:"11px", color:"var(--muted)", letterSpacing:"0.08em" }}>
                       {String(i+1).padStart(2,"0")}
                     </div>

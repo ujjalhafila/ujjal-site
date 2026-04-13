@@ -35,20 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </ThemeProvider>
         <Analytics />
         <script dangerouslySetInnerHTML={{ __html: `
-(function(){
-  var obs=new IntersectionObserver(function(es){
-    es.forEach(function(e){
-      if(e.isIntersecting){
-        e.target.classList.add('visible');
-        obs.unobserve(e.target);
-      }
-    });
-  },{threshold:0.07,rootMargin:'0px 0px -40px 0px'});
-  function wire(){
-    document.querySelectorAll('.reveal,.reveal-stagger').forEach(function(el){obs.observe(el);});
-  }
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',wire);}else{wire();}
-})();
+var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
         `}} />
       </body>
     </html>
