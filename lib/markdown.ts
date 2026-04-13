@@ -63,51 +63,55 @@ function parseTables(md: string): string {
     return `<div class="notion-table-wrap"><table>${inner}</table></div>`;
   });
 
-  // notion-to-md outputs GFM pipe tables, but cells can contain newlines.
-  // A table row STARTS with | but continuation lines of a multiline cell may not.
-  // Strategy: join any non-pipe line that immediately follows a pipe-starting line
-  // into a single line (treating it as continuation of the previous cell), then parse.
+  // notion-to-md outputs GFM pipe tables. Cells with newlines cause rows to
+  // span multiple lines. We find the separator line (| -- | -- |), then:
+  //   - header = the pipe line immediately before it
+  //   - body = pipe lines after it, with non-pipe continuation lines joined
+  //     into the preceding row, stopping at any blank line.
 
-  // Step 1: Collapse multiline cells — join continuation lines into their row
-  const joinedLines = result.split("\n");
-  const collapsed: string[] = [];
-  for (let i = 0; i < joinedLines.length; i++) {
-    const line = joinedLines[i];
-    if (!line.trim().startsWith("|") && collapsed.length > 0) {
-      const prev = collapsed[collapsed.length - 1];
-      // If previous line looks like a table row or separator, append to it
-      if (prev.trim().startsWith("|")) {
-        collapsed[collapsed.length - 1] = prev.trimEnd() + " " + line.trim();
-        continue;
-      }
-    }
-    collapsed.push(line);
-  }
-
-  // Step 2: Line-by-line separator detection on the collapsed content
-  const lines = collapsed;
+  const rawLines = result.split("\n");
   const out: string[] = [];
   let i = 0;
 
-  while (i < lines.length) {
-    const line = lines[i];
-    // Separator: only pipes, dashes, spaces, colons
-    if (/^\|[-| :]+\|$/.test(line.trim()) && i > 0 && lines[i - 1]?.trim().startsWith("|")) {
-      // Header was already pushed — remove it and rebuild as <table>
-      out.pop();
+  while (i < rawLines.length) {
+    const line = rawLines[i];
+
+    // Detect separator: only pipes, dashes, spaces, colons
+    if (/^\|[\s\-|:]+\|$/.test(line.trim())) {
+      // Find header by walking back through out[] to the last pipe line
+      let headerLine: string | undefined;
+      while (out.length > 0) {
+        const top = out[out.length - 1];
+        if (top.trim().startsWith("|")) { headerLine = out.pop(); break; }
+        // non-pipe lines between header and sep (continuations pushed earlier) — discard
+        out.pop();
+      }
+      if (!headerLine) { out.push(line); i++; continue; }
 
       const parseRow = (row: string) =>
         row.replace(/^\||\|$/g, "").split("|").map(c => c.trim()).filter(Boolean);
 
-      const headerCells = parseRow(lines[i - 1]);
+      const headerCells = parseRow(headerLine);
 
-      // Collect body rows
+      // Collect body rows, joining continuation lines within each row
       const bodyRows: string[][] = [];
       let j = i + 1;
-      while (j < lines.length && lines[j].trim().startsWith("|")) {
-        bodyRows.push(parseRow(lines[j]));
+      let currentRow: string | null = null;
+
+      while (j < rawLines.length) {
+        const bl = rawLines[j];
+        if (bl.trim() === "") break;                       // blank = end of table
+        if (bl.trim().startsWith("|")) {
+          if (currentRow !== null) bodyRows.push(parseRow(currentRow));
+          currentRow = bl;
+        } else if (currentRow !== null) {
+          currentRow = currentRow.trimEnd() + " " + bl.trim(); // join continuation
+        } else {
+          break;
+        }
         j++;
       }
+      if (currentRow !== null) bodyRows.push(parseRow(currentRow));
 
       const thead = `<thead><tr>${headerCells.map(h => `<th>${h}</th>`).join("")}</tr></thead>`;
       const tbody = bodyRows.length
