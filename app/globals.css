@@ -293,7 +293,7 @@ html.dark .portrait-img {
 
 /* ── Notion / Markdown tables ────────────────────────────────────────────── */
 /* Notion table wrapper + styled table */
-.notion-table-wrap { overflow-x:auto; margin:1.75rem 0; border-radius:6px; border:1px solid var(--border); }
+.notion-table-wrap { overflow-x:auto; margin:0 0 1.75rem 0; border-radius:6px; border:1px solid var(--border); }
 .notion-table-wrap table,
 .notion-table { width:100%; border-collapse:collapse; font-family:'DM Sans',sans-serif; font-size:14px; line-height:1.6; }
 .notion-table-wrap th,
@@ -311,7 +311,7 @@ html.dark .portrait-img {
 .notion-table tbody tr:hover td { background:var(--surface); }
 
 /* Also style any raw table tags inside prose — catches tables that bypass the parser */
-.prose-ujjal table { width:100%; border-collapse:collapse; font-family:'DM Sans',sans-serif; font-size:14px; line-height:1.6; margin:1.75rem 0; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+.prose-ujjal table { width:100%; border-collapse:collapse; font-family:'DM Sans',sans-serif; font-size:14px; line-height:1.6; margin:0 0 1.75rem 0; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
 .prose-ujjal th { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); background:var(--surface); font-weight:500; padding:0.65rem 1rem; text-align:left; border-bottom:1px solid var(--border); }
 .prose-ujjal td { padding:0.65rem 1rem; color:var(--ink); border-bottom:1px solid var(--border); vertical-align:top; }
 .prose-ujjal tr:last-child td { border-bottom:none; }

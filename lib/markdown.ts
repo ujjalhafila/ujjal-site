@@ -118,6 +118,9 @@ function parseTables(md: string): string {
         ? `<tbody>${bodyRows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>`
         : "";
 
+      // Remove trailing blank lines from out[] before the table — prevents empty <p> above header
+      while (out.length > 0 && out[out.length - 1].trim() === "") out.pop();
+
       out.push(`<div class="notion-table-wrap"><table>${thead}${tbody}</table></div>`);
       i = j;
     } else {
