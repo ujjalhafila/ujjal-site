@@ -6,11 +6,13 @@ import { Analytics } from '@vercel/analytics/next';
 export const metadata: Metadata = {
   title: { default: "Ujjal Hafila — Product Designer", template: "%s | Ujjal Hafila" },
   description: "Product designer who starts with Why. Building at the intersection of strategy, interaction design, and AI.",
-  icons: [
-    { rel: "icon", url: "/favicon.svg", type: "image/svg+xml" },
-    { rel: "shortcut icon", url: "/favicon.svg" },
-    { rel: "apple-touch-icon", url: "/favicon.svg" },
-  ],
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
   openGraph: {
     title: "Ujjal Hafila — Product Designer",
     description: "Product designer who starts with Why.",
@@ -23,7 +25,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
+        <link rel="shortcut icon" href="/favicon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
