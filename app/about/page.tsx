@@ -1,6 +1,9 @@
 import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
 import { getAchievements } from "../../lib/notion";
+import { unstable_cache } from "next/cache";
+
+const getCachedAchievements = unstable_cache(getAchievements, ["achievements"], { revalidate: 60 });
 import type { Metadata } from "next";
 import Image from "next/image";
 
@@ -24,7 +27,7 @@ const TYPE_META: Record<string, { color: string; label: string }> = {
 };
 
 export default async function AboutPage() {
-  const achievements = await getAchievements();
+  const achievements = await getCachedAchievements();
   const groups = ["Award", "Recognition", "Publication", "Patent"];
 
   return (

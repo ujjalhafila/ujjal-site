@@ -2,6 +2,9 @@ import Link from "next/link";
 import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
 import { getThinkItems } from "../../lib/notion";
+import { unstable_cache } from "next/cache";
+
+const getCachedThinkItems = unstable_cache(getThinkItems, ["think-items"], { revalidate: 60 });
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Think Space" };
@@ -13,7 +16,7 @@ const TYPE_COLORS: Record<string,string> = {
 };
 
 export default async function ThinkPage() {
-  const items = await getThinkItems();
+  const items = await getCachedThinkItems();
   const featured = items.filter(i=>i.featured);
   const rest = items.filter(i=>!i.featured);
 

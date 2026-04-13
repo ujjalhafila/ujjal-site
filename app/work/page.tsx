@@ -3,6 +3,9 @@ import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
 import { ClickableThumb } from "../../components/WorkGallery";
 import { getWorkItems } from "../../lib/notion";
+import { unstable_cache } from "next/cache";
+
+const getCachedWorkItems = unstable_cache(getWorkItems, ["work-items"], { revalidate: 60 });
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Work" };
@@ -10,7 +13,7 @@ export const revalidate = 60;
 const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace" };
 
 export default async function WorkPage() {
-  const items = await getWorkItems();
+  const items = await getCachedWorkItems();
   return (
     <main>
       <Nav />

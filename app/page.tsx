@@ -3,6 +3,10 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Portrait from "../components/Portrait";
 import { getFeaturedWork, getFeaturedThink } from "../lib/notion";
+import { unstable_cache } from "next/cache";
+
+const getCachedFeaturedWork  = unstable_cache(getFeaturedWork,  ["featured-work"],  { revalidate: 60 });
+const getCachedFeaturedThink = unstable_cache(getFeaturedThink, ["featured-think"], { revalidate: 60 });
 
 export const revalidate = 60;
 const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace" };
@@ -15,7 +19,7 @@ const QUOTES = [
 ];
 
 export default async function Home() {
-  const [work, think] = await Promise.all([getFeaturedWork(), getFeaturedThink()]);
+  const [work, think] = await Promise.all([getCachedFeaturedWork(), getCachedFeaturedThink()]);
 
   return (
     <main>
