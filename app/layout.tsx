@@ -11,8 +11,8 @@ export const metadata: Metadata = {
     { rel: "apple-touch-icon", url: "/favicon.svg" },
   ],
   openGraph: {
-    title: "Ujjal Hafila — Product Designer",
-    description: "Product designer who starts with Why.",
+    title: "Ujjal Hafila - Product Designer",
+    description: "Case studies, essays, and experiments.",
     url: "https://ujjalhafila.com",
     type: "website",
   },
