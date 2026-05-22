@@ -32,8 +32,8 @@ export default async function ThinkPage() {
             <span style={{ display:"block", width:"20px", height:"1px", background:"var(--ink3)" }} />
             Think Space
           </div>
-          <h1 style={{ fontFamily:SANS, fontSize:"clamp(2.5rem,6vw,5rem)", fontWeight:300, lineHeight:1.0, letterSpacing:"-2px" }}>
-            The <em style={{ fontStyle:"italic" }}>Why</em>
+          <h1 style={{ fontFamily:SANS, fontSize:"clamp(2.5rem,6vw,5rem)", fontWeight:600, lineHeight:1.0, letterSpacing:"-2px" }}>
+            The Why
           </h1>
           <p style={{ marginTop:"20px", fontSize:"14px", fontWeight:300, lineHeight:1.75, color:"var(--ink2)", maxWidth:"440px", fontFamily:SANS }}>
             Essays, experiments, and concept flows — each one answering a why question about design, systems, and how we build things.

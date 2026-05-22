@@ -79,12 +79,13 @@ export default async function Home() {
 
           {/* heading */}
           <h1 style={{
-            fontFamily:SANS, fontSize:"clamp(2.2rem,5vw,4.2rem)",
+            fontFamily:SANS, fontSize:"clamp(2rem,4.5vw,3.8rem)",
             fontWeight:600, lineHeight:1.05, letterSpacing:"-1.5px",
             animation:"fadeUp 0.6s ease 0.15s both",
           }}>
-            Designing systems<br />
-            that think
+            Product designer<br />
+            who starts<br />
+            with <span style={{ color:"var(--ink)", borderBottom:"1.5px solid var(--rule2)", paddingBottom:"1px" }}>why</span>
           </h1>
 
           {/* body */}
@@ -93,9 +94,8 @@ export default async function Home() {
             lineHeight:1.75, color:"var(--ink2)", maxWidth:"300px",
             animation:"fadeUp 0.6s ease 0.25s both",
           }}>
-            I design systems that think — working at the intersection of product
-            strategy, interaction design, and AI. I start with{" "}
-            <em style={{ fontStyle:"italic" }}>why</em> before building what.
+            Working at the intersection of product strategy, interaction design, and AI.
+            Building digital adoption systems that reduce friction and create clarity.
           </p>
 
           {/* CTAs — glow buttons */}

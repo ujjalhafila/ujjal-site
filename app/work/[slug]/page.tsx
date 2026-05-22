@@ -32,7 +32,7 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
   return (
     <main style={{ background:"var(--bg)", color:"var(--ink)" }}>
       <Nav />
-      <div style={{ paddingTop:"5rem" }}>
+      <div style={{ paddingTop:"52px" }}>
 
         {/* Header */}
         <div style={{ padding:"3rem 2rem 2.5rem", borderBottom:"1px solid var(--rule)" }}>
@@ -117,17 +117,17 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
           align-items: start;
         }
         .work-toc-aside {
-          position: sticky; top: 5.5rem;
+          position: sticky; top: 56px;
           padding: 2.5rem 1rem 2rem 2rem;
-          max-height: calc(100vh - 6rem); overflow-y: auto; scrollbar-width: none;
+          max-height: calc(100vh - 60px); overflow-y: auto; scrollbar-width: none;
         }
         .work-toc-aside::-webkit-scrollbar { display: none; }
         .work-toc-aside .toc-sidebar { display: block; }
         .work-toc-aside .toc-pills   { display: none !important; }
         .toc-mobile-strip {
-          display: none; position: sticky; top: 4.25rem; z-index: 50;
+          display: none; position: sticky; top: 52px; z-index: 50;
           background: var(--nav-bg); backdrop-filter: blur(12px);
-          border-bottom: 1px solid var(--border);
+          border-bottom: 1px solid var(--rule);
         }
         .toc-mobile-strip .toc-sidebar { display: none !important; }
         .toc-mobile-strip .toc-pills   { display: block !important; border-bottom: none; }

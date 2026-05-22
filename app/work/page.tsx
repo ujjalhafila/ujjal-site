@@ -31,8 +31,8 @@ export default async function WorkPage() {
             <span style={{ display:"block", width:"20px", height:"1px", background:"var(--ink3)" }} />
             Work Space
           </div>
-          <h1 style={{ fontFamily:SANS, fontSize:"clamp(2.5rem,6vw,5rem)", fontWeight:300, lineHeight:1.0, letterSpacing:"-2px" }}>
-            Things I've<br /><em style={{ fontStyle:"italic", fontWeight:300 }}>Built</em>
+          <h1 style={{ fontFamily:SANS, fontSize:"clamp(2.5rem,6vw,5rem)", fontWeight:600, lineHeight:1.0, letterSpacing:"-2px" }}>
+            Things I've Built
           </h1>
           <p style={{ marginTop:"20px", fontSize:"14px", fontWeight:300, lineHeight:1.75, color:"var(--ink2)", maxWidth:"440px", fontFamily:SANS }}>
             Product design work across digital adoption, AI systems, and platform design. Each project starts with a why.

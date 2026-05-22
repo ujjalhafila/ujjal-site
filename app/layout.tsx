@@ -8,9 +8,10 @@ export const metadata: Metadata = {
   description: "Product designer who starts with Why. Building at the intersection of strategy, interaction design, and AI.",
   icons: [
     { rel: "icon", url: "/favicon.svg", type: "image/svg+xml" },
+    { rel: "shortcut icon", url: "/favicon.ico" },
     { rel: "icon", url: "/favicon.ico", type: "image/x-icon", sizes: "16x16" },
     { rel: "apple-touch-icon", url: "/favicon-192.png" },
-    { rel: "shortcut icon", url: "/favicon.ico" },
+    { rel: "icon", url: "/favicon-192.png", sizes: "192x192", type: "image/png" },
   ],
   openGraph: {
     title: "Ujjal Hafila - Product Designer",
@@ -26,6 +27,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16 32x32" />
+        <link rel="apple-touch-icon" href="/favicon-192.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet" />

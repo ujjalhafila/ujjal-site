@@ -1,5 +1,6 @@
 import Nav from "../../components/Nav";
 import Portrait from "../../components/Portrait";
+import Portrait from "../../components/Portrait";
 import Footer from "../../components/Footer";
 import { getAchievements, getAboutMarkdown } from "../../lib/notion";
 import { markdownToHtml } from "../../lib/markdown";
@@ -31,15 +32,23 @@ export default async function AboutPage() {
       <Nav />
       <div style={{ paddingTop:"52px" }}>
 
-        {/* Header */}
-        <div style={{ padding:"48px 28px 36px", borderBottom:"1px solid var(--rule)" }}>
-          <div style={{ fontFamily:MONO, fontSize:"11px", letterSpacing:"1.5px", textTransform:"uppercase", color:"var(--ink3)", marginBottom:"20px", display:"flex", alignItems:"center", gap:"10px" }}>
-            <span style={{ display:"block", width:"20px", height:"1px", background:"var(--ink3)" }} />
-            About
+        {/* Header — portrait left, text right */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", borderBottom:"1px solid var(--rule)" }} className="about-hero-grid">
+          <div style={{ borderRight:"1px solid var(--rule)", display:"flex", alignItems:"center", justifyContent:"center", padding:"clamp(2rem,5vw,4rem) clamp(1.5rem,3vw,3rem)", minHeight:"360px" }}>
+            <Portrait />
           </div>
-          <h1 style={{ fontFamily:SANS, fontSize:"clamp(2.5rem,6vw,5rem)", fontWeight:300, lineHeight:1.0, letterSpacing:"-2px" }}>
-            Ujjal<br /><em style={{ fontStyle:"italic", fontWeight:300 }}>Hafila</em>
-          </h1>
+          <div style={{ padding:"48px 28px 36px", display:"flex", flexDirection:"column", justifyContent:"flex-end", gap:"20px" }}>
+            <div style={{ fontFamily:MONO, fontSize:"11px", letterSpacing:"1.5px", textTransform:"uppercase", color:"var(--ink3)", display:"flex", alignItems:"center", gap:"10px" }}>
+              <span style={{ display:"block", width:"20px", height:"1px", background:"var(--ink3)" }} />
+              About
+            </div>
+            <h1 style={{ fontFamily:SANS, fontSize:"clamp(2.5rem,6vw,4.5rem)", fontWeight:600, lineHeight:1.0, letterSpacing:"-2px" }}>
+              Ujjal Hafila
+            </h1>
+            <p style={{ fontFamily:SANS, fontSize:"14px", fontWeight:300, lineHeight:1.75, color:"var(--ink2)", maxWidth:"320px" }}>
+              Product designer at Whatfix, Bengaluru. Working at the intersection of strategy, interaction design, and AI.
+            </p>
+          </div>
         </div>
 
         {/* Bio + portrait + meta grid */}
