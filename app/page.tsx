@@ -79,12 +79,12 @@ export default async function Home() {
 
           {/* heading */}
           <h1 style={{
-            fontFamily:SANS, fontSize:"clamp(2.8rem,6vw,5.5rem)",
-            fontWeight:300, lineHeight:1.0, letterSpacing:"-2px",
+            fontFamily:SANS, fontSize:"clamp(2.2rem,5vw,4.2rem)",
+            fontWeight:600, lineHeight:1.05, letterSpacing:"-1.5px",
             animation:"fadeUp 0.6s ease 0.15s both",
           }}>
-            Ujjal<br />
-            <em style={{ fontStyle:"italic", fontWeight:300 }}>Hafila</em>
+            Designing systems<br />
+            that think
           </h1>
 
           {/* body */}

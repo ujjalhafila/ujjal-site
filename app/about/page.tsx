@@ -1,4 +1,5 @@
 import Nav from "../../components/Nav";
+import Portrait from "../../components/Portrait";
 import Footer from "../../components/Footer";
 import { getAchievements, getAboutMarkdown } from "../../lib/notion";
 import { markdownToHtml } from "../../lib/markdown";
@@ -41,8 +42,12 @@ export default async function AboutPage() {
           </h1>
         </div>
 
-        {/* Bio + meta grid */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", borderBottom:"1px solid var(--rule)" }} className="about-grid">
+        {/* Bio + portrait + meta grid */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", borderBottom:"1px solid var(--rule)" }} className="about-grid">
+          {/* Portrait column */}
+          <div style={{ borderRight:"1px solid var(--rule)", display:"flex", alignItems:"center", justifyContent:"center", padding:"clamp(1.5rem,3vw,3rem)", background:"var(--surface)" }} className="about-portrait-cell">
+            <Portrait />
+          </div>
           <div style={{ padding:"36px 28px", borderRight:"1px solid var(--rule)" }}>
             {aboutHtml ? (
               <div className="prose-ujjal" dangerouslySetInnerHTML={{ __html: aboutHtml }} />
@@ -141,9 +146,13 @@ export default async function AboutPage() {
       </div>
       <Footer />
       <style>{`
+        @media (max-width: 900px) {
+          .about-grid { grid-template-columns: 1fr 1fr !important; }
+          .about-grid > *:first-child { border-right: 1px solid var(--rule); grid-column: 1 / -1; border-bottom: 1px solid var(--rule); }
+        }
         @media (max-width: 700px) {
           .about-grid { grid-template-columns: 1fr !important; }
-          .about-grid > *:first-child { border-right: none !important; border-bottom: 1px solid var(--rule); }
+          .about-grid > * { border-right: none !important; border-bottom: 1px solid var(--rule); }
           .achievement-row { grid-template-columns: 52px 1fr !important; gap: 1rem !important; }
           .achievement-row > *:last-child { grid-column: 2; }
         }

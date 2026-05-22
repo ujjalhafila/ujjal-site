@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   description: "Product designer who starts with Why. Building at the intersection of strategy, interaction design, and AI.",
   icons: [
     { rel: "icon", url: "/favicon.svg", type: "image/svg+xml" },
-    { rel: "shortcut icon", url: "/favicon.svg" },
-    { rel: "apple-touch-icon", url: "/favicon.svg" },
     { rel: "icon", url: "/favicon.ico", type: "image/x-icon", sizes: "16x16" },
+    { rel: "apple-touch-icon", url: "/favicon-192.png" },
+    { rel: "shortcut icon", url: "/favicon.ico" },
   ],
   openGraph: {
     title: "Ujjal Hafila - Product Designer",
