@@ -1,6 +1,5 @@
 import Nav from "../../components/Nav";
 import Portrait from "../../components/Portrait";
-import Portrait from "../../components/Portrait";
 import Footer from "../../components/Footer";
 import { getAchievements, getAboutMarkdown } from "../../lib/notion";
 import { markdownToHtml } from "../../lib/markdown";
