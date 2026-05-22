@@ -16,12 +16,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const root = document.documentElement;
     root.setAttribute("data-theme", theme);
     localStorage.setItem("uh-theme", theme);
-    if (theme === "dark") root.classList.add("dark");
-    else if (theme === "light") root.classList.remove("dark");
-    else {
+    if (theme === "dark") {
+      root.classList.add("dark"); root.classList.remove("light");
+    } else if (theme === "light") {
+      root.classList.remove("dark"); root.classList.add("light");
+    } else {
       const mq = window.matchMedia("(prefers-color-scheme: dark)");
       root.classList.toggle("dark", mq.matches);
-      const handler = (e: MediaQueryListEvent) => root.classList.toggle("dark", e.matches);
+      root.classList.toggle("light", !mq.matches);
+      const handler = (e: MediaQueryListEvent) => {
+        root.classList.toggle("dark", e.matches);
+        root.classList.toggle("light", !e.matches);
+      };
       mq.addEventListener("change", handler);
       return () => mq.removeEventListener("change", handler);
     }
@@ -40,18 +46,20 @@ export function ThemeToggle() {
     { value: "auto", label: "Auto", icon: "◑" },
     { value: "dark", label: "Dark", icon: "☽" },
   ];
+  const current = options.find(o => o.value === theme) ?? options[1];
+  const next = options[(options.indexOf(current) + 1) % options.length];
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:"2px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"20px", padding:"2px" }}>
-      {options.map(o => (
-        <button key={o.value} onClick={() => setTheme(o.value)}
-          title={o.label}
-          style={{ background: theme===o.value ? "var(--ink)" : "transparent",
-            color: theme===o.value ? "var(--paper)" : "var(--muted)",
-            border:"none", borderRadius:"16px", padding:"4px 8px",
-            cursor:"pointer", fontSize:"13px", transition:"all 0.2s", lineHeight:1 }}>
-          {o.icon}
-        </button>
-      ))}
-    </div>
+    <button
+      onClick={() => setTheme(next.value)}
+      title={`Switch to ${next.label}`}
+      style={{
+        background:"none", border:"none", cursor:"pointer",
+        fontFamily:"'DM Mono', monospace", fontSize:"13px",
+        color:"var(--ink3)", transition:"color 0.2s", lineHeight:1, padding:0,
+      }}
+      onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ink)"}
+      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ink3)"}>
+      {current.icon}
+    </button>
   );
 }
