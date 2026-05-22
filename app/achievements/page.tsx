@@ -68,7 +68,7 @@ export default async function AchievementsPage() {
 
                     {/* Title + subtitle + description — takes full available width */}
                     <div style={{ minWidth:0 }}>
-                      <h3 style={{ fontFamily:S.serif, fontSize:"clamp(1rem,2vw,1.25rem)", fontWeight:700, lineHeight:1.3, letterSpacing:"-0.01em", marginBottom:"0.3rem" }}>
+                      <h3 style={{ fontFamily:S.serif, fontSize:"clamp(1rem,2vw,1.25rem)", fontWeight:500, lineHeight:1.3, letterSpacing:"-0.01em", marginBottom:"0.3rem" }}>
                         {item.title}
                       </h3>
                       {item.subtitle && (

@@ -7,16 +7,13 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "About" };
 export const revalidate = 60;
 
-const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace", sans:"'DM Sans',sans-serif" };
+const MONO = "'DM Mono',monospace";
+const SANS = "'DM Sans',sans-serif";
 
-const TYPE_META: Record<string, { color: string }> = {
-  Publication: { color:"#185FA5" },
-  Patent:      { color:"#534AB7" },
-  Award:       { color:"#BA7517" },
-  Recognition: { color:"#0F6E56" },
+const TYPE_META: Record<string, string> = {
+  Publication:"#4D9FFF", Patent:"#B44DFF", Award:"#FFD24D", Recognition:"#4DFFB4",
 };
 
-// Default bio shown when NOTION_ABOUT_PAGE_ID is not set
 const DEFAULT_BIO = [
   "I'm a product designer based in Bengaluru, working at the intersection of strategy, interaction design, and emerging AI systems. My work lives in the space between <em>why something should exist</em> and <em>how it should feel to use it</em>.",
   "Currently building at a Digital Adoption Platform company, where I focus on desktop application guidance — designing flows that help enterprise users navigate complex software without friction. I've been particularly invested in how AI can reshape guidance from static scripts into dynamic, context-aware assistants.",
@@ -24,136 +21,112 @@ const DEFAULT_BIO = [
 ];
 
 export default async function AboutPage() {
-  const [achievements, aboutMd] = await Promise.all([
-    getAchievements(),
-    getAboutMarkdown(),
-  ]);
-
+  const [achievements, aboutMd] = await Promise.all([getAchievements(), getAboutMarkdown()]);
   const aboutHtml = aboutMd ? markdownToHtml(aboutMd) : "";
   const groups = ["Award","Recognition","Publication","Patent"];
 
   return (
-    <main>
+    <main style={{ background:"var(--bg)", color:"var(--ink)" }}>
       <Nav />
-      <div style={{ paddingTop:"5rem" }}>
+      <div style={{ paddingTop:"52px" }}>
 
-        {/* ── Header ─────────────────────────────────────────────────── */}
-        <div style={{ padding:"4rem 2rem 3.5rem", borderBottom:"1px solid var(--border)" }}>
-          <div style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.15em", textTransform:"uppercase", color:"var(--accent)", marginBottom:"1.5rem", display:"flex", alignItems:"center", gap:"0.75rem" }}>
-            <span style={{ width:"24px", height:"1px", background:"var(--accent)", display:"block" }}/>
+        {/* Header */}
+        <div style={{ padding:"48px 28px 36px", borderBottom:"1px solid var(--rule)" }}>
+          <div style={{ fontFamily:MONO, fontSize:"11px", letterSpacing:"1.5px", textTransform:"uppercase", color:"var(--ink3)", marginBottom:"20px", display:"flex", alignItems:"center", gap:"10px" }}>
+            <span style={{ display:"block", width:"20px", height:"1px", background:"var(--ink3)" }} />
             About
           </div>
-          <h1 style={{ fontFamily:S.serif, fontSize:"clamp(2.5rem,7vw,5.5rem)", fontWeight:900, lineHeight:0.92, letterSpacing:"-0.03em", marginBottom:"2rem" }}>
-            Ujjal<br/><em style={{ fontStyle:"italic", color:"var(--accent)" }}>Hafila</em>
+          <h1 style={{ fontFamily:SANS, fontSize:"clamp(2.5rem,6vw,5rem)", fontWeight:300, lineHeight:1.0, letterSpacing:"-2px" }}>
+            Ujjal<br /><em style={{ fontStyle:"italic", fontWeight:300 }}>Hafila</em>
           </h1>
         </div>
 
-        {/* ── Bio body ────────────────────────────────────────────────── */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", borderBottom:"1px solid var(--border)" }} className="about-grid">
-
-          {/* Left: bio text — from Notion if NOTION_ABOUT_PAGE_ID is set, else default */}
-          <div style={{ padding:"3rem 2rem", borderRight:"1px solid var(--border)" }}>
+        {/* Bio + meta grid */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", borderBottom:"1px solid var(--rule)" }} className="about-grid">
+          <div style={{ padding:"36px 28px", borderRight:"1px solid var(--rule)" }}>
             {aboutHtml ? (
               <div className="prose-ujjal" dangerouslySetInnerHTML={{ __html: aboutHtml }} />
             ) : (
               DEFAULT_BIO.map((para, i) => (
-                <p key={i} style={{ fontFamily:S.sans, fontSize:"16px", lineHeight:1.9, color: i === 0 ? "var(--ink)" : "var(--muted)", marginBottom:"1.25rem" }}
+                <p key={i} style={{ fontFamily:SANS, fontSize:"14px", fontWeight:300, lineHeight:1.9, color:"var(--ink2)", marginBottom:"20px" }}
                   dangerouslySetInnerHTML={{ __html: para }} />
               ))
             )}
           </div>
-
-          {/* Right: structured meta */}
-          <div style={{ padding:"3rem 2rem" }}>
-            <div style={{ marginBottom:"2.5rem" }}>
-              <div style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.12em", textTransform:"uppercase", color:"var(--accent)", marginBottom:"0.85rem", borderBottom:"1px solid var(--border)", paddingBottom:"0.5rem" }}>Currently</div>
-              <p style={{ fontFamily:S.sans, fontSize:"15px", lineHeight:1.8, color:"var(--muted)" }}>
-                Senior Product Designer · Digital Adoption Platform · Bengaluru
-              </p>
-            </div>
-            <div style={{ marginBottom:"2.5rem" }}>
-              <div style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.12em", textTransform:"uppercase", color:"var(--accent)", marginBottom:"0.85rem", borderBottom:"1px solid var(--border)", paddingBottom:"0.5rem" }}>Focus Areas</div>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:"0.5rem" }}>
-                {["Agentic UX","Journey Design","Systems Thinking","AI-first Interaction","Product Strategy","Interaction Design","User Research"].map(t => (
-                  <span key={t} style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.08em", textTransform:"uppercase", color:"var(--muted)", border:"1px solid var(--border)", padding:"0.25rem 0.6rem", borderRadius:"3px" }}>{t}</span>
-                ))}
+          <div style={{ padding:"36px 28px" }}>
+            {[
+              { label:"Currently", content:<p style={{ fontFamily:SANS, fontSize:"14px", fontWeight:300, lineHeight:1.75, color:"var(--ink2)" }}>Senior Product Designer · Digital Adoption Platform · Bengaluru</p> },
+              { label:"Focus Areas", content:(
+                <div style={{ display:"flex", flexWrap:"wrap", gap:"6px" }}>
+                  {["Agentic UX","Journey Design","Systems Thinking","AI-first Interaction","Product Strategy","Interaction Design","User Research"].map(t=>(
+                    <span key={t} style={{ fontFamily:MONO, fontSize:"10px", letterSpacing:"0.5px", color:"var(--ink3)", border:"1px solid var(--rule)", padding:"3px 9px", borderRadius:"1px" }}>{t}</span>
+                  ))}
+                </div>
+              )},
+              { label:"Contact", content:(
+                <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+                  {[["Email","ujjalhafila@gmail.com","mailto:ujjalhafila@gmail.com"],["Phone","+91 70861 16844","tel:+917086116844"],["LinkedIn","linkedin.com/in/ujjalhafila","https://www.linkedin.com/in/ujjalhafila/"]].map(([l,t,h])=>(
+                    <a key={l} href={h} target={h.startsWith("http")?"_blank":undefined}
+                      className="sec-link-hover"
+                      style={{ fontFamily:SANS, fontSize:"13px", textDecoration:"none", display:"flex", gap:"12px" }}>
+                      <span style={{ fontFamily:MONO, fontSize:"10px", textTransform:"uppercase", letterSpacing:"0.5px", color:"var(--ink3)", minWidth:"56px", paddingTop:"2px" }}>{l}</span>
+                      <span>{t}</span>
+                    </a>
+                  ))}
+                </div>
+              )},
+            ].map(({ label, content }) => (
+              <div key={label} style={{ marginBottom:"28px" }}>
+                <div style={{ fontFamily:MONO, fontSize:"10px", letterSpacing:"1px", textTransform:"uppercase", color:"var(--ink3)", marginBottom:"12px", borderBottom:"1px solid var(--rule)", paddingBottom:"8px" }}>{label}</div>
+                {content}
               </div>
-            </div>
-            <div style={{ marginBottom:"2.5rem" }}>
-              <div style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.12em", textTransform:"uppercase", color:"var(--accent)", marginBottom:"0.85rem", borderBottom:"1px solid var(--border)", paddingBottom:"0.5rem" }}>Contact</div>
-              <div style={{ display:"flex", flexDirection:"column", gap:"0.5rem" }}>
-                {[
-                  ["Email","ujjalhafila@gmail.com","mailto:ujjalhafila@gmail.com"],
-                  ["Phone","+91 70861 16844","tel:+917086116844"],
-                  ["LinkedIn","linkedin.com/in/ujjalhafila","https://www.linkedin.com/in/ujjalhafila/"],
-                ].map(([l,t,h]) => (
-                  <a key={l} href={h} target={h.startsWith("http")?"_blank":undefined}
-                    style={{ fontFamily:S.sans, fontSize:"14px", color:"var(--muted)", textDecoration:"none", display:"flex", gap:"0.75rem" }}>
-                    <span style={{ fontFamily:S.mono, fontSize:"10px", textTransform:"uppercase", letterSpacing:"0.08em", color:"var(--accent)", minWidth:"60px", paddingTop:"2px" }}>{l}</span>
-                    <span>{t}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* ── Achievements ────────────────────────────────────────────── */}
-        <div style={{ padding:"3rem 2rem 1.5rem", borderBottom:"1px solid var(--border)" }}>
-          <div style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.15em", textTransform:"uppercase", color:"var(--accent)", marginBottom:"1rem", display:"flex", alignItems:"center", gap:"0.75rem" }}>
-            <span style={{ width:"24px", height:"1px", background:"var(--accent)", display:"block" }}/>
-            Achievements
-          </div>
-          <h2 style={{ fontFamily:S.serif, fontSize:"clamp(1.75rem,4vw,3rem)", fontWeight:900, lineHeight:1.05, letterSpacing:"-0.03em" }}>
-            Work that <em style={{ fontStyle:"italic", color:"var(--accent)" }}>matters</em>
-          </h2>
+        {/* Achievements header */}
+        <div style={{ padding:"0 28px", height:"40px", display:"flex", alignItems:"center", borderBottom:"1px solid var(--rule)" }}>
+          <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", letterSpacing:"1.5px" }}>Achievements</span>
         </div>
 
         {achievements.length === 0 ? (
-          <div style={{ padding:"4rem 2rem", borderBottom:"1px solid var(--border)" }}>
-            <p style={{ fontFamily:S.sans, fontStyle:"italic", fontSize:"1rem", color:"var(--muted)", marginBottom:"0.5rem" }}>
-              No achievements found.
-            </p>
-            <p style={{ fontFamily:S.mono, fontSize:"11px", color:"var(--muted)", letterSpacing:"0.06em" }}>
-              Add entries to your Achievements Notion database. Each row will appear here automatically.
+          <div style={{ padding:"4rem 28px", borderBottom:"1px solid var(--rule)" }}>
+            <p style={{ fontFamily:MONO, fontSize:"12px", color:"var(--ink3)" }}>
+              No achievements found. Add entries to your Achievements Notion database.
             </p>
           </div>
         ) : (
           groups.map(group => {
             const items = achievements.filter(a => a.type === group);
             if (!items.length) return null;
-            const meta = TYPE_META[group] || { color:"var(--accent)" };
+            const color = TYPE_META[group] || "var(--ink3)";
             return (
-              <section key={group} style={{ borderBottom:"1px solid var(--border)" }}>
-                <div style={{ padding:"1.25rem 2rem", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                  <span style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.15em", textTransform:"uppercase", color:meta.color }}>{group}s</span>
-                  <span style={{ fontFamily:S.mono, fontSize:"10px", color:"var(--muted)" }}>{items.length}</span>
+              <section key={group} style={{ borderBottom:"1px solid var(--rule)" }}>
+                <div style={{ padding:"0 28px", height:"40px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid var(--rule)" }}>
+                  <span style={{ fontFamily:MONO, fontSize:"11px", letterSpacing:"1.5px", color }}>{group}s</span>
+                  <span style={{ fontFamily:MONO, fontSize:"10px", color:"var(--ink3)" }}>{items.length}</span>
                 </div>
                 {items.map((item, i) => (
                   <div key={item.id} className="achievement-row reveal"
-                    style={{ display:"grid", gridTemplateColumns:"72px 1fr auto", gap:"0 2rem", alignItems:"start", padding:"1.75rem 2rem", borderBottom:i < items.length-1 ? "1px solid var(--border)" : "none" }}>
-                    <div style={{ fontFamily:S.serif, fontSize:"1.5rem", fontWeight:900, color:"var(--muted)", opacity:0.22, lineHeight:1, paddingTop:"3px" }}>
+                    style={{ display:"grid", gridTemplateColumns:"72px 1fr auto", gap:"0 2rem", alignItems:"start", padding:"28px 28px", borderBottom:i < items.length-1?"1px solid var(--rule)":"none" }}>
+                    <div style={{ fontFamily:MONO, fontSize:"24px", fontWeight:300, color:"var(--ink3)", opacity:0.4, lineHeight:1, paddingTop:"3px" }}>
                       {item.year || "—"}
                     </div>
                     <div style={{ minWidth:0 }}>
-                      <h3 style={{ fontFamily:S.serif, fontSize:"clamp(1rem,1.8vw,1.2rem)", fontWeight:700, lineHeight:1.3, letterSpacing:"-0.01em", marginBottom:"0.3rem" }}>
+                      <h3 style={{ fontFamily:SANS, fontSize:"clamp(1rem,1.8vw,1.15rem)", fontWeight:400, lineHeight:1.3, letterSpacing:"-0.2px", marginBottom:"6px" }}>
                         {item.title}
                       </h3>
                       {item.subtitle && (
-                        <div style={{ fontFamily:S.mono, fontSize:"11px", color:"var(--muted)", letterSpacing:"0.06em", marginBottom:"0.5rem" }}>
-                          {item.subtitle}
-                        </div>
+                        <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginBottom:"8px" }}>{item.subtitle}</div>
                       )}
                       {item.description && (
-                        <p style={{ fontFamily:S.sans, fontSize:"14px", lineHeight:1.7, color:"var(--muted)" }}>
-                          {item.description}
-                        </p>
+                        <p style={{ fontFamily:SANS, fontSize:"13px", fontWeight:300, lineHeight:1.7, color:"var(--ink2)" }}>{item.description}</p>
                       )}
                     </div>
                     <div style={{ flexShrink:0, paddingTop:"3px" }}>
                       {item.url && (
                         <a href={item.url} target="_blank" rel="noopener" className="achievement-link"
-                          style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.08em", textTransform:"uppercase", color:meta.color, border:`1px solid ${meta.color}`, padding:"0.3rem 0.75rem", textDecoration:"none", whiteSpace:"nowrap", display:"inline-flex", alignItems:"center", gap:"0.35rem", borderRadius:"4px" }}>
+                          style={{ fontFamily:MONO, fontSize:"10px", letterSpacing:"0.5px", textTransform:"uppercase", color, border:`1px solid ${color}`, padding:"4px 10px", textDecoration:"none", whiteSpace:"nowrap", display:"inline-flex", alignItems:"center", gap:"4px" }}>
                           {item.linkLabel || "View"}
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         </a>
@@ -170,7 +143,7 @@ export default async function AboutPage() {
       <style>{`
         @media (max-width: 700px) {
           .about-grid { grid-template-columns: 1fr !important; }
-          .about-grid > *:first-child { border-right: none !important; border-bottom: 1px solid var(--border); }
+          .about-grid > *:first-child { border-right: none !important; border-bottom: 1px solid var(--rule); }
           .achievement-row { grid-template-columns: 52px 1fr !important; gap: 1rem !important; }
           .achievement-row > *:last-child { grid-column: 2; }
         }

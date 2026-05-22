@@ -45,7 +45,7 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
                   {item.type}
                 </div>
               )}
-              <h1 style={{ fontFamily:S.sans, fontSize:"clamp(1.8rem,5vw,3.25rem)", fontWeight:900, lineHeight:1.05, letterSpacing:"-0.03em", marginBottom:"1.25rem" }}>
+              <h1 style={{ fontFamily:S.sans, fontSize:"clamp(1.8rem,5vw,3.25rem)", fontWeight:400, lineHeight:1.05, letterSpacing:"-0.03em", marginBottom:"1.25rem" }}>
                 {item.title}
               </h1>
               {item.description && (

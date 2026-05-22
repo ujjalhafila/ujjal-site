@@ -51,7 +51,7 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
                 {item.readTime}{item.publishedOn && ` · ${new Date(item.publishedOn).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}`}
               </span>
             </div>
-            <h1 style={{ fontFamily:S.sans,fontSize:"clamp(2rem,5vw,3.5rem)",fontWeight:900,lineHeight:1.05,letterSpacing:"-0.03em",marginBottom:"1.5rem" }}>
+            <h1 style={{ fontFamily:S.sans,fontSize:"clamp(2rem,5vw,3.5rem)",fontWeight:400,lineHeight:1.05,letterSpacing:"-0.03em",marginBottom:"1.5rem" }}>
               {item.title}
             </h1>
             {item.whyQuestion && (

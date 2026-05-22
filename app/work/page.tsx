@@ -6,69 +6,101 @@ import { getWorkItems } from "../../lib/notion";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Work" };
-export const dynamic = 'force-dynamic';
-const S = { sans:"'DM Sans',sans-serif", mono:"'DM Mono',monospace" };
+export const dynamic = "force-dynamic";
+
+const MONO = "'DM Mono',monospace";
+const SANS = "'DM Sans',sans-serif";
+
+const GLOWS = [
+  { gc:"rgba(255,77,109,0.09)", gcLine:"#FF4D6D", gcText:"#FF4D6D" },
+  { gc:"rgba(77,255,180,0.07)", gcLine:"#4DFFB4", gcText:"#4DFFB4" },
+  { gc:"rgba(180,77,255,0.08)", gcLine:"#B44DFF", gcText:"#B44DFF" },
+  { gc:"rgba(77,159,255,0.08)", gcLine:"#4D9FFF", gcText:"#4D9FFF" },
+];
 
 export default async function WorkPage() {
   const items = await getWorkItems();
   return (
-    <main>
+    <main style={{ background:"var(--bg)", color:"var(--ink)" }}>
       <Nav />
-      <div style={{ paddingTop:"5rem" }}>
-        <div style={{ padding:"3.5rem 2rem 2.5rem", borderBottom:"1px solid var(--border)" }}>
-          <div style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.15em", textTransform:"uppercase", color:"var(--accent)", marginBottom:"1.25rem", display:"flex", alignItems:"center", gap:"0.75rem" }}>
-            <span style={{ display:"block", width:"24px", height:"1px", background:"var(--accent)" }}/>Work Space
+
+      {/* Page header */}
+      <div style={{ paddingTop:"52px", borderBottom:"1px solid var(--rule)" }}>
+        <div style={{ padding:"48px 28px 36px" }}>
+          <div style={{ fontFamily:MONO, fontSize:"11px", letterSpacing:"1.5px", textTransform:"uppercase", color:"var(--ink3)", marginBottom:"20px", display:"flex", alignItems:"center", gap:"10px" }}>
+            <span style={{ display:"block", width:"20px", height:"1px", background:"var(--ink3)" }} />
+            Work Space
           </div>
-          <h1 style={{ fontFamily:S.sans, fontSize:"clamp(2.5rem,7vw,5.5rem)", fontWeight:900, lineHeight:0.92, letterSpacing:"-0.03em" }}>
-            Things I've<br/><em style={{ fontStyle:"italic", color:"var(--accent)" }}>Built</em>
+          <h1 style={{ fontFamily:SANS, fontSize:"clamp(2.5rem,6vw,5rem)", fontWeight:300, lineHeight:1.0, letterSpacing:"-2px" }}>
+            Things I've<br /><em style={{ fontStyle:"italic", fontWeight:300 }}>Built</em>
           </h1>
-          <p style={{ marginTop:"1.25rem", fontSize:"16px", lineHeight:1.75, color:"var(--muted)", maxWidth:"52ch" }}>
+          <p style={{ marginTop:"20px", fontSize:"14px", fontWeight:300, lineHeight:1.75, color:"var(--ink2)", maxWidth:"440px", fontFamily:SANS }}>
             Product design work across digital adoption, AI systems, and platform design. Each project starts with a why.
           </p>
         </div>
+      </div>
 
-        {items.length === 0 ? (
-          <div style={{ padding:"5rem 2rem", textAlign:"center" }}>
-            <p style={{ fontFamily:S.sans, fontStyle:"italic", fontSize:"1.25rem", color:"var(--muted)" }}>
-              No shipped work yet — set Status → Shipped in your Notion Portfolio database.
-            </p>
-          </div>
-        ) : (
-          <div className="work-grid">
-            {items.map((item, i) => (
-              <div key={item.id} className="work-card" style={{ padding:"2rem", borderBottom:"1px solid var(--border)" }}>
-                {/* Thumbnail — clickable for preview, card navigates to detail */}
+      {items.length === 0 ? (
+        <div style={{ padding:"5rem 28px", textAlign:"center" }}>
+          <p style={{ fontFamily:MONO, fontSize:"13px", color:"var(--ink3)" }}>
+            No shipped work yet — set Status → Shipped in your Notion Portfolio database.
+          </p>
+        </div>
+      ) : (
+        <div className="work-grid-inner">
+          {items.map((item, i) => {
+            const g = GLOWS[i % GLOWS.length];
+            return (
+              <Link
+                key={item.id}
+                href={`/work/${item.slug}`}
+                className="glow-card reveal"
+                style={{
+                  display:"flex", flexDirection:"column",
+                  borderBottom:"1px solid var(--rule)",
+                  ["--gc" as string]: g.gc,
+                  ["--gc-line" as string]: g.gcLine,
+                  ["--gc-text" as string]: g.gcText,
+                } as React.CSSProperties}
+              >
                 {item.thumbnailUrl && (
-                  <ClickableThumb src={item.thumbnailUrl} alt={item.title} title={item.title} />
-                )}
-                <Link href={`/work/${item.slug}`} style={{ textDecoration:"none", color:"inherit", display:"block" }}>
-                  <div style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.1em", color:"var(--muted)", marginBottom:"1rem", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <span>{String(i+1).padStart(2,"0")} / {item.type||"Project"}</span>
-                    <span style={{ color:item.status==="WIP"?"var(--accent)":"var(--muted)" }}>{item.status}</span>
+                  <div style={{ width:"100%", aspectRatio:"16/9", overflow:"hidden", borderBottom:"1px solid var(--rule)", background:"var(--surface)" }}>
+                    <img src={item.thumbnailUrl} alt={item.title} className="thumb-img" loading="lazy" />
                   </div>
-                  <h2 style={{ fontFamily:S.sans, fontSize:"clamp(1.3rem,2.5vw,1.85rem)", fontWeight:700, lineHeight:1.15, letterSpacing:"-0.02em", marginBottom:"0.75rem" }}>{item.title}</h2>
-                  <p style={{ fontSize:"14px", lineHeight:1.75, color:"var(--muted)", marginBottom:"1.25rem" }}>{item.description}</p>
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:"0.4rem", marginBottom:"0.75rem" }}>
-                    {item.tags.slice(0,5).map(t=>(
-                      <span key={t} style={{ fontFamily:S.mono, fontSize:"9px", letterSpacing:"0.1em", textTransform:"uppercase", color:"var(--muted)", border:"1px solid var(--border)", padding:"0.2rem 0.5rem" }}>{t}</span>
+                )}
+                <div style={{ padding:"24px 28px 32px", flex:1, display:"flex", flexDirection:"column", gap:"10px" }}>
+                  <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                    <span>{String(i+1).padStart(2,"0")} / {item.type || "Project"}</span>
+                    <span className="gc-arr" style={{ fontSize:"16px" }}>↗</span>
+                  </div>
+                  <h2 className="gc-title" style={{ fontFamily:SANS, fontSize:"clamp(1.2rem,2vw,1.6rem)", fontWeight:400, lineHeight:1.2, letterSpacing:"-0.3px" }}>
+                    {item.title}
+                  </h2>
+                  <p style={{ fontSize:"13px", fontWeight:300, lineHeight:1.7, color:"var(--ink2)", fontFamily:SANS }}>
+                    {item.description}
+                  </p>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:"5px", marginTop:"auto", paddingTop:"8px" }}>
+                    {item.tags.slice(0,5).map(t => (
+                      <span key={t} style={{ fontFamily:MONO, fontSize:"10px", padding:"3px 9px", border:"1px solid var(--rule)", color:"var(--ink3)", borderRadius:"1px" }}>{t}</span>
                     ))}
                   </div>
-                  <span style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.08em", textTransform:"uppercase", color:"var(--accent)" }}>
+                  <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"4px" }}>
                     View case study →
                   </span>
-                </Link>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
       <Footer />
       <style>{`
-        .work-grid { display: grid; grid-template-columns: 1fr 1fr; }
-        .work-card:nth-child(odd) { border-right: 1px solid var(--border); }
-        @media (max-width: 700px) {
-          .work-grid { grid-template-columns: 1fr !important; }
-          .work-card { border-right: none !important; }
+        .work-grid-inner { display:grid; grid-template-columns:1fr 1fr; }
+        .work-grid-inner > *:nth-child(odd) { border-right:1px solid var(--rule); }
+        @media (max-width:700px) {
+          .work-grid-inner { grid-template-columns:1fr !important; }
+          .work-grid-inner > * { border-right:none !important; }
         }
       `}</style>
     </main>
