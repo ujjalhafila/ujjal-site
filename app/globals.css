@@ -310,3 +310,7 @@ html.dark .portrait-img { filter: brightness(0.88) contrast(1.05); }
 @keyframes fadeUp   { from { opacity:0; transform:translateY(14px);  } to { opacity:1; transform:none; } }
 @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
 @keyframes marquee  { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+
+/* ── Section link hover (server-component safe) ──────────────────────────── */
+.sec-link-hover { color: var(--ink3); transition: color 0.2s; }
+.sec-link-hover:hover { color: var(--ink); }

@@ -168,12 +168,8 @@ export default async function Home() {
             <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", letterSpacing:"1.5px" }}>
               Featured Works
             </span>
-            <Link href="/work" style={{
-              fontFamily:MONO, fontSize:"11px", color:"var(--ink3)",
-              textDecoration:"none", transition:"color 0.2s",
-            }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ink)"}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ink3)"}>
+            <Link href="/work" className="sec-link-hover"
+              style={{ fontFamily:MONO, fontSize:"11px", textDecoration:"none" }}>
               All work →
             </Link>
           </div>
@@ -255,12 +251,8 @@ export default async function Home() {
           <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", letterSpacing:"1.5px" }}>
             Think Space
           </span>
-          <Link href="/think" style={{
-            fontFamily:MONO, fontSize:"11px", color:"var(--ink3)",
-            textDecoration:"none", transition:"color 0.2s",
-          }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ink)"}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ink3)"}>
+          <Link href="/think" className="sec-link-hover"
+            style={{ fontFamily:MONO, fontSize:"11px", textDecoration:"none" }}>
             All thoughts →
           </Link>
         </div>
