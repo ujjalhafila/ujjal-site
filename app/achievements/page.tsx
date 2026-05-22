@@ -29,7 +29,7 @@ export default async function AchievementsPage() {
             Achievements
           </div>
           <h1 style={{ fontFamily:S.serif, fontSize:"clamp(2.5rem,7vw,5.5rem)", fontWeight:900, lineHeight:0.92, letterSpacing:"-0.03em" }}>
-            Work that<br/><em style={{ fontStyle:"italic", color:"var(--accent)" }}>matters</em>
+            Work that<br/><span style={{ fontWeight:600 }}>matters</span>
           </h1>
           <p style={{ fontFamily:S.sans, marginTop:"1.5rem", fontSize:"16px", lineHeight:1.8, color:"var(--muted)", maxWidth:"52ch" }}>
             Publications, patents, awards, and recognitions — outputs that exist beyond screens.
@@ -38,7 +38,7 @@ export default async function AchievementsPage() {
 
         {all.length === 0 ? (
           <div style={{ padding:"5rem 2rem", textAlign:"center" }}>
-            <p style={{ fontFamily:S.sans, fontStyle:"italic", fontSize:"1.25rem", color:"var(--muted)", marginBottom:"1rem" }}>No achievements published yet.</p>
+            <p style={{ fontFamily:S.sans, fontSize:"1.25rem", color:"var(--muted)", marginBottom:"1rem" }}>No achievements published yet.</p>
             <p style={{ fontFamily:S.mono, fontSize:"12px", color:"var(--muted)", letterSpacing:"0.08em" }}>
               Add entries to your Achievements Notion database → set Status to "Published".
             </p>

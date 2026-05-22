@@ -20,11 +20,42 @@ const WORK_GLOWS = [
 
 const THINK_GLOW = { gc:"rgba(77,255,180,0.12)", gcLine:"#4DFFB4", gcText:"#4DFFB4" };
 
+// Notion icon (N letter mark, simplified)
+function NotionIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.14c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z"/>
+    </svg>
+  );
+}
+function LinkedInIcon2() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2zm2-5a2 2 0 110 4 2 2 0 010-4z"/>
+    </svg>
+  );
+}
+function MailIcon2() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+      <polyline points="22,6 12,13 2,6"/>
+    </svg>
+  );
+}
+function PhoneIcon2() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.09 6.09l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/>
+    </svg>
+  );
+}
+
 const CONNECT_LINKS = [
-  { label:"Notion Portfolio", sub:"ujjalhafila-portfolio.notion.site →",  href:"https://ujjalhafila-portfolio.notion.site/2478afe624ae80cc8e60ed2ccaa171ef?v=2478afe624ae813bb226000cb8044eb0", gc:"rgba(255,210,77,0.13)", gcText:"#FFD24D" },
-  { label:"LinkedIn",         sub:"linkedin.com/in/ujjalhafila →",         href:"https://www.linkedin.com/in/ujjalhafila/",  gc:"rgba(77,159,255,0.13)", gcText:"#4D9FFF" },
-  { label:"Email",            sub:"ujjalhafila@gmail.com →",               href:"mailto:ujjalhafila@gmail.com",              gc:"rgba(255,77,109,0.13)", gcText:"#FF4D6D" },
-  { label:"Phone",            sub:"+91 70861 16844 →",                     href:"tel:+917086116844",                         gc:"rgba(77,255,180,0.12)", gcText:"#4DFFB4" },
+  { label:"Notion Portfolio", sub:"ujjalhafila-portfolio.notion.site →",  href:"https://ujjalhafila-portfolio.notion.site/2478afe624ae80cc8e60ed2ccaa171ef?v=2478afe624ae813bb226000cb8044eb0", gc:"rgba(255,210,77,0.13)", gcText:"#FFD24D", Icon:NotionIcon },
+  { label:"LinkedIn",         sub:"linkedin.com/in/ujjalhafila →",         href:"https://www.linkedin.com/in/ujjalhafila/",  gc:"rgba(77,159,255,0.13)", gcText:"#4D9FFF", Icon:LinkedInIcon2 },
+  { label:"Email",            sub:"ujjalhafila@gmail.com →",               href:"mailto:ujjalhafila@gmail.com",              gc:"rgba(255,77,109,0.13)", gcText:"#FF4D6D", Icon:MailIcon2 },
+  { label:"Phone",            sub:"+91 70861 16844 →",                     href:"tel:+917086116844",                         gc:"rgba(77,255,180,0.12)", gcText:"#4DFFB4", Icon:PhoneIcon2 },
 ];
 
 const QUOTES = [
@@ -266,7 +297,7 @@ export default async function Home() {
             display:"flex", flexDirection:"column", justifyContent:"space-between",
           }}>
             <div style={{ fontSize:"22px", fontWeight:300, letterSpacing:"-0.5px", lineHeight:1.3 }}>
-              The <em style={{ fontStyle:"italic" }}>Why</em><br />behind things
+              The <span style={{ fontWeight:600 }}>Why</span><br />behind things
             </div>
           </div>
 
@@ -293,7 +324,7 @@ export default async function Home() {
                   {item.title}
                 </div>
                 {item.whyQuestion && (
-                  <p style={{ fontSize:"12px", fontWeight:300, color:"var(--ink2)", lineHeight:1.7, fontStyle:"italic" }}>
+                  <p style={{ fontSize:"12px", fontWeight:300, color:"var(--ink2)", lineHeight:1.7 }}>
                     "{item.whyQuestion}"
                   </p>
                 )}
@@ -337,11 +368,11 @@ export default async function Home() {
             } as React.CSSProperties}
           >
             <div style={{
-              fontFamily:MONO, fontSize:"11px", color:"var(--ink3)",
               display:"flex", alignItems:"center", justifyContent:"center",
               borderRight:"1px solid var(--rule)", height:"100%",
+              color:"var(--ink3)",
             }}>
-              0{i+1}
+              <link.Icon />
             </div>
             <div style={{ padding:"0 24px" }}>
               <div className="gc-title" style={{ fontFamily:SANS, fontSize:"14px", fontWeight:400 }}>

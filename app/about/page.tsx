@@ -15,9 +15,9 @@ const TYPE_META: Record<string, string> = {
 };
 
 const DEFAULT_BIO = [
-  "I'm a product designer based in Bengaluru, working at the intersection of strategy, interaction design, and emerging AI systems. My work lives in the space between <em>why something should exist</em> and <em>how it should feel to use it</em>.",
+  "I'm a product designer based in Bengaluru, working at the intersection of strategy, interaction design, and emerging AI systems. My work lives in the space between <span style={{ fontWeight:600 }}>why something should exist</span> and <span style={{ fontWeight:600 }}>how it should feel to use it</span>.",
   "Currently building at a Digital Adoption Platform company, where I focus on desktop application guidance — designing flows that help enterprise users navigate complex software without friction. I've been particularly invested in how AI can reshape guidance from static scripts into dynamic, context-aware assistants.",
-  "Before that, I've worked across product strategy, user research, and systems design — always starting with a <em>why</em> before touching a frame.",
+  "Before that, I've worked across product strategy, user research, and systems design — always starting with a <span style={{ fontWeight:600 }}>why</span> before touching a frame.",
 ];
 
 export default async function AboutPage() {

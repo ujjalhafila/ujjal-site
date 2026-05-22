@@ -27,15 +27,18 @@ export default function Nav() {
         background:"var(--nav-bg)", borderBottom:"1px solid var(--rule)",
         backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
       }}>
-        {/* Logo — portrait icon */}
+        {/* Logo — home icon (matches toolbar icon design language) */}
         <Link href="/" style={{
           display:"flex", alignItems:"center", justifyContent:"center",
           padding:"0 16px",
           borderRight:"1px solid var(--rule)", textDecoration:"none",
-          flexShrink:0, width:"52px",
-        }} aria-label="Home">
-          <img src="/favicon-192.png" alt="Ujjal Hafila"
-            style={{ width:"32px", height:"32px", borderRadius:"50%", display:"block" }} />
+          color:"var(--ink3)", flexShrink:0, width:"52px",
+          transition:"color 0.2s",
+        }} aria-label="Home" className="nav-home-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/>
+            <polyline points="9,21 9,12 15,12 15,21"/>
+          </svg>
         </Link>
 
         {/* Desktop nav links */}
@@ -132,6 +135,7 @@ export default function Nav() {
 
       <style>{`
         /* per-link underline colour */
+        .nav-home-link:hover { color: var(--ink) !important; }
         .nav-link::after { background: var(--nl-color, var(--ink)); }
         .nav-link:hover { color: var(--ink) !important; }
         @media (max-width: 768px) {

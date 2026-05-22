@@ -67,6 +67,12 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 
+/* ─── GLOBAL: no italics anywhere ─────────────────────────────────── */
+em, i, cite, blockquote, q { font-style: normal !important; }
+* { font-style: normal !important; }
+/* Blockquotes: use weight instead of italics */
+blockquote { font-weight: 400; }
+
 /* ─── RESPONSIVE GRID HELPERS ─────────────────────────────────────────── */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; }
 .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); }
@@ -197,8 +203,8 @@ html.dark .portrait-img { filter: brightness(0.88) contrast(1.05); }
 .prose-ujjal h4 { font-size: 1.1rem; }
 .prose-ujjal p  { font-size: 15px; line-height: 1.85; color: var(--ink2); margin-bottom: 1.5rem; }
 .prose-ujjal blockquote {
-  font-family: 'DM Mono', monospace; font-size: 14px;
-  line-height: 1.65; border-left: 1px solid var(--rule2); padding-left: 1.5rem;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+  line-height: 1.7; border-left: 2px solid var(--rule2); padding-left: 1.5rem;
   margin: 2rem 0; color: var(--ink2);
 }
 .prose-ujjal a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; opacity: 0.8; }
@@ -211,8 +217,7 @@ html.dark .portrait-img { filter: brightness(0.88) contrast(1.05); }
 .prose-ujjal hr { border: none; border-top: 1px solid var(--rule); margin: 3rem 0; }
 .prose-ujjal figure { margin: 2rem 0; }
 .prose-ujjal figcaption { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink3); margin-top: 0.5rem; }
-/* Strip all italic from prose headings */
-.prose-ujjal h1 em, .prose-ujjal h2 em, .prose-ujjal h3 em, .prose-ujjal h4 em { font-style: normal; }
+/* all italic globally stripped above */
 
 /* ─── FORM INPUTS ──────────────────────────────────────────────────────── */
 input, textarea, select {
