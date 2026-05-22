@@ -18,8 +18,14 @@ export const metadata: Metadata = {
     description: "Case studies, essays, and experiments.",
     url: "https://ujjalhafila.com",
     type: "website",
+    images: [{ url: "https://ujjalhafila.com/og-image.png", width: 1080, height: 1080, alt: "Ujjal Hafila — Product Designer" }],
   },
-  twitter: { card: "summary", title: "Ujjal Hafila - Product Designer", description: "Case studies, essays, and experiments." },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ujjal Hafila - Product Designer",
+    description: "Case studies, essays, and experiments.",
+    images: ["https://ujjalhafila.com/og-image.png"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

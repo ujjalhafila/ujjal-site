@@ -11,10 +11,10 @@ const MONO = "'DM Mono',monospace";
 const SANS = "'DM Sans',sans-serif";
 
 const GLOWS = [
-  { gc:"rgba(77,255,180,0.07)",  gcLine:"#4DFFB4", gcText:"#4DFFB4" },
-  { gc:"rgba(77,159,255,0.07)",  gcLine:"#4D9FFF", gcText:"#4D9FFF" },
-  { gc:"rgba(255,210,77,0.07)",  gcLine:"#FFD24D", gcText:"#B8860B" },
-  { gc:"rgba(180,77,255,0.07)",  gcLine:"#B44DFF", gcText:"#B44DFF" },
+  { gc:"rgba(77,255,180,0.13)",  gcLine:"#4DFFB4", gcText:"#4DFFB4" },
+  { gc:"rgba(77,159,255,0.13)",  gcLine:"#4D9FFF", gcText:"#4D9FFF" },
+  { gc:"rgba(255,210,77,0.13)",  gcLine:"#FFD24D", gcText:"#B8860B" },
+  { gc:"rgba(180,77,255,0.13)",  gcLine:"#B44DFF", gcText:"#B44DFF" },
 ];
 
 export default async function ThinkPage() {

@@ -12,10 +12,10 @@ const MONO = "'DM Mono',monospace";
 const SANS = "'DM Sans',sans-serif";
 
 const GLOWS = [
-  { gc:"rgba(255,77,109,0.09)", gcLine:"#FF4D6D", gcText:"#FF4D6D" },
-  { gc:"rgba(77,255,180,0.07)", gcLine:"#4DFFB4", gcText:"#4DFFB4" },
-  { gc:"rgba(180,77,255,0.08)", gcLine:"#B44DFF", gcText:"#B44DFF" },
-  { gc:"rgba(77,159,255,0.08)", gcLine:"#4D9FFF", gcText:"#4D9FFF" },
+  { gc:"rgba(255,77,109,0.16)", gcLine:"#FF4D6D", gcText:"#FF4D6D" },
+  { gc:"rgba(77,255,180,0.13)", gcLine:"#4DFFB4", gcText:"#4DFFB4" },
+  { gc:"rgba(180,77,255,0.14)", gcLine:"#B44DFF", gcText:"#B44DFF" },
+  { gc:"rgba(77,159,255,0.14)", gcLine:"#4D9FFF", gcText:"#4D9FFF" },
 ];
 
 export default async function WorkPage() {

@@ -11,19 +11,19 @@ const SANS  = "'DM Sans', sans-serif";
 
 // Each work item gets its own glow colour
 const WORK_GLOWS = [
-  { gc:"rgba(255,77,109,0.09)",  gcLine:"#FF4D6D", gcText:"#FF4D6D"  },
-  { gc:"rgba(77,255,180,0.07)",  gcLine:"#4DFFB4", gcText:"#4DFFB4"  },
-  { gc:"rgba(180,77,255,0.08)",  gcLine:"#B44DFF", gcText:"#B44DFF"  },
-  { gc:"rgba(77,159,255,0.08)",  gcLine:"#4D9FFF", gcText:"#4D9FFF"  },
+  { gc:"rgba(255,77,109,0.16)",  gcLine:"#FF4D6D", gcText:"#FF4D6D"  },
+  { gc:"rgba(77,255,180,0.12)",  gcLine:"#4DFFB4", gcText:"#4DFFB4"  },
+  { gc:"rgba(180,77,255,0.14)",  gcLine:"#B44DFF", gcText:"#B44DFF"  },
+  { gc:"rgba(77,159,255,0.14)",  gcLine:"#4D9FFF", gcText:"#4D9FFF"  },
 ];
 
-const THINK_GLOW = { gc:"rgba(77,255,180,0.07)", gcLine:"#4DFFB4", gcText:"#4DFFB4" };
+const THINK_GLOW = { gc:"rgba(77,255,180,0.12)", gcLine:"#4DFFB4", gcText:"#4DFFB4" };
 
 const CONNECT_LINKS = [
-  { label:"Notion Portfolio", sub:"ujjalhafila-portfolio.notion.site →",  href:"https://ujjalhafila-portfolio.notion.site/2478afe624ae80cc8e60ed2ccaa171ef?v=2478afe624ae813bb226000cb8044eb0", gc:"rgba(255,210,77,0.07)", gcText:"#FFD24D" },
-  { label:"LinkedIn",         sub:"linkedin.com/in/ujjalhafila →",         href:"https://www.linkedin.com/in/ujjalhafila/",  gc:"rgba(77,159,255,0.07)", gcText:"#4D9FFF" },
-  { label:"Email",            sub:"ujjalhafila@gmail.com →",               href:"mailto:ujjalhafila@gmail.com",              gc:"rgba(255,77,109,0.07)", gcText:"#FF4D6D" },
-  { label:"Phone",            sub:"+91 70861 16844 →",                     href:"tel:+917086116844",                         gc:"rgba(77,255,180,0.07)", gcText:"#4DFFB4" },
+  { label:"Notion Portfolio", sub:"ujjalhafila-portfolio.notion.site →",  href:"https://ujjalhafila-portfolio.notion.site/2478afe624ae80cc8e60ed2ccaa171ef?v=2478afe624ae813bb226000cb8044eb0", gc:"rgba(255,210,77,0.13)", gcText:"#FFD24D" },
+  { label:"LinkedIn",         sub:"linkedin.com/in/ujjalhafila →",         href:"https://www.linkedin.com/in/ujjalhafila/",  gc:"rgba(77,159,255,0.13)", gcText:"#4D9FFF" },
+  { label:"Email",            sub:"ujjalhafila@gmail.com →",               href:"mailto:ujjalhafila@gmail.com",              gc:"rgba(255,77,109,0.13)", gcText:"#FF4D6D" },
+  { label:"Phone",            sub:"+91 70861 16844 →",                     href:"tel:+917086116844",                         gc:"rgba(77,255,180,0.12)", gcText:"#4DFFB4" },
 ];
 
 const QUOTES = [

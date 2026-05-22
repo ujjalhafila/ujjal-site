@@ -1,5 +1,4 @@
 import Nav from "../../components/Nav";
-import Portrait from "../../components/Portrait";
 import Footer from "../../components/Footer";
 import { getAchievements, getAboutMarkdown } from "../../lib/notion";
 import { markdownToHtml } from "../../lib/markdown";
@@ -31,10 +30,22 @@ export default async function AboutPage() {
       <Nav />
       <div style={{ paddingTop:"52px" }}>
 
-        {/* Header — portrait left, text right */}
+        {/* ── HERO: photo left, name right ── */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", borderBottom:"1px solid var(--rule)" }} className="about-hero-grid">
-          <div style={{ borderRight:"1px solid var(--rule)", display:"flex", alignItems:"center", justifyContent:"center", padding:"clamp(2rem,5vw,4rem) clamp(1.5rem,3vw,3rem)", minHeight:"360px" }}>
-            <Portrait />
+          {/* Single photo — portrait-about.png */}
+          <div style={{
+            borderRight:"1px solid var(--rule)",
+            overflow:"hidden",
+            minHeight:"400px",
+            background:"var(--surface)",
+            display:"flex", alignItems:"stretch",
+          }}>
+            <img
+              src="/portrait-about.png"
+              alt="Ujjal Hafila"
+              style={{ width:"100%", height:"100%", objectFit:"cover", objectPosition:"center top", display:"block" }}
+              loading="eager"
+            />
           </div>
           <div style={{ padding:"48px 28px 36px", display:"flex", flexDirection:"column", justifyContent:"flex-end", gap:"20px" }}>
             <div style={{ fontFamily:MONO, fontSize:"11px", letterSpacing:"1.5px", textTransform:"uppercase", color:"var(--ink3)", display:"flex", alignItems:"center", gap:"10px" }}>
@@ -50,12 +61,8 @@ export default async function AboutPage() {
           </div>
         </div>
 
-        {/* Bio + portrait + meta grid */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", borderBottom:"1px solid var(--rule)" }} className="about-grid">
-          {/* Portrait column */}
-          <div style={{ borderRight:"1px solid var(--rule)", display:"flex", alignItems:"center", justifyContent:"center", padding:"clamp(1.5rem,3vw,3rem)", background:"var(--surface)" }} className="about-portrait-cell">
-            <Portrait />
-          </div>
+        {/* ── BIO + META: 2-column ── */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", borderBottom:"1px solid var(--rule)" }} className="about-bio-grid">
           <div style={{ padding:"36px 28px", borderRight:"1px solid var(--rule)" }}>
             {aboutHtml ? (
               <div className="prose-ujjal" dangerouslySetInnerHTML={{ __html: aboutHtml }} />
@@ -97,7 +104,7 @@ export default async function AboutPage() {
           </div>
         </div>
 
-        {/* Achievements header */}
+        {/* ── ACHIEVEMENTS ── */}
         <div style={{ padding:"0 28px", height:"40px", display:"flex", alignItems:"center", borderBottom:"1px solid var(--rule)" }}>
           <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", letterSpacing:"1.5px" }}>Achievements</span>
         </div>
@@ -121,7 +128,7 @@ export default async function AboutPage() {
                 </div>
                 {items.map((item, i) => (
                   <div key={item.id} className="achievement-row reveal"
-                    style={{ display:"grid", gridTemplateColumns:"72px 1fr auto", gap:"0 2rem", alignItems:"start", padding:"28px 28px", borderBottom:i < items.length-1?"1px solid var(--rule)":"none" }}>
+                    style={{ display:"grid", gridTemplateColumns:"72px 1fr auto", gap:"0 2rem", alignItems:"start", padding:"28px", borderBottom:i < items.length-1?"1px solid var(--rule)":"none" }}>
                     <div style={{ fontFamily:MONO, fontSize:"24px", fontWeight:300, color:"var(--ink3)", opacity:0.4, lineHeight:1, paddingTop:"3px" }}>
                       {item.year || "—"}
                     </div>
@@ -154,13 +161,11 @@ export default async function AboutPage() {
       </div>
       <Footer />
       <style>{`
-        @media (max-width: 900px) {
-          .about-grid { grid-template-columns: 1fr 1fr !important; }
-          .about-grid > *:first-child { border-right: 1px solid var(--rule); grid-column: 1 / -1; border-bottom: 1px solid var(--rule); }
-        }
         @media (max-width: 700px) {
-          .about-grid { grid-template-columns: 1fr !important; }
-          .about-grid > * { border-right: none !important; border-bottom: 1px solid var(--rule); }
+          .about-hero-grid { grid-template-columns: 1fr !important; }
+          .about-hero-grid > *:first-child { border-right: none !important; min-height: 280px !important; border-bottom: 1px solid var(--rule); }
+          .about-bio-grid { grid-template-columns: 1fr !important; }
+          .about-bio-grid > *:first-child { border-right: none !important; border-bottom: 1px solid var(--rule); }
           .achievement-row { grid-template-columns: 52px 1fr !important; gap: 1rem !important; }
           .achievement-row > *:last-child { grid-column: 2; }
         }
