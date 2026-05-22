@@ -29,10 +29,10 @@ function GalleryCard({ src, label, onClick }: { src: string; label: string; onCl
   return (
     <button onClick={onClick} className="gallery-card" aria-label={`Open ${label}`}
       style={{ display:"block", width:"100%", padding:0, background:"var(--surface)",
-        border:"1px solid var(--border)", borderRadius:"10px", overflow:"hidden",
+        border:"1px solid var(--rule)", overflow:"hidden",
         cursor:"pointer", position:"relative", textAlign:"left", transition:"all 0.2s" }}>
       <div style={{ position:"relative", width:"100%", height:"200px", overflow:"hidden",
-        background:"var(--ink)", borderRadius:"9px 9px 0 0" }}>
+        background:"var(--surface)" }}>
         {thumb ? (
           <img src={thumb} alt={label} loading="lazy"
             style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
@@ -64,7 +64,7 @@ function GalleryCard({ src, label, onClick }: { src: string; label: string; onCl
         </div>
       </div>
       <div style={{ padding:"0.55rem 0.85rem", display:"flex", alignItems:"center",
-        justifyContent:"space-between", borderTop:"1px solid var(--border)" }}>
+        justifyContent:"space-between", borderTop:"1px solid var(--rule)" }}>
         <span style={{ fontFamily:M.mono, fontSize:"10px", letterSpacing:"0.08em",
           textTransform:"uppercase", color:"var(--muted)" }}>{label}</span>
         <span style={{ color:"var(--accent)", fontSize:"12px", opacity:0.7 }}>
@@ -90,9 +90,9 @@ export function ClickableThumb({ src, alt, title }: { src: string; alt: string; 
         aria-label={`View ${alt||title||"project image"}`}
         style={{ width:"100%", height:"220px", marginBottom:"1.5rem",
           overflow:"hidden", background:"var(--surface)", cursor:"zoom-in",
-          borderRadius:"10px", border:"1px solid var(--border)", position:"relative" }}>
+          border:"1px solid var(--rule)", position:"relative" }}>
         <img src={src} alt={alt}
-          style={{ width:"100%", height:"100%", objectFit:"cover", display:"block", borderRadius:"9px" }}
+          style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
           loading="lazy" />
         <div className="thumb-zoom-hint" style={{ position:"absolute", bottom:"0.6rem",
           right:"0.6rem", background:"rgba(0,0,0,0.55)", borderRadius:"6px",
@@ -103,7 +103,7 @@ export function ClickableThumb({ src, alt, title }: { src: string; alt: string; 
         </div>
       </div>
       {modal && <MediaModal key={modal.src} src={modal.src} type="image" alt={modal.alt} onClose={close} />}
-      <style>{`.clickable-thumb:hover .thumb-zoom-hint{opacity:1}.clickable-thumb:hover{border-color:var(--accent)!important}`}</style>
+      <style>{`.clickable-thumb:hover .thumb-zoom-hint{opacity:1}.clickable-thumb:hover{border-color:var(--rule2)!important}`}</style>
     </>
   );
 }
@@ -133,7 +133,7 @@ export default function WorkGallery({ thumbnailUrl, videoDemo, title }: {
       </div>
       {modal && <MediaModal key={modal.src} src={modal.src} type={modal.type} alt={modal.alt} onClose={close} />}
       <style>{`
-        .gallery-card:hover{border-color:var(--accent)!important;transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,0.08)}
+        .gallery-card:hover{border-color:var(--rule2)!important}
         .gallery-card:hover .gallery-overlay{background:rgba(0,0,0,0.52)!important}
         @media(max-width:600px){.gallery-grid{grid-template-columns:1fr!important}}
       `}</style>

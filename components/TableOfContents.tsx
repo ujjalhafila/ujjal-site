@@ -5,16 +5,14 @@ interface Heading { id: string; text: string; level: number; }
 
 const S = { mono: "'DM Mono',monospace", sans: "'DM Sans',sans-serif" };
 
+// Active colour palette — matches the site's per-page accent colours
+const ACTIVE_COLOR = "#4DFFB4";   // teal — works on dark + light
+const ACTIVE_BG    = "rgba(77,255,180,0.08)";
+
 function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
+  return text.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim();
 }
 
-// Extract headings from HTML string (no DOM needed)
 function extractHeadings(html: string): Heading[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
@@ -26,7 +24,6 @@ function extractHeadings(html: string): Heading[] {
   return out;
 }
 
-// Stamp IDs onto every h2/h3 inside .prose-ujjal
 function stampIds() {
   const prose = document.querySelector(".prose-ujjal");
   if (!prose) return;
@@ -41,10 +38,10 @@ export default function TableOfContents({ html }: { html: string }) {
     typeof window !== "undefined" ? extractHeadings(html) : []
   );
   const [active, setActive] = useState<string>("");
+  const [hovered, setHovered] = useState<string>("");
   const pillRef = useRef<HTMLDivElement>(null);
   const rafRef  = useRef<number>(0);
 
-  // Stamp IDs on mount; watch for any DOM re-diffing via MutationObserver
   useEffect(() => {
     stampIds();
     const prose = document.querySelector(".prose-ujjal");
@@ -54,7 +51,6 @@ export default function TableOfContents({ html }: { html: string }) {
     return () => mo.disconnect();
   }, []);
 
-  // Scroll-based active tracking — survives modal open/close
   const updateActive = useCallback(() => {
     const offset = 110;
     let best = "";
@@ -84,7 +80,6 @@ export default function TableOfContents({ html }: { html: string }) {
     };
   }, [headings, updateActive]);
 
-  // Keep active pill visible on mobile
   useEffect(() => {
     if (!active || !pillRef.current) return;
     const btn = pillRef.current.querySelector<HTMLElement>(`[data-id="${active}"]`);
@@ -94,7 +89,7 @@ export default function TableOfContents({ html }: { html: string }) {
   if (!headings.length) return null;
 
   const handleClick = (id: string) => {
-    stampIds(); // re-stamp in case modal closed and DOM was re-diffed
+    stampIds();
     const el = document.getElementById(id);
     if (!el) return;
     const top = el.getBoundingClientRect().top + window.scrollY - 88;
@@ -104,68 +99,87 @@ export default function TableOfContents({ html }: { html: string }) {
 
   return (
     <>
-      {/* ── Desktop sidebar ─────────────────────────────────────────── */}
+      {/* ── Desktop sidebar ──────────────────────────────────────────── */}
       <nav className="toc-sidebar" aria-label="Page sections">
+        {/* Label */}
         <div style={{
-          fontFamily: S.mono, fontSize: "11px", letterSpacing: "0.12em",
-          textTransform: "uppercase", color: "var(--accent)",
-          marginBottom: "1.1rem", display: "flex", alignItems: "center", gap: "0.5rem",
+          fontFamily: S.mono, fontSize: "11px", letterSpacing: "1.5px",
+          textTransform: "uppercase", color: "var(--ink3)",
+          marginBottom: "1rem", display: "flex", alignItems: "center", gap: "8px",
         }}>
-          <span style={{ width: "16px", height: "1px", background: "var(--accent)", display: "block", flexShrink: 0 }} />
+          <span style={{ width: "16px", height: "1px", background: "var(--ink3)", display: "block", flexShrink: 0 }} />
           Contents
         </div>
+
+        {/* Items */}
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-          {headings.map(({ id, text, level }) => (
-            <li key={id} style={{ marginBottom: "0.4rem", paddingLeft: level === 3 ? "0.9rem" : "0" }}>
+          {headings.map(({ id, text, level }) => {
+            const isActive  = active === id;
+            const isHovered = hovered === id;
+            return (
+              <li key={id} style={{ marginBottom: "2px", paddingLeft: level === 3 ? "0.85rem" : "0" }}>
+                <button
+                  onClick={() => handleClick(id)}
+                  onMouseEnter={() => setHovered(id)}
+                  onMouseLeave={() => setHovered("")}
+                  style={{
+                    background: isActive ? ACTIVE_BG : isHovered ? "var(--surface)" : "none",
+                    border: "none",
+                    borderLeft: `2px solid ${isActive ? ACTIVE_COLOR : isHovered ? "var(--rule2)" : "var(--rule)"}`,
+                    cursor: "pointer",
+                    textAlign: "left",
+                    width: "100%",
+                    fontFamily: S.sans,
+                    fontSize: level === 2 ? "13px" : "12px",
+                    fontWeight: isActive ? 500 : 400,
+                    lineHeight: 1.5,
+                    color: isActive ? ACTIVE_COLOR : isHovered ? "var(--ink)" : "var(--ink3)",
+                    paddingLeft: "0.7rem",
+                    paddingTop: "0.3rem",
+                    paddingBottom: "0.3rem",
+                    paddingRight: "0.5rem",
+                    transition: "color 0.15s, border-color 0.15s, background 0.15s",
+                    borderRadius: "0 3px 3px 0",
+                  }}
+                >
+                  {text}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* ── Mobile pill strip ────────────────────────────────────────── */}
+      <nav className="toc-pills" aria-label="Page sections" ref={pillRef}>
+        <div style={{ display: "flex", gap: "6px", padding: "0.7rem 1.25rem", overflowX: "auto", scrollbarWidth: "none" }}>
+          {headings.map(({ id, text }) => {
+            const isActive = active === id;
+            return (
               <button
+                key={id}
+                data-id={id}
                 onClick={() => handleClick(id)}
                 style={{
-                  background: "none", border: "none", cursor: "pointer",
-                  textAlign: "left", width: "100%",
-                  fontFamily: S.sans,
-                  fontSize: level === 2 ? "14px" : "13px",
-                  fontWeight: level === 2 ? 500 : 400,
-                  lineHeight: 1.5,
-                  color: active === id ? "var(--ink)" : "var(--muted)",
-                  borderLeft: `2px solid ${active === id ? "var(--accent)" : "transparent"}`,
-                  paddingLeft: "0.6rem",
-                  paddingTop: "0.25rem", paddingBottom: "0.25rem",
-                  transition: "color 0.18s, border-color 0.18s",
+                  flexShrink: 0,
+                  background: isActive ? ACTIVE_BG : "var(--surface)",
+                  color: isActive ? ACTIVE_COLOR : "var(--ink3)",
+                  border: `1px solid ${isActive ? ACTIVE_COLOR : "var(--rule)"}`,
+                  borderRadius: "2px",
+                  padding: "0.3rem 0.85rem",
+                  fontFamily: S.mono,
+                  fontSize: "11px",
+                  letterSpacing: "0.05em",
+                  fontWeight: isActive ? 500 : 400,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  transition: "all 0.15s",
                 }}
               >
                 {text}
               </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      {/* ── Mobile pill strip ───────────────────────────────────────── */}
-      <nav className="toc-pills" aria-label="Page sections" ref={pillRef}>
-        <div style={{ display: "flex", gap: "0.5rem", padding: "0.7rem 1.25rem", overflowX: "auto", scrollbarWidth: "none" }}>
-          {headings.map(({ id, text }) => (
-            <button
-              key={id}
-              data-id={id}
-              onClick={() => handleClick(id)}
-              style={{
-                flexShrink: 0,
-                background: active === id ? "var(--ink)" : "var(--surface)",
-                color: active === id ? "var(--paper)" : "var(--muted)",
-                border: `1px solid ${active === id ? "var(--ink)" : "var(--border)"}`,
-                borderRadius: "100px",
-                padding: "0.32rem 0.9rem",
-                fontFamily: S.mono,
-                fontSize: "11px",
-                letterSpacing: "0.05em",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                transition: "all 0.18s",
-              }}
-            >
-              {text}
-            </button>
-          ))}
+            );
+          })}
         </div>
       </nav>
     </>
