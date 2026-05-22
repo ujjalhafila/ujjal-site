@@ -19,13 +19,13 @@ export const metadata: Metadata = {
     description: "Case studies, essays, and experiments.",
     url: "https://ujjalhafila.com",
     type: "website",
-    images: [{ url: "https://ujjalhafila.com/favicon-portrait.png", width: 1080, height: 1080, alt: "Ujjal Hafila — Product Designer" }],
+    images: [{ url: "https://ujjalhafila.com/og-image.png", width: 1200, height: 630, alt: "Ujjal Hafila — Product Designer" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Ujjal Hafila - Product Designer",
     description: "Case studies, essays, and experiments.",
-    images: ["https://ujjalhafila.com/favicon-portrait.png"],
+    images: ["https://ujjalhafila.com/og-image.png"],
   },
 };
 
