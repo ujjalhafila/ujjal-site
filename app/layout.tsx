@@ -7,9 +7,10 @@ export const metadata: Metadata = {
   title: { default: "Ujjal Hafila — Product Designer", template: "%s | Ujjal Hafila" },
   description: "Product designer who starts with Why. Building at the intersection of strategy, interaction design, and AI.",
   icons: [
+    { rel: "icon", url: "/favicon-portrait.png", type: "image/png" },
     { rel: "icon", url: "/favicon.svg", type: "image/svg+xml" },
     { rel: "shortcut icon", url: "/favicon.ico" },
-    { rel: "icon", url: "/favicon.ico", type: "image/x-icon", sizes: "16x16" },
+    { rel: "icon", url: "/favicon.ico", type: "image/x-icon", sizes: "16x16 32x32" },
     { rel: "apple-touch-icon", url: "/favicon-192.png" },
     { rel: "icon", url: "/favicon-192.png", sizes: "192x192", type: "image/png" },
   ],
@@ -18,13 +19,13 @@ export const metadata: Metadata = {
     description: "Case studies, essays, and experiments.",
     url: "https://ujjalhafila.com",
     type: "website",
-    images: [{ url: "https://ujjalhafila.com/og-image.png", width: 1080, height: 1080, alt: "Ujjal Hafila — Product Designer" }],
+    images: [{ url: "https://ujjalhafila.com/favicon-portrait.png", width: 1080, height: 1080, alt: "Ujjal Hafila — Product Designer" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Ujjal Hafila - Product Designer",
     description: "Case studies, essays, and experiments.",
-    images: ["https://ujjalhafila.com/og-image.png"],
+    images: ["https://ujjalhafila.com/favicon-portrait.png"],
   },
 };
 
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon-portrait.png" type="image/png" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16 32x32" />

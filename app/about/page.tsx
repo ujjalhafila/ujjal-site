@@ -32,18 +32,24 @@ export default async function AboutPage() {
 
         {/* ── HERO: photo left, name right ── */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", borderBottom:"1px solid var(--rule)" }} className="about-hero-grid">
-          {/* Single photo — portrait-about.png */}
+          {/* Photo — contained, not full-bleed */}
           <div style={{
             borderRight:"1px solid var(--rule)",
-            overflow:"hidden",
-            minHeight:"400px",
+            minHeight:"360px",
             background:"var(--surface)",
-            display:"flex", alignItems:"stretch",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            padding:"clamp(2rem,4vw,3.5rem)",
           }}>
             <img
               src="/portrait-about.png"
               alt="Ujjal Hafila"
-              style={{ width:"100%", height:"100%", objectFit:"cover", objectPosition:"center top", display:"block" }}
+              style={{
+                width:"clamp(180px,70%,280px)",
+                height:"auto",
+                borderRadius:"12px",
+                display:"block",
+                boxShadow:"0 4px 32px rgba(0,0,0,0.18)",
+              }}
               loading="eager"
             />
           </div>

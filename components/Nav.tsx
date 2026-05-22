@@ -27,14 +27,15 @@ export default function Nav() {
         background:"var(--nav-bg)", borderBottom:"1px solid var(--rule)",
         backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
       }}>
-        {/* Logo */}
+        {/* Logo — portrait icon */}
         <Link href="/" style={{
-          display:"flex", alignItems:"center", padding:"0 24px",
-          fontFamily:MONO, fontSize:"13px", color:"var(--ink)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          padding:"0 16px",
           borderRight:"1px solid var(--rule)", textDecoration:"none",
-          letterSpacing:"0.3px", flexShrink:0,
-        }}>
-          Ujjal Hafila
+          flexShrink:0, width:"52px",
+        }} aria-label="Home">
+          <img src="/favicon-192.png" alt="Ujjal Hafila"
+            style={{ width:"32px", height:"32px", borderRadius:"50%", display:"block" }} />
         </Link>
 
         {/* Desktop nav links */}

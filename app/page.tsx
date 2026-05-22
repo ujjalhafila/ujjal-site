@@ -2,6 +2,7 @@ import Link from "next/link";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Portrait from "../components/Portrait";
+import QuotesCarousel from "../components/QuotesCarousel";
 import { getFeaturedWork, getFeaturedThink } from "../lib/notion";
 
 export const dynamic = "force-dynamic";
@@ -83,9 +84,9 @@ export default async function Home() {
             fontWeight:600, lineHeight:1.05, letterSpacing:"-1.5px",
             animation:"fadeUp 0.6s ease 0.15s both",
           }}>
-            Product designer<br />
-            who starts<br />
-            with <span style={{ color:"var(--ink)", borderBottom:"1.5px solid var(--rule2)", paddingBottom:"1px" }}>why</span>
+            I start<br />
+            with the<br />
+            <span style={{ color:"var(--ink)", borderBottom:"2px solid var(--rule2)", paddingBottom:"2px" }}>why</span>
           </h1>
 
           {/* body */}
@@ -355,25 +356,8 @@ export default async function Home() {
         ))}
       </section>
 
-      {/* ── QUOTES (non-interactive) ──────────────────────────────────── */}
-      <section style={{
-        display:"grid", gridTemplateColumns:"1fr 1fr",
-        borderBottom:"1px solid var(--rule)",
-      }} className="quotes-grid">
-        {QUOTES.slice(0,2).map((q, i) => (
-          <div key={i} style={{
-            padding:"28px",
-            borderRight: i === 0 ? "1px solid var(--rule)" : "none",
-          }}>
-            <p style={{ fontSize:"13px", fontWeight:300, color:"var(--ink2)", lineHeight:1.75, fontStyle:"italic" }}>
-              "{q.text}"
-            </p>
-            <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"12px" }}>
-              {q.attr}
-            </div>
-          </div>
-        ))}
-      </section>
+      {/* ── QUOTES (interactive carousel) ──────────────────────────── */}
+      <QuotesCarousel quotes={QUOTES} />
 
       <Footer />
 
