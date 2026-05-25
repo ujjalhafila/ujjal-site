@@ -130,17 +130,30 @@ export async function getAchievements(): Promise<AchievementItem[]> {
   }));
 }
 
+// Fallback experiments shown when the Experiments Notion DB is inaccessible.
+// Replace by setting NOTION_EXPERIMENTS_DB_ID in Vercel env vars once you
+// share your Experiments DB with the Notion integration.
+const FALLBACK_EXPERIMENTS: ExperimentItem[] = [
+  {
+    id: "fallback-1",
+    title: "Confidence-Based Element Resolver",
+    description: "A scoring algorithm that identifies UI elements on desktop apps by weighting AutomationId, ControlType, and positional heuristics — built for Whatfix Journeys.",
+    imageUrl: null,
+    tags: ["Prototype", "AI", "Tool"],
+    url: "https://github.com/ujjalhafila",
+    status: "Published",
+    date: "2025-05-01",
+  },
+];
+
 export async function getExperiments(): Promise<ExperimentItem[]> {
-  if (!EXPERIMENTS_DS) return [];
+  if (!EXPERIMENTS_DS) return FALLBACK_EXPERIMENTS;
   try {
-    // Query with no filter, no sorts — most permissive call
     const r = await (notion as any).dataSources.query({ data_source_id: EXPERIMENTS_DS });
     const results: any[] = r?.results ?? [];
-    console.log("[getExperiments] raw count:", results.length, "ids:", results.map((p:any)=>p.id));
-    return results
+    const mapped = results
       .filter((p: any) => {
         const status = sel(p, "Status") || p.properties?.Status?.status?.name || "";
-        console.log("[getExperiments] row:", pageTitle(p), "status:", status);
         return status === "Published";
       })
       .map((p: any) => ({
@@ -153,9 +166,11 @@ export async function getExperiments(): Promise<ExperimentItem[]> {
         status:      sel(p, "Status"),
         date:        dt(p, "Date"),
       }));
+    // If the DB is accessible but empty, still return fallbacks so the section isn't blank
+    return mapped.length > 0 ? mapped : FALLBACK_EXPERIMENTS;
   } catch(e) {
     console.error("[getExperiments] error:", e);
-    return [];
+    return FALLBACK_EXPERIMENTS;
   }
 }
 
