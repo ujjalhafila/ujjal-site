@@ -1,4 +1,5 @@
 import Nav from "../../components/Nav";
+import AboutPortrait from "../../components/AboutPortrait";
 import Footer from "../../components/Footer";
 import { getAchievements, getAboutMarkdown } from "../../lib/notion";
 import { markdownToHtml } from "../../lib/markdown";
@@ -32,27 +33,7 @@ export default async function AboutPage() {
 
         {/* ── HERO: photo left, name right ── */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", borderBottom:"1px solid var(--rule)" }} className="about-hero-grid">
-          {/* Photo — contained, not full-bleed */}
-          <div style={{
-            borderRight:"1px solid var(--rule)",
-            minHeight:"360px",
-            background:"var(--surface)",
-            display:"flex", alignItems:"center", justifyContent:"center",
-            padding:"clamp(2rem,4vw,3.5rem)",
-          }}>
-            <img
-              src="/portrait-about.png"
-              alt="Ujjal Hafila"
-              style={{
-                width:"clamp(180px,70%,280px)",
-                height:"auto",
-                borderRadius:"12px",
-                display:"block",
-                boxShadow:"0 4px 32px rgba(0,0,0,0.18)",
-              }}
-              loading="eager"
-            />
-          </div>
+          <AboutPortrait />
           <div style={{ padding:"48px 28px 36px", display:"flex", flexDirection:"column", justifyContent:"flex-end", gap:"20px" }}>
             <div style={{ fontFamily:MONO, fontSize:"11px", letterSpacing:"1.5px", textTransform:"uppercase", color:"var(--ink3)", display:"flex", alignItems:"center", gap:"10px" }}>
               <span style={{ display:"block", width:"20px", height:"1px", background:"var(--ink3)" }} />

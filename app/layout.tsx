@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "../components/ThemeProvider";
 import GlowProvider from "../components/GlowProvider";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: { default: "Ujjal Hafila — Product Designer", template: "%s | Ujjal Hafila" },
@@ -50,6 +52,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </ThemeProvider>
         {/* GlowProvider: attaches mousemove glow tracker on every page, survives client-side navigation */}
         <GlowProvider />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

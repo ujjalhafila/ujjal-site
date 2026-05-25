@@ -1,26 +1,67 @@
+"use client";
+import { useRef, useCallback } from "react";
+
 export default function Portrait({ className = "" }: { className?: string }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
+
+  const onMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!wrapRef.current || !glowRef.current) return;
+    const r = wrapRef.current.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    glowRef.current.style.left = x + "px";
+    glowRef.current.style.top  = y + "px";
+    glowRef.current.style.opacity = "1";
+  }, []);
+
+  const onLeave = useCallback(() => {
+    if (glowRef.current) glowRef.current.style.opacity = "0";
+  }, []);
+
   return (
-    <div className={`portrait-outer ${className}`} style={{
-      position: "relative",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      width: "100%",
-      padding: "1.5rem 0",
-    }}>
-      {/* Decorative accent ring */}
+    <div
+      ref={wrapRef}
+      className={`portrait-outer ${className}`}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        padding: "1.5rem 0",
+      }}
+    >
+      {/* Cursor-tracked radial glow — terracotta, matches portrait palette */}
+      <div ref={glowRef} style={{
+        position: "absolute",
+        width: "380px",
+        height: "380px",
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(200,75,47,0.22) 0%, transparent 65%)",
+        transform: "translate(-50%, -50%)",
+        pointerEvents: "none",
+        opacity: 0,
+        transition: "opacity 0.4s ease",
+        zIndex: 0,
+        left: "50%",
+        top: "50%",
+      }} />
+
+      {/* Soft ambient halo behind portrait */}
       <div style={{
         position: "absolute",
-        width: "clamp(200px, 72%, 340px)",
+        width: "clamp(220px,78%,360px)",
         aspectRatio: "1",
         borderRadius: "50%",
-        border: "1px solid var(--accent)",
-        opacity: 0.12,
+        background: "radial-gradient(circle, rgba(200,75,47,0.10) 0%, transparent 70%)",
         pointerEvents: "none",
         zIndex: 0,
       }} />
 
-      {/* Portrait — always white bg, never inverted */}
+      {/* Portrait image */}
       <div className="portrait-wrap" style={{
         borderRadius: "16px",
         overflow: "hidden",
@@ -44,7 +85,7 @@ export default function Portrait({ className = "" }: { className?: string }) {
 
       <style>{`
         .portrait-outer:hover .portrait-wrap {
-          transform: translateY(-5px);
+          transform: translateY(-4px);
         }
       `}</style>
     </div>
