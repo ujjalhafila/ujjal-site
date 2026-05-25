@@ -131,16 +131,18 @@ export async function getAchievements(): Promise<AchievementItem[]> {
 }
 
 export async function getExperiments(): Promise<ExperimentItem[]> {
-  const dbId = EXPERIMENTS_DS;
-  if (!dbId) return [];
-  try {
-    // Use standard databases.query — works for any Notion DB accessible to the integration
-    const r = await (notion as any).databases.query({
-      database_id: dbId,
-      filter: { property: "Status", select: { equals: "Published" } },
-      sorts: [{ property: "Date", direction: "descending" }],
-    });
-    return (r.results as any[]).map((p: any) => ({
+  if (!EXPERIMENTS_DS) return [];
+  // dataSources.query with no filter — returns all pages in the data source
+  // then we filter to Published client-side to avoid filter format issues
+  const results = await queryDS(EXPERIMENTS_DS, undefined, [
+    { property: "Date", direction: "descending" },
+  ]);
+  return results
+    .filter((p: any) => {
+      const status = sel(p, "Status") || p.properties?.Status?.status?.name || "";
+      return status === "Published";
+    })
+    .map((p: any) => ({
       id:          p.id,
       title:       pageTitle(p),
       description: richText(p, "Description"),
@@ -150,7 +152,6 @@ export async function getExperiments(): Promise<ExperimentItem[]> {
       status:      sel(p, "Status"),
       date:        dt(p, "Date"),
     }));
-  } catch(e) { console.error("getExperiments error:", e); return []; }
 }
 
 export async function getFeaturedWork() { return (await getWorkItems()).slice(0,3); }
