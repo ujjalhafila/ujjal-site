@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import ExperimentModal from "./ExperimentModal";
 
 const MONO = "'DM Mono',monospace";
 const SANS = "'DM Sans',sans-serif";
@@ -20,10 +21,11 @@ const EXP_GLOWS = [
 ];
 
 interface WorkItem  { id:string; title:string; description:string; type:string; tags:string[]; thumbnailUrl:string|null; slug:string; }
-interface ExpItem   { id:string; title:string; description:string; imageUrl:string|null; tags:string[]; url:string|null; }
+interface ExpItem   { id:string; title:string; description:string; content:string; imageUrl:string|null; tags:string[]; url:string|null; date:string|null; }
 
 export default function WorkTabs({ workItems, experiments }: { workItems:WorkItem[]; experiments:ExpItem[]; }) {
   const [tab, setTab] = useState<"work"|"experiments">("work");
+  const [activeExp, setActiveExp] = useState<ExpItem | null>(null);
 
   return (
     <>
@@ -115,64 +117,77 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
           {experiments.length === 0 ? (
             <div style={{ padding:"4rem 28px" }}>
               <p style={{ fontFamily:MONO, fontSize:"12px", color:"var(--ink3)", lineHeight:1.75 }}>
-                No experiments published yet. In your Notion Experiments database,
-                set a row&apos;s Status to <strong>Published</strong> to show it here.
+                No experiments published yet.
               </p>
             </div>
           ) : (
             <div className="exp-grid">
               {experiments.map((exp, i) => {
                 const g = EXP_GLOWS[i % EXP_GLOWS.length];
-                const card = (
-                  <div className="glow-card exp-card"
+                return (
+                  <button
+                    key={exp.id}
+                    onClick={() => setActiveExp(exp)}
                     style={{
-                      display:"flex", flexDirection:"column", height:"100%",
-                      borderRight:"1px solid var(--rule)", borderBottom:"1px solid var(--rule)",
-                      ["--gc" as string]:g.gc, ["--gc-line" as string]:g.gcLine, ["--gc-text" as string]:g.gcText,
-                    } as React.CSSProperties}
+                      display:"block", width:"100%", textAlign:"left",
+                      background:"none", border:"none", cursor:"pointer", padding:0,
+                    }}
                   >
-                    <div style={{ width:"100%", aspectRatio:"4/3", overflow:"hidden", borderBottom:"1px solid var(--rule)", background:"var(--surface)", flexShrink:0 }}>
-                      {exp.imageUrl ? (
-                        <img src={exp.imageUrl} alt={exp.title} loading="lazy" className="thumb-img"
-                          style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
-                      ) : (
-                        <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--rule2)" strokeWidth="1">
-                            <rect x="3" y="3" width="18" height="18"/><path d="M3 9h18M9 3v18"/>
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ padding:"16px 18px 20px", flex:1, display:"flex", flexDirection:"column", gap:"8px" }}>
-                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:"8px" }}>
-                        <h3 className="gc-title" style={{ fontFamily:SANS, fontSize:"14px", fontWeight:600, lineHeight:1.3, letterSpacing:"-0.2px" }}>
-                          {exp.title}
-                        </h3>
-                        {exp.url && <span className="gc-arr" style={{ fontSize:"14px", color:"var(--ink3)", flexShrink:0, marginTop:"1px" }}>↗</span>}
+                    <div
+                      className="glow-card exp-card"
+                      style={{
+                        display:"flex", flexDirection:"column", height:"100%",
+                        borderRight:"1px solid var(--rule)", borderBottom:"1px solid var(--rule)",
+                        ["--gc" as string]:g.gc, ["--gc-line" as string]:g.gcLine, ["--gc-text" as string]:g.gcText,
+                      } as React.CSSProperties}
+                    >
+                      {/* Image */}
+                      <div style={{ width:"100%", aspectRatio:"4/3", overflow:"hidden", borderBottom:"1px solid var(--rule)", background:"var(--surface)", flexShrink:0 }}>
+                        {exp.imageUrl ? (
+                          <img src={exp.imageUrl} alt={exp.title} loading="lazy" className="thumb-img"
+                            style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                        ) : (
+                          <div style={{ width:"100%", height:"100%", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"8px" }}>
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--rule2)" strokeWidth="1">
+                              <rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+                            </svg>
+                            <span style={{ fontFamily:MONO, fontSize:"9px", color:"var(--ink3)", letterSpacing:"0.5px" }}>No image</span>
+                          </div>
+                        )}
                       </div>
-                      {exp.description && (
-                        <p style={{ fontFamily:SANS, fontSize:"12px", fontWeight:300, lineHeight:1.65, color:"var(--ink2)", margin:0 }}>
-                          {exp.description}
-                        </p>
-                      )}
-                      {exp.tags.length > 0 && (
-                        <div style={{ display:"flex", flexWrap:"wrap", gap:"4px", marginTop:"auto", paddingTop:"6px" }}>
-                          {exp.tags.slice(0,4).map(t => (
-                            <span key={t} style={{ fontFamily:MONO, fontSize:"9px", padding:"2px 7px", border:"1px solid var(--rule)", color:"var(--ink3)", letterSpacing:"0.3px" }}>{t}</span>
-                          ))}
+                      {/* Content */}
+                      <div style={{ padding:"16px 18px 20px", flex:1, display:"flex", flexDirection:"column", gap:"8px" }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:"8px" }}>
+                          <h3 className="gc-title" style={{ fontFamily:SANS, fontSize:"14px", fontWeight:600, lineHeight:1.3, letterSpacing:"-0.2px" }}>
+                            {exp.title}
+                          </h3>
+                          <span className="gc-arr" style={{ fontSize:"14px", color:"var(--ink3)", flexShrink:0, marginTop:"1px" }}>↗</span>
                         </div>
-                      )}
+                        {exp.description && (
+                          <p style={{ fontFamily:SANS, fontSize:"12px", fontWeight:300, lineHeight:1.65, color:"var(--ink2)", margin:0 }}>
+                            {exp.description}
+                          </p>
+                        )}
+                        {exp.tags.length > 0 && (
+                          <div style={{ display:"flex", flexWrap:"wrap", gap:"4px", marginTop:"auto", paddingTop:"6px" }}>
+                            {exp.tags.slice(0,4).map(t => (
+                              <span key={t} style={{ fontFamily:MONO, fontSize:"9px", padding:"2px 7px", border:"1px solid var(--rule)", color:"var(--ink3)", letterSpacing:"0.3px" }}>{t}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </button>
                 );
-                return exp.url ? (
-                  <a key={exp.id} href={exp.url} target="_blank" rel="noopener"
-                    style={{ display:"block", textDecoration:"none", color:"inherit" }}>{card}</a>
-                ) : <div key={exp.id}>{card}</div>;
               })}
             </div>
           )}
         </div>
+      )}
+
+      {/* ── Modal ── */}
+      {activeExp && (
+        <ExperimentModal exp={activeExp} onClose={() => setActiveExp(null)} />
       )}
 
       <style>{`

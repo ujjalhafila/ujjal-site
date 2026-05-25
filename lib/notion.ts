@@ -7,7 +7,7 @@ const n2m = new NotionToMarkdown({ notionClient: notion as any });
 const PORTFOLIO_DS = process.env.NOTION_PORTFOLIO_DB_ID!;
 const THINK_DS = process.env.NOTION_THINK_DB_ID!;
 const ACHIEVEMENTS_DS = process.env.NOTION_ACHIEVEMENTS_DB_ID!;
-const EXPERIMENTS_DS  = process.env.NOTION_EXPERIMENTS_DB_ID ?? "ef7d12a8-04a0-4052-a266-6f6b6a61c67d";
+const EXPERIMENTS_DS  = process.env.NOTION_EXPERIMENTS_DB_ID ?? "a42b63ae-25b4-4b07-98ae-f7be3c6046e6";
 
 export type WorkItem = {
   id: string; title: string; description: string; status: string;
@@ -32,6 +32,7 @@ export type ExperimentItem = {
   id: string;
   title: string;
   description: string;
+  content: string;
   imageUrl: string | null;
   tags: string[];
   url: string | null;
@@ -138,8 +139,9 @@ const FALLBACK_EXPERIMENTS: ExperimentItem[] = [
     id: "fallback-1",
     title: "Confidence-Based Element Resolver",
     description: "A scoring algorithm that identifies UI elements on desktop apps by weighting AutomationId, ControlType, and positional heuristics — built for Whatfix Journeys.",
+    content: "## What is this?\n\nA confidence-based scoring algorithm for resolving UI elements on native desktop applications — targeting SAP and similar enterprise tools.\n\n## Approach\n\nScore each candidate element across five weighted signals: AutomationId (0.40), ControlType (0.25), Name/Label (0.20), Position proximity (0.10), Sibling context (0.05). Pick the candidate with score > 0.72.\n\n## Status\n\nInternal prototype validated in early testing of Journeys hybrid flow authoring on SAP desktop.",
     imageUrl: null,
-    tags: ["Prototype", "AI", "Tool"],
+    tags: ["Prototype", "AI", "Tool", "System Design"],
     url: "https://github.com/ujjalhafila",
     status: "Published",
     date: "2025-05-01",
@@ -160,14 +162,23 @@ export async function getExperiments(): Promise<ExperimentItem[]> {
         id:          p.id,
         title:       pageTitle(p),
         description: richText(p, "Description"),
+        content:     "",
         imageUrl:    fileUrl(p, "Cover") ?? fileUrl(p, "Image") ?? fileUrl(p, "Thumbnail"),
         tags:        mSel(p, "Tags"),
         url:         pUrl(p, "userDefined:URL") ?? pUrl(p, "URL"),
         status:      sel(p, "Status"),
         date:        dt(p, "Date"),
       }));
-    // If the DB is accessible but empty, still return fallbacks so the section isn't blank
-    return mapped.length > 0 ? mapped : FALLBACK_EXPERIMENTS;
+    if (mapped.length === 0) return FALLBACK_EXPERIMENTS;
+    // Fetch markdown content for each experiment
+    const withContent = await Promise.all(mapped.map(async (exp) => {
+      try {
+        const blocks = await n2m.pageToMarkdown(exp.id);
+        exp.content = n2m.toMarkdownString(blocks).parent ?? "";
+      } catch { exp.content = ""; }
+      return exp;
+    }));
+    return withContent;
   } catch(e) {
     console.error("[getExperiments] error:", e);
     return FALLBACK_EXPERIMENTS;
