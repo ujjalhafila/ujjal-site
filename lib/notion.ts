@@ -7,6 +7,7 @@ const n2m = new NotionToMarkdown({ notionClient: notion as any });
 const PORTFOLIO_DS = process.env.NOTION_PORTFOLIO_DB_ID!;
 const THINK_DS = process.env.NOTION_THINK_DB_ID!;
 const ACHIEVEMENTS_DS = process.env.NOTION_ACHIEVEMENTS_DB_ID!;
+const EXPERIMENTS_DS  = process.env.NOTION_EXPERIMENTS_DB_ID ?? "";
 
 export type WorkItem = {
   id: string; title: string; description: string; status: string;
@@ -25,6 +26,17 @@ export type AchievementItem = {
   year: number | null; description: string;
   url: string | null; linkLabel: string;
   featured: boolean; imageUrl: string | null;
+};
+
+export type ExperimentItem = {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string | null;
+  tags: string[];
+  url: string | null;
+  status: string;
+  date: string | null;
 };
 
 function slugify(t: string) { return t.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""); }
@@ -115,6 +127,28 @@ export async function getAchievements(): Promise<AchievementItem[]> {
     description:richText(p,"Description"),
     url:pUrl(p,"userDefined:URL"), linkLabel:richText(p,"Link Label"),
     featured:chk(p,"Featured"), imageUrl:fileUrl(p,"Image"),
+  }));
+}
+
+export async function getExperiments(): Promise<ExperimentItem[]> {
+  if (!EXPERIMENTS_DS) return [];
+  const results = await queryDS(
+    EXPERIMENTS_DS,
+    { or:[
+      { property:"Status", select:{ equals:"Published" } },
+      { property:"Status", status:{ equals:"Published" } },
+    ]},
+    [{ property:"Date", direction:"descending" }]
+  );
+  return results.map((p: any) => ({
+    id:          p.id,
+    title:       pageTitle(p),
+    description: richText(p, "Description"),
+    imageUrl:    fileUrl(p, "Cover") ?? fileUrl(p, "Image") ?? fileUrl(p, "Thumbnail"),
+    tags:        mSel(p, "Tags"),
+    url:         pUrl(p, "URL") ?? pUrl(p, "userDefined:URL") ?? pUrl(p, "Link"),
+    status:      sel(p, "Status") || p.properties?.Status?.status?.name || "",
+    date:        dt(p, "Date"),
   }));
 }
 
