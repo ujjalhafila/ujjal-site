@@ -135,7 +135,7 @@ export async function getExperiments(): Promise<ExperimentItem[]> {
   if (!dbId) return [];
   try {
     // Use standard databases.query — works for any Notion DB accessible to the integration
-    const r = await notion.databases.query({
+    const r = await (notion as any).databases.query({
       database_id: dbId,
       filter: { property: "Status", select: { equals: "Published" } },
       sorts: [{ property: "Date", direction: "descending" }],
