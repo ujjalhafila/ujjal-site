@@ -132,26 +132,31 @@ export async function getAchievements(): Promise<AchievementItem[]> {
 
 export async function getExperiments(): Promise<ExperimentItem[]> {
   if (!EXPERIMENTS_DS) return [];
-  // dataSources.query with no filter — returns all pages in the data source
-  // then we filter to Published client-side to avoid filter format issues
-  const results = await queryDS(EXPERIMENTS_DS, undefined, [
-    { property: "Date", direction: "descending" },
-  ]);
-  return results
-    .filter((p: any) => {
-      const status = sel(p, "Status") || p.properties?.Status?.status?.name || "";
-      return status === "Published";
-    })
-    .map((p: any) => ({
-      id:          p.id,
-      title:       pageTitle(p),
-      description: richText(p, "Description"),
-      imageUrl:    fileUrl(p, "Cover") ?? fileUrl(p, "Image") ?? fileUrl(p, "Thumbnail"),
-      tags:        mSel(p, "Tags"),
-      url:         pUrl(p, "userDefined:URL") ?? pUrl(p, "URL"),
-      status:      sel(p, "Status"),
-      date:        dt(p, "Date"),
-    }));
+  try {
+    // Query with no filter, no sorts — most permissive call
+    const r = await (notion as any).dataSources.query({ data_source_id: EXPERIMENTS_DS });
+    const results: any[] = r?.results ?? [];
+    console.log("[getExperiments] raw count:", results.length, "ids:", results.map((p:any)=>p.id));
+    return results
+      .filter((p: any) => {
+        const status = sel(p, "Status") || p.properties?.Status?.status?.name || "";
+        console.log("[getExperiments] row:", pageTitle(p), "status:", status);
+        return status === "Published";
+      })
+      .map((p: any) => ({
+        id:          p.id,
+        title:       pageTitle(p),
+        description: richText(p, "Description"),
+        imageUrl:    fileUrl(p, "Cover") ?? fileUrl(p, "Image") ?? fileUrl(p, "Thumbnail"),
+        tags:        mSel(p, "Tags"),
+        url:         pUrl(p, "userDefined:URL") ?? pUrl(p, "URL"),
+        status:      sel(p, "Status"),
+        date:        dt(p, "Date"),
+      }));
+  } catch(e) {
+    console.error("[getExperiments] error:", e);
+    return [];
+  }
 }
 
 export async function getFeaturedWork() { return (await getWorkItems()).slice(0,3); }
