@@ -7,7 +7,7 @@ const n2m = new NotionToMarkdown({ notionClient: notion as any });
 const PORTFOLIO_DS = process.env.NOTION_PORTFOLIO_DB_ID!;
 const THINK_DS = process.env.NOTION_THINK_DB_ID!;
 const ACHIEVEMENTS_DS = process.env.NOTION_ACHIEVEMENTS_DB_ID!;
-const EXPERIMENTS_DS  = process.env.NOTION_EXPERIMENTS_DB_ID ?? "";
+const EXPERIMENTS_DS  = process.env.NOTION_EXPERIMENTS_DB_ID ?? "ef7d12a8-04a0-4052-a266-6f6b6a61c67d";
 
 export type WorkItem = {
   id: string; title: string; description: string; status: string;
