@@ -131,25 +131,26 @@ export async function getAchievements(): Promise<AchievementItem[]> {
 }
 
 export async function getExperiments(): Promise<ExperimentItem[]> {
-  if (!EXPERIMENTS_DS) return [];
-  const results = await queryDS(
-    EXPERIMENTS_DS,
-    { or:[
-      { property:"Status", select:{ equals:"Published" } },
-      { property:"Status", status:{ equals:"Published" } },
-    ]},
-    [{ property:"Date", direction:"descending" }]
-  );
-  return results.map((p: any) => ({
-    id:          p.id,
-    title:       pageTitle(p),
-    description: richText(p, "Description"),
-    imageUrl:    fileUrl(p, "Cover") ?? fileUrl(p, "Image") ?? fileUrl(p, "Thumbnail"),
-    tags:        mSel(p, "Tags"),
-    url:         pUrl(p, "URL") ?? pUrl(p, "userDefined:URL") ?? pUrl(p, "Link"),
-    status:      sel(p, "Status") || p.properties?.Status?.status?.name || "",
-    date:        dt(p, "Date"),
-  }));
+  const dbId = EXPERIMENTS_DS;
+  if (!dbId) return [];
+  try {
+    // Use standard databases.query — works for any Notion DB accessible to the integration
+    const r = await notion.databases.query({
+      database_id: dbId,
+      filter: { property: "Status", select: { equals: "Published" } },
+      sorts: [{ property: "Date", direction: "descending" }],
+    });
+    return (r.results as any[]).map((p: any) => ({
+      id:          p.id,
+      title:       pageTitle(p),
+      description: richText(p, "Description"),
+      imageUrl:    fileUrl(p, "Cover") ?? fileUrl(p, "Image") ?? fileUrl(p, "Thumbnail"),
+      tags:        mSel(p, "Tags"),
+      url:         pUrl(p, "userDefined:URL") ?? pUrl(p, "URL"),
+      status:      sel(p, "Status"),
+      date:        dt(p, "Date"),
+    }));
+  } catch(e) { console.error("getExperiments error:", e); return []; }
 }
 
 export async function getFeaturedWork() { return (await getWorkItems()).slice(0,3); }
