@@ -84,10 +84,12 @@ function parseTables(md: string): string {
       merged.length > 0 &&
       merged[merged.length - 1].trim().startsWith("|") &&
       trimmed !== "" &&
-      lines[i + 1]?.trim().startsWith("|")
+      (lines[i + 1]?.trim().startsWith("|") || trimmed.endsWith("|"))
     ) {
-      // Non-pipe line sandwiched between two pipe lines → continuation cell text
-      merged[merged.length - 1] += " " + trimmed;
+      // Continuation: sandwiched between pipe rows OR ends with | (dangling cell text)
+      // Strip trailing | if present, then append to the previous row
+      const cont = trimmed.endsWith("|") ? trimmed.slice(0, -1).trim() : trimmed;
+      merged[merged.length - 1] += " " + cont;
     } else {
       merged.push(lines[i]);
     }

@@ -232,29 +232,41 @@ export type CtaItem = {
   accent: "teal" | "red" | "purple" | "blue" | "yellow";
 };
 
+// Shown when Notion CTA DB is inaccessible — edit fields in the Site CTA Notion DB to override.
+const DEFAULT_CTA: CtaItem = {
+  heading: "Shaping my next work — need your take",
+  description: "I'm researching how product designers navigate tool overload and AI adoption. Takes 3 minutes — your input shapes what I write and build next.",
+  ctaLabel: "Take the Survey →",
+  ctaUrl: "https://forms.gle/placeholder",
+  accent: "teal",
+};
+
 export async function getActiveCta(): Promise<CtaItem | null> {
-  if (!CTA_DS) return null;
   try {
     const token = process.env.NOTION_TOKEN ?? "";
-    const resp = await fetch(`https://api.notion.com/v1/databases/${CTA_DS}/query`, {
+    const dbId = CTA_DS || "bb2bfb72-2af1-4f68-bfd5-8d0ca44d42bc";
+    const resp = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${token}`, "Notion-Version": "2022-06-28", "Content-Type": "application/json" },
       body: JSON.stringify({}),
-      next: { revalidate: 300 }, // cache 5 min
+      next: { revalidate: 300 },
     });
-    if (!resp.ok) return null;
+    if (!resp.ok) return DEFAULT_CTA;
     const data = await resp.json() as any;
     const active = (data.results ?? []).find((p: any) => p.properties?.Active?.checkbox === true);
-    if (!active) return null;
+    if (!active) return DEFAULT_CTA;
     const props = active.properties;
+    const heading  = props?.Heading?.rich_text?.[0]?.plain_text ?? "";
+    const ctaUrl   = props?.["CTA URL"]?.url ?? "";
+    if (!heading || !ctaUrl) return DEFAULT_CTA;
     return {
-      heading:     props?.Heading?.rich_text?.[0]?.plain_text ?? "",
+      heading,
       description: props?.Description?.rich_text?.[0]?.plain_text ?? "",
       ctaLabel:    props?.["CTA Label"]?.rich_text?.[0]?.plain_text ?? "Learn more →",
-      ctaUrl:      props?.["CTA URL"]?.url ?? "#",
+      ctaUrl,
       accent:      (props?.Accent?.select?.name ?? "teal") as CtaItem["accent"],
     };
-  } catch { return null; }
+  } catch { return DEFAULT_CTA; }
 }
 
 export async function getFeaturedWork() { return (await getWorkItems()).slice(0,3); }
