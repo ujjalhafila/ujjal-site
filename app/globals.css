@@ -157,22 +157,22 @@ blockquote { font-weight: 400; }
 
 /* ─── GLOW BUTTON ──────────────────────────────────────────────────────── */
 .glow-btn {
-  position: relative; overflow: visible; cursor: pointer;
-  transition: color 0.25s, border-color 0.25s, box-shadow 0.25s;
+  position: relative; cursor: pointer;
   display: inline-flex; align-items: center; text-decoration: none;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
 }
-/* Outer glow halo — shows on hover, tracks cursor via JS */
-.glow-btn::after {
-  content: ''; position: absolute; border-radius: 50%;
-  width: 220px; height: 220px;
-  background: radial-gradient(circle, var(--gc, rgba(77,255,180,0.18)) 0%, transparent 70%);
-  left: var(--mx, 50%); top: var(--my, 50%);
-  transform: translate(-50%, -50%);
-  opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: -1;
-  will-change: left, top;
+/* Primary (filled dark) button hover: lift + subtle glow shadow */
+.glow-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--gc, rgba(0,168,107,0.28));
 }
-.glow-btn:hover::after { opacity: 1; }
-.glow-btn > * { position: relative; z-index: 1; }
+.glow-btn:active { transform: translateY(0); box-shadow: none; }
+/* Secondary (outline) button hover: border becomes ink, slight lift */
+.glow-btn-outline:hover {
+  border-color: var(--ink) !important;
+  color: var(--ink) !important;
+  transform: translateY(-1px);
+}
 
 /* ─── CARD IMAGE ZOOM ──────────────────────────────────────────────────── */
 .glow-card:hover .thumb-img { transform: scale(1.04); filter: grayscale(0%); }
@@ -262,33 +262,44 @@ input:focus, textarea:focus { border-color: var(--rule2); outline: none; }
 .media-play-btn { width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,0.92); display: flex; align-items: center; justify-content: center; transition: transform 0.2s, box-shadow 0.2s; }
 .media-placeholder:hover .media-play-btn { transform: scale(1.08); box-shadow: 0 0 20px rgba(255,255,255,0.3); }
 .media-platform-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.9); }
-.media-no-thumb { height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: var(--surface); cursor: pointer; transition: background 0.2s; }
-.media-placeholder:hover .media-no-thumb { background: var(--surface); }
-.media-play-circle { width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid var(--rule2); background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--ink2); transition: border-color 0.2s, color 0.2s, transform 0.2s; }
-.media-placeholder:hover .media-play-circle { border-color: var(--ink3); color: var(--ink); transform: scale(1.06); }
-.media-play-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--ink3); transition: color 0.2s; }
-.media-placeholder:hover .media-play-label { color: var(--ink); }
+.media-no-thumb { height: 180px; display: flex; align-items: center; justify-content: center; background: var(--surface); cursor: pointer; position: relative; overflow: hidden; }
+.media-play-circle { display: none; }
+.media-play-label { display: none; }
+/* "▶ Play video" appears on hover in bottom-left corner */
+.media-no-thumb::after {
+  content: "▶  Play Video";
+  position: absolute; bottom: 10px; left: 12px;
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  letter-spacing: 0.6px; text-transform: uppercase;
+  color: var(--ink); background: var(--bg);
+  padding: 4px 10px; opacity: 0;
+  transition: opacity 0.2s;
+}
+.media-placeholder:hover .media-no-thumb::after { opacity: 1; }
 
 /* ── Iframe static preview card ─────────────────────────────────────────── */
 .media-iframe-preview { position: relative; width: 100%; padding-bottom: 56.25%; background: #111; }
 .media-preview-iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; pointer-events: none; }
 .media-iframe-overlay {
-  position: absolute; inset: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 10px;
-  background: rgba(0,0,0,0.35); cursor: pointer;
+  position: absolute; inset: 0;
+  background: transparent; cursor: pointer;
   transition: background 0.2s;
 }
-.media-placeholder:hover .media-iframe-overlay { background: rgba(0,0,0,0.2); }
-.media-iframe-overlay .media-play-btn {
-  width: 56px; height: 56px; border-radius: 50%;
-  background: rgba(255,255,255,0.9);
-  display: flex; align-items: center; justify-content: center;
-  color: #0f0e0d; transition: transform 0.2s, box-shadow 0.2s;
+.media-placeholder:hover .media-iframe-overlay { background: rgba(0,0,0,0.08); }
+/* Hide the centered play button — we use a corner label instead */
+.media-iframe-overlay .media-play-btn { display: none; }
+.media-iframe-overlay .media-platform-label { display: none; }
+/* "▶ Play video" corner label */
+.media-iframe-overlay::after {
+  content: "▶  Play Video";
+  position: absolute; bottom: 10px; left: 12px;
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  letter-spacing: 0.6px; text-transform: uppercase;
+  color: #fff; background: rgba(0,0,0,0.55);
+  padding: 4px 10px; opacity: 0;
+  transition: opacity 0.2s;
 }
-.media-placeholder:hover .media-iframe-overlay .media-play-btn {
-  transform: scale(1.1); box-shadow: 0 0 24px rgba(255,255,255,0.4);
-}
-.media-iframe-overlay .media-platform-label { color: rgba(255,255,255,0.9); }
+.media-placeholder:hover .media-iframe-overlay::after { opacity: 1; }
 
 /* ─── NOTION COLUMNS / TABLES ──────────────────────────────────────────── */
 .notion-columns { display: grid; gap: 2rem; margin: 1.75rem 0; align-items: start; }

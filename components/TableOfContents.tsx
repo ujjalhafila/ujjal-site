@@ -5,9 +5,13 @@ interface Heading { id: string; text: string; level: number; }
 
 const S = { mono: "'DM Mono',monospace", sans: "'DM Sans',sans-serif" };
 
-// Active colour palette — matches the site's per-page accent colours
-const ACTIVE_COLOR = "#4DFFB4";   // teal — works on dark + light
-const ACTIVE_BG    = "rgba(77,255,180,0.08)";
+// Active colour — matches "Work" nav link colour in light mode (#FF4D6D),
+// teal in dark mode (#4DFFB4). Resolved at runtime from CSS variables.
+// We inject a <style> that defines --toc-active for each theme.
+const TOC_ACTIVE_STYLE = `
+  :root, .light, [data-theme="light"] { --toc-active: #D42B45; --toc-active-bg: rgba(212,43,69,0.07); }
+  .dark, [data-theme="dark"]           { --toc-active: #4DFFB4; --toc-active-bg: rgba(77,255,180,0.08); }
+`;
 
 function slugify(text: string) {
   return text.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim();
@@ -99,6 +103,9 @@ export default function TableOfContents({ html }: { html: string }) {
 
   return (
     <>
+      {/* Inject theme-aware active colour variables */}
+      <style dangerouslySetInnerHTML={{ __html: TOC_ACTIVE_STYLE }} />
+
       {/* ── Desktop sidebar ──────────────────────────────────────────── */}
       <nav className="toc-sidebar" aria-label="Page sections">
         {/* Label */}
@@ -123,9 +130,9 @@ export default function TableOfContents({ html }: { html: string }) {
                   onMouseEnter={() => setHovered(id)}
                   onMouseLeave={() => setHovered("")}
                   style={{
-                    background: isActive ? ACTIVE_BG : isHovered ? "var(--surface)" : "none",
+                    background: isActive ? "var(--toc-active-bg)" : isHovered ? "var(--surface)" : "none",
                     border: "none",
-                    borderLeft: `2px solid ${isActive ? ACTIVE_COLOR : isHovered ? "var(--rule2)" : "var(--rule)"}`,
+                    borderLeft: `2px solid ${isActive ? "var(--toc-active)" : isHovered ? "var(--rule2)" : "var(--rule)"}`,
                     cursor: "pointer",
                     textAlign: "left",
                     width: "100%",
@@ -133,7 +140,7 @@ export default function TableOfContents({ html }: { html: string }) {
                     fontSize: level === 2 ? "13px" : "12px",
                     fontWeight: isActive ? 500 : 400,
                     lineHeight: 1.5,
-                    color: isActive ? ACTIVE_COLOR : isHovered ? "var(--ink)" : "var(--ink3)",
+                    color: isActive ? "var(--toc-active)" : isHovered ? "var(--ink)" : "var(--ink3)",
                     paddingLeft: "0.7rem",
                     paddingTop: "0.3rem",
                     paddingBottom: "0.3rem",
@@ -162,9 +169,9 @@ export default function TableOfContents({ html }: { html: string }) {
                 onClick={() => handleClick(id)}
                 style={{
                   flexShrink: 0,
-                  background: isActive ? ACTIVE_BG : "var(--surface)",
-                  color: isActive ? ACTIVE_COLOR : "var(--ink3)",
-                  border: `1px solid ${isActive ? ACTIVE_COLOR : "var(--rule)"}`,
+                  background: isActive ? "var(--toc-active-bg)" : "var(--surface)",
+                  color: isActive ? "var(--toc-active)" : "var(--ink3)",
+                  border: `1px solid ${isActive ? "var(--toc-active)" : "var(--rule)"}`,
                   borderRadius: "2px",
                   padding: "0.3rem 0.85rem",
                   fontFamily: S.mono,

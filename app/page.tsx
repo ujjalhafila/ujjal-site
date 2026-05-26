@@ -144,7 +144,7 @@ export default async function Home() {
             }}>
               View Work →
             </Link>
-            <Link href="/think" className="glow-btn" style={{
+            <Link href="/think" className="glow-btn glow-btn-outline" style={{
               fontFamily:MONO, fontSize:"12px", padding:"9px 22px",
               background:"transparent", color:"var(--ink2)",
               border:"1px solid var(--rule)",
@@ -428,7 +428,8 @@ export default async function Home() {
       if (raf) { cancelAnimationFrame(raf); raf = null; }
     });
   }
-  document.querySelectorAll('.glow-card, .glow-row, .glow-btn').forEach(trackGlow);
+  /* Cards and rows get organic cursor glow; buttons use CSS-only box-shadow */
+  document.querySelectorAll('.glow-card, .glow-row').forEach(trackGlow);
 
   /* Quote rotation (kept from original) */
   var slides = document.querySelectorAll('.quote-slide');
