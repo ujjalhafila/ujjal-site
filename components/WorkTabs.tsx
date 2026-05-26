@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import ExperimentModal from "./ExperimentModal";
 
 const MONO = "'DM Mono',monospace";
@@ -26,6 +26,47 @@ interface ExpItem   { id:string; title:string; description:string; content:strin
 export default function WorkTabs({ workItems, experiments }: { workItems:WorkItem[]; experiments:ExpItem[]; }) {
   const [tab, setTab] = useState<"work"|"experiments">("work");
   const [activeExp, setActiveExp] = useState<ExpItem | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    function attachTracker(el: Element) {
+      let targetX = 0, targetY = 0, currentX = 0, currentY = 0, raf: number | null = null;
+      function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
+      function animate() {
+        currentX = lerp(currentX, targetX, 0.18);
+        currentY = lerp(currentY, targetY, 0.18);
+        (el as HTMLElement).style.setProperty("--mx", currentX.toFixed(1) + "px");
+        (el as HTMLElement).style.setProperty("--my", currentY.toFixed(1) + "px");
+        if (Math.abs(currentX - targetX) > 0.5 || Math.abs(currentY - targetY) > 0.5) {
+          raf = requestAnimationFrame(animate);
+        } else { raf = null; }
+      }
+      el.addEventListener("mousemove", (e: Event) => {
+        const me = e as MouseEvent;
+        const r = (el as HTMLElement).getBoundingClientRect();
+        targetX = me.clientX - r.left;
+        targetY = me.clientY - r.top;
+        if (!raf) raf = requestAnimationFrame(animate);
+      });
+      el.addEventListener("mouseleave", () => {
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
+      });
+    }
+
+    const cards = container.querySelectorAll(".glow-card");
+    cards.forEach(attachTracker);
+
+    // Re-attach when tab changes (new cards rendered)
+    const observer = new MutationObserver(() => {
+      container.querySelectorAll(".glow-card").forEach(attachTracker);
+    });
+    observer.observe(container, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <>
@@ -59,7 +100,7 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
 
       {/* ── Case Studies ── */}
       {tab === "work" && (
-        <div style={{ animation:"fadeUp 0.25s ease both" }}>
+        <div ref={containerRef} style={{ animation:"fadeUp 0.25s ease both" }}>
           {workItems.length === 0 ? (
             <div style={{ padding:"5rem 28px", borderBottom:"1px solid var(--rule)", textAlign:"center" }}>
               <p style={{ fontFamily:MONO, fontSize:"13px", color:"var(--ink3)" }}>
@@ -113,7 +154,7 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
 
       {/* ── Experiments ── */}
       {tab === "experiments" && (
-        <div style={{ animation:"fadeUp 0.25s ease both" }}>
+        <div ref={containerRef} style={{ animation:"fadeUp 0.25s ease both" }}>
           {experiments.length === 0 ? (
             <div style={{ padding:"4rem 28px" }}>
               <p style={{ fontFamily:MONO, fontSize:"12px", color:"var(--ink3)", lineHeight:1.75 }}>
