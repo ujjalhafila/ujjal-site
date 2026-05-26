@@ -144,7 +144,7 @@ export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClos
             {exp.url && (
               <a href={exp.url} target="_blank" rel="noopener" className="modal-link-btn" style={{
                 fontFamily:MONO, fontSize:"11px", letterSpacing:"0.5px", textTransform:"uppercase",
-                color:"#4DFFB4", border:"1px solid #4DFFB4", padding:"6px 14px",
+                color:"var(--modal-cta)", border:"1px solid var(--modal-cta)", padding:"6px 14px",
                 textDecoration:"none", display:"inline-flex", alignItems:"center", gap:"6px",
                 transition:"background 0.2s, color 0.2s",
               }}>
