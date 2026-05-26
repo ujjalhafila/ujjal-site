@@ -6,10 +6,12 @@ const n2m = new NotionToMarkdown({ notionClient: notion as any });
 
 // ── Block type transformers ───────────────────────────────────────────────
 n2m.setCustomTransformer("button", async (block: any) => {
-  const label = block?.button?.label ?? block?.button?.text ?? "Open";
-  const url   = block?.button?.url ?? block?.button?.action?.url ?? "";
-  if (!url) return `**${label}**`;
-  return `[button:${label}](${url})`;
+  const b = block?.button ?? {};
+  // Notion button: rich_text for label, action.url for destination
+  const richText = (b.rich_text ?? []).map((t: any) => t.plain_text).join("") || b.label || b.text || "Open";
+  const url = b.url ?? b.action?.url ?? b.action?.type === "url" ? (b.action?.url ?? "") : "";
+  if (!url) return `**${richText}**`;
+  return `[button:${richText}](${url})`;
 });
 n2m.setCustomTransformer("callout", async (block: any) => {
   const text = (block?.callout?.rich_text ?? []).map((t: any) => t.plain_text).join("");
@@ -232,13 +234,14 @@ export type CtaItem = {
   accent: "teal" | "red" | "purple" | "blue" | "yellow";
 };
 
-// Shown when Notion CTA DB is inaccessible — edit fields in the Site CTA Notion DB to override.
+// Shown when Notion CTA DB is inaccessible — mirrors the active Notion row.
+// Update this whenever you update the Notion "Site CTA" database.
 const DEFAULT_CTA: CtaItem = {
   heading: "Shaping my next work — need your take",
   description: "I'm researching how product designers navigate tool overload and AI adoption. Takes 3 minutes — your input shapes what I write and build next.",
-  ctaLabel: "Take the Survey →",
+  ctaLabel: "Take the Survey",
   ctaUrl: "https://forms.gle/placeholder",
-  accent: "teal",
+  accent: "blue",
 };
 
 export async function getActiveCta(): Promise<CtaItem | null> {

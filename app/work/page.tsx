@@ -32,14 +32,6 @@ export default async function WorkPage() {
               Case studies and live experiments — from digital adoption systems to AI-first interaction design.
             </p>
           </div>
-          {/* Experiment count callout */}
-          {experiments.length > 0 && (
-            <div style={{ textAlign:"right", paddingBottom:"4px" }}>
-              <div style={{ fontFamily:MONO, fontSize:"10px", color:"var(--ink3)", letterSpacing:"1px", marginBottom:"6px" }}>ALSO</div>
-              <div style={{ fontFamily:MONO, fontSize:"28px", fontWeight:300, color:"var(--ink)", lineHeight:1 }}>{experiments.length}</div>
-              <div style={{ fontFamily:MONO, fontSize:"10px", color:"var(--ink3)", marginTop:"4px", letterSpacing:"0.5px" }}>Experiment{experiments.length !== 1 ? "s" : ""}</div>
-            </div>
-          )}
         </div>
       </div>
 

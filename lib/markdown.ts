@@ -35,17 +35,36 @@ function videoPlatform(url: string): string {
 
 // Emits a server-rendered placeholder div.
 // ProseContent.tsx picks these up by data-media-type and makes them interactive.
+function getDriveId(url: string): string | null {
+  return url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] ?? null;
+}
+
+function staticPreviewUrl(url: string): string | null {
+  const ytId_ = ytId(url);
+  if (ytId_) return `https://www.youtube-nocookie.com/embed/${ytId_}?rel=0&controls=0&showinfo=0&modestbranding=1`;
+  const id = getDriveId(url);
+  if (id) return `https://drive.google.com/file/d/${id}/preview`;
+  return null;
+}
+
 function mediaCard(url: string, alt = "", type: "image" | "video" | "figma") {
-  const thumb = videoThumb(url) || "";
+  const thumb    = videoThumb(url) || "";
   const platform = type === "video" ? videoPlatform(url) : type === "figma" ? "Figma" : "";
-  const driveNote = isDriveVideo(url) ? '<span class="media-drive-note">Opens in Google Drive</span>' : "";
-  return `<div class="media-placeholder" data-media-type="${type}" data-src="${escAttr(url)}" data-alt="${escAttr(alt)}" data-thumb="${escAttr(thumb)}" data-platform="${escAttr(platform)}" tabindex="0" role="button" aria-label="Open ${alt || platform || "media"} in viewer">${
-    type === "image"
-      ? `<img src="${escAttr(url)}" alt="${escAttr(alt)}" loading="lazy" class="media-thumb-img"/><div class="media-zoom-badge">⊕ View</div>`
-      : thumb
-      ? `<img src="${escAttr(thumb)}" alt="${escAttr(platform)} preview" loading="lazy" class="media-thumb-img"/><div class="media-play-overlay"><div class="media-play-btn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#c84b2f"><polygon points="6,3 20,12 6,21"/></svg></div><span class="media-platform-label">${platform}</span></div>`
-      : `<div class="media-no-thumb"><div class="media-play-circle"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="8,5 19,12 8,19"/></svg></div><span class="media-play-label">▶&nbsp;Play ${platform || "Video"}</span></div>`
-  }</div>`;
+  const preview  = type === "video" ? staticPreviewUrl(url) : null;
+
+  let inner: string;
+  if (type === "image") {
+    inner = `<img src="${escAttr(url)}" alt="${escAttr(alt)}" loading="lazy" class="media-thumb-img"/><div class="media-zoom-badge">⊕ View</div>`;
+  } else if (preview) {
+    // Show a non-autoplay iframe as static preview — clicking opens the modal with autoplay
+    inner = `<div class="media-iframe-preview"><iframe src="${escAttr(preview)}" loading="lazy" tabindex="-1" aria-hidden="true" class="media-preview-iframe" allowfullscreen></iframe><div class="media-iframe-overlay"><div class="media-play-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></div><span class="media-platform-label">${platform}</span></div></div>`;
+  } else if (thumb) {
+    inner = `<img src="${escAttr(thumb)}" alt="${escAttr(platform)} preview" loading="lazy" class="media-thumb-img"/><div class="media-play-overlay"><div class="media-play-btn"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></div><span class="media-platform-label">${platform}</span></div>`;
+  } else {
+    inner = `<div class="media-no-thumb"><div class="media-play-circle"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="8,5 19,12 8,19"/></svg></div><span class="media-play-label">▶&nbsp;Play ${platform || "Video"}</span></div>`;
+  }
+
+  return `<div class="media-placeholder" data-media-type="${type}" data-src="${escAttr(url)}" data-alt="${escAttr(alt)}" data-thumb="${escAttr(thumb)}" data-platform="${escAttr(platform)}" tabindex="0" role="button" aria-label="Play ${alt || platform || "video"}">${inner}</div>`;
 }
 
 // ── Notion <columns> → side-by-side grid ────────────────────────────────────

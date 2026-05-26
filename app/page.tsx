@@ -140,7 +140,7 @@ export default async function Home() {
               fontFamily:MONO, fontSize:"12px", padding:"9px 22px",
               background:"var(--ink)", color:"var(--bg)",
               border:"1px solid var(--ink)",
-              ["--gc" as string]:"rgba(237,234,226,0.15)",
+              ["--gc" as string]:"rgba(0,168,107,0.35)",
             }}>
               View Work →
             </Link>
@@ -405,12 +405,27 @@ export default async function Home() {
   }, { threshold:0.12 });
   document.querySelectorAll('.reveal').forEach(function(el){ obs.observe(el); });
 
-  /* Cursor-tracked glow on .glow-card and .glow-row and .glow-btn */
+  /* Cursor-tracked glow — organic follow with RAF for smoothness */
   function trackGlow(el) {
+    var targetX = 0, targetY = 0, currentX = 0, currentY = 0, raf = null;
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function animate() {
+      currentX = lerp(currentX, targetX, 0.18);
+      currentY = lerp(currentY, targetY, 0.18);
+      el.style.setProperty('--mx', currentX.toFixed(1) + 'px');
+      el.style.setProperty('--my', currentY.toFixed(1) + 'px');
+      if (Math.abs(currentX - targetX) > 0.5 || Math.abs(currentY - targetY) > 0.5) {
+        raf = requestAnimationFrame(animate);
+      } else { raf = null; }
+    }
     el.addEventListener('mousemove', function(e){
       var r = el.getBoundingClientRect();
-      el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-      el.style.setProperty('--my', (e.clientY - r.top)  + 'px');
+      targetX = e.clientX - r.left;
+      targetY = e.clientY - r.top;
+      if (!raf) raf = requestAnimationFrame(animate);
+    });
+    el.addEventListener('mouseleave', function(){
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
     });
   }
   document.querySelectorAll('.glow-card, .glow-row, .glow-btn').forEach(trackGlow);
