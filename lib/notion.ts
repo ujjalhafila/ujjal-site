@@ -166,8 +166,19 @@ export async function getAchievements(): Promise<AchievementItem[]> {
 export async function getExperiments(): Promise<ExperimentItem[]> {
   if (!EXPERIMENTS_DS) return [];
   try {
-    const results = await queryDS(EXPERIMENTS_DS);
-    console.log("[exp] ds rows:", results.length);
+    // Try dataSources.query first; fall back to notion.search if it returns nothing
+    let results = await queryDS(EXPERIMENTS_DS);
+    if (results.length === 0) {
+      // notion.search finds pages shared with the integration via UI
+      const dbId = EXPERIMENTS_DS.replace(/-/g, "");
+      const sr = await (notion as any).search({
+        filter: { value: "page", property: "object" },
+        page_size: 100,
+      });
+      results = ((sr as any).results ?? []).filter((p: any) =>
+        (p.parent?.database_id ?? "").replace(/-/g,"") === dbId
+      );
+    }
     const published = results.filter((p: any) => sel(p, "Status") === "Published");
     if (published.length === 0) return [];
     const items = await Promise.all(published.map(async (p: any) => {
