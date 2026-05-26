@@ -11,12 +11,17 @@ function ytId(url: string) {
 function vimeoId(url: string) { return url.match(/vimeo\.com\/(\d+)/)?.[1] || null; }
 function loomId(url: string) { return url.match(/loom\.com\/share\/([a-zA-Z0-9]+)/)?.[1] || null; }
 function isFigma(url: string) { return url.includes("figma.com"); }
-function isVideo(url: string) { return !!(ytId(url) || vimeoId(url) || loomId(url)); }
+function isDriveVideo(url: string) { return url.includes("drive.google.com") || url.includes("docs.google.com/file"); }
+function isVideo(url: string) { return !!(ytId(url) || vimeoId(url) || loomId(url) || isDriveVideo(url)); }
 function isImageUrl(url: string) { return /\.(png|jpg|jpeg|gif|webp|svg)(\?|$)/i.test(url) || url.includes("prod-files-secure") || url.includes("notion.so/image"); }
 
 function videoThumb(url: string): string | null {
   const id = ytId(url);
-  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+  if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  // Loom provides a thumbnail via their API pattern
+  const lo = loomId(url);
+  if (lo) return `https://cdn.loom.com/sessions/thumbnails/${lo}/thumbnail.jpg`;
+  return null; // Drive and Vimeo need auth — show play icon instead
 }
 
 function videoPlatform(url: string): string {
@@ -24,6 +29,7 @@ function videoPlatform(url: string): string {
   if (loomId(url)) return "Loom";
   if (vimeoId(url)) return "Vimeo";
   if (isFigma(url)) return "Figma";
+  if (isDriveVideo(url)) return "Google Drive";
   return "Video";
 }
 
@@ -32,12 +38,13 @@ function videoPlatform(url: string): string {
 function mediaCard(url: string, alt = "", type: "image" | "video" | "figma") {
   const thumb = videoThumb(url) || "";
   const platform = type === "video" ? videoPlatform(url) : type === "figma" ? "Figma" : "";
-  return `<div class="media-placeholder" data-media-type="${type}" data-src="${escAttr(url)}" data-alt="${escAttr(alt)}" data-thumb="${escAttr(thumb)}" data-platform="${platform}" tabindex="0" role="button" aria-label="Open ${alt || platform || "media"} in viewer">${
+  const driveNote = isDriveVideo(url) ? '<span class="media-drive-note">Opens in Google Drive</span>' : "";
+  return `<div class="media-placeholder" data-media-type="${type}" data-src="${escAttr(url)}" data-alt="${escAttr(alt)}" data-thumb="${escAttr(thumb)}" data-platform="${escAttr(platform)}" tabindex="0" role="button" aria-label="Open ${alt || platform || "media"} in viewer">${
     type === "image"
       ? `<img src="${escAttr(url)}" alt="${escAttr(alt)}" loading="lazy" class="media-thumb-img"/><div class="media-zoom-badge">⊕ View</div>`
       : thumb
       ? `<img src="${escAttr(thumb)}" alt="${escAttr(platform)} preview" loading="lazy" class="media-thumb-img"/><div class="media-play-overlay"><div class="media-play-btn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#c84b2f"><polygon points="6,3 20,12 6,21"/></svg></div><span class="media-platform-label">${platform}</span></div>`
-      : `<div class="media-no-thumb"><div class="media-play-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></div><span class="media-platform-label">${platform}</span></div>`
+      : `<div class="media-no-thumb"><div class="media-play-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></div><span class="media-platform-label">${platform || "Video"}</span>${driveNote}</div>`
   }</div>`;
 }
 
@@ -61,32 +68,85 @@ function parseColumns(md: string): string {
 }
 
 // ── Notion/GFM tables → styled HTML table ───────────────────────────────────
+// Handles multiline cell content: Notion sometimes puts newlines inside cells.
+// Strategy: collect all lines that start with | (table lines), join non-pipe
+// continuation lines back into the preceding cell.
 function parseTables(md: string): string {
-  // Match a Markdown table block: header row | separator row | data rows
-  return md.replace(
-    /((?:^|\n)\|.+\|[ \t]*\n\|[-| :]+\|[ \t]*\n(?:\|.+\|[ \t]*\n?)+)/g,
-    (block) => {
-      const rows = block.trim().split("\n").filter(r => r.trim());
-      if (rows.length < 2) return block;
+  const lines = md.split("\n");
+  const out: string[] = [];
+  let tableLines: string[] = [];
 
-      const parseRow = (row: string) =>
-        row
-          .replace(/^\||\|$/g, "")        // strip outer pipes
-          .split("|")
-          .map(c => c.trim());
-
-      const headerCells = parseRow(rows[0]);
-      // rows[1] is the separator — skip it
-      const bodyRows = rows.slice(2);
-
-      const thead = `<thead><tr>${headerCells.map(c => `<th>${c}</th>`).join("")}</tr></thead>`;
-      const tbody = `<tbody>${bodyRows
-        .map(r => `<tr>${parseRow(r).map(c => `<td>${c}</td>`).join("")}</tr>`)
-        .join("")}</tbody>`;
-
-      return `<div class="notion-table-wrap"><table class="notion-table">${thead}${tbody}</table></div>`;
+  function flushTable() {
+    if (tableLines.length < 3) { out.push(...tableLines); tableLines = []; return; }
+    // Separate header, separator, body
+    const rows: string[] = [];
+    let current = "";
+    for (const line of tableLines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("|")) {
+        if (current) rows.push(current);
+        current = trimmed;
+      } else {
+        // Continuation line — append to previous cell (replace newline with space)
+        current += " " + trimmed;
+      }
     }
-  );
+    if (current) rows.push(current);
+
+    const parseRow = (row: string) =>
+      row.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+
+    const header = rows[0];
+    const sepIdx = rows.findIndex((r, i) => i > 0 && /^\|[-:| ]+\|$/.test(r));
+    const bodyRows = rows.slice(sepIdx > 0 ? sepIdx + 1 : 2);
+
+    const headerCells = parseRow(header);
+    const colCount = headerCells.length;
+
+    const thead = `<thead><tr>${headerCells.map(c => `<th>${c}</th>`).join("")}</tr></thead>`;
+    const tbody = `<tbody>${bodyRows
+      .filter(r => r.trim() && !/^\|[-:| ]+\|$/.test(r))
+      .map(r => {
+        const cells = parseRow(r);
+        // Pad missing cells to match header column count
+        while (cells.length < colCount) cells.push("");
+        return `<tr>${cells.slice(0, colCount).map(c => `<td>${c}</td>`).join("")}</tr>`;
+      })
+      .join("")}</tbody>`;
+
+    out.push(`<div class="notion-table-wrap"><table class="notion-table">${thead}${tbody}</table></div>`);
+    tableLines = [];
+  }
+
+  let inTable = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    const isTableLine = trimmed.startsWith("|") && trimmed.endsWith("|");
+    const isSep = /^\|[-:| ]+\|$/.test(trimmed);
+
+    if (isTableLine || isSep) {
+      inTable = true;
+      tableLines.push(line);
+    } else if (inTable && trimmed && !isTableLine) {
+      // Check if next line is a table line (continuation scenario)
+      const nextLine = lines[i + 1]?.trim() ?? "";
+      if (nextLine.startsWith("|")) {
+        // This is a continuation of the previous cell
+        tableLines.push(line);
+      } else {
+        // End of table
+        flushTable();
+        inTable = false;
+        out.push(line);
+      }
+    } else {
+      if (inTable) { flushTable(); inTable = false; }
+      out.push(line);
+    }
+  }
+  if (inTable) flushTable();
+  return out.join("\n");
 }
 
 export function markdownToHtml(md: string): string {
