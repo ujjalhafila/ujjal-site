@@ -39,7 +39,7 @@ n2m.setCustomTransformer("bookmark", async (block: any) => {
 const PORTFOLIO_DS = process.env.NOTION_PORTFOLIO_DB_ID!;
 const THINK_DS = process.env.NOTION_THINK_DB_ID!;
 const ACHIEVEMENTS_DS = process.env.NOTION_ACHIEVEMENTS_DB_ID!;
-const EXPERIMENTS_DS  = process.env.NOTION_EXPERIMENTS_DB_ID ?? "a42b63ae-25b4-4b07-98ae-f7be3c6046e6";
+const EXPERIMENTS_DS  = process.env.NOTION_EXPERIMENTS_DB_ID ?? "6fd8b573-3419-4ecd-96e5-cb7031752c58";
 
 export type WorkItem = {
   id: string; title: string; description: string; status: string;
@@ -163,59 +163,18 @@ export async function getAchievements(): Promise<AchievementItem[]> {
   }));
 }
 
-// Fallback experiments shown when the Experiments Notion DB is inaccessible.
-// Replace by setting NOTION_EXPERIMENTS_DB_ID in Vercel env vars once you
-// share your Experiments DB with the Notion integration.
-const FALLBACK_EXPERIMENTS: ExperimentItem[] = [
-  {
-    id: "fallback-1",
-    title: "Confidence-Based Element Resolver",
-    description: "A scoring algorithm that identifies UI elements on desktop apps by weighting AutomationId, ControlType, and positional heuristics — built for Whatfix Journeys.",
-    content: "## What is this?\n\nA confidence-based scoring algorithm for resolving UI elements on native desktop applications — targeting SAP and similar enterprise tools.\n\n## Approach\n\nScore each candidate element across five weighted signals: AutomationId (0.40), ControlType (0.25), Name/Label (0.20), Position proximity (0.10), Sibling context (0.05). Pick the candidate with score > 0.72.\n\n## Status\n\nInternal prototype validated in early testing of Journeys hybrid flow authoring on SAP desktop.",
-    imageUrl: null,
-    tags: ["Prototype", "AI", "Tool", "System Design"],
-    url: "https://github.com/ujjalhafila",
-    status: "Published",
-    date: "2025-05-01",
-  },
-];
-
 export async function getExperiments(): Promise<ExperimentItem[]> {
-  if (!EXPERIMENTS_DS) return FALLBACK_EXPERIMENTS;
+  if (!EXPERIMENTS_DS) return [];
   try {
-    // Primary: dataSources.query — fastest, works when token has DS access
-    const r = await queryDS(EXPERIMENTS_DS);
-    const allResults: any[] = r ?? [];
-
-    // Secondary: if dataSources returned nothing, try broader search
-    let results = allResults;
-    if (results.length === 0) {
-      try {
-        const dbId = EXPERIMENTS_DS.replace(/-/g, "");
-        const sr = await (notion as any).search({
-          filter: { value: "page", property: "object" }, page_size: 100,
-        });
-        results = ((sr as any).results ?? []).filter((p: any) => {
-          const pid = (p.parent?.database_id ?? p.parent?.data_source_id ?? "").replace(/-/g, "");
-          return pid === dbId;
-        });
-      } catch { /* ignore search failure */ }
-    }
-
-    if (results.length === 0) return FALLBACK_EXPERIMENTS;
-
-    const published = results.filter((p: any) => {
-      const s = sel(p, "Status") ?? "";
-      return s === "Published";
-    });
-    if (published.length === 0) return FALLBACK_EXPERIMENTS;
-
-    const mapped = await Promise.all(published.map(async (p: any) => {
+    const results = await queryDS(EXPERIMENTS_DS);
+    const published = results.filter((p: any) => sel(p, "Status") === "Published");
+    if (published.length === 0) return [];
+    const items = await Promise.all(published.map(async (p: any) => {
       let content = "";
       try {
         const blocks = await n2m.pageToMarkdown(p.id);
         content = n2m.toMarkdownString(blocks).parent ?? "";
-      } catch { /* no content */ }
+      } catch { /**/ }
       return {
         id:          p.id,
         title:       pageTitle(p),
@@ -223,18 +182,18 @@ export async function getExperiments(): Promise<ExperimentItem[]> {
         content,
         imageUrl:    fileUrl(p, "Cover") ?? null,
         tags:        mSel(p, "Tags"),
-        url:         pUrl(p, "userDefined:URL") ?? pUrl(p, "URL") ?? null,
-        status:      sel(p, "Status") ?? "",
+        url:         pUrl(p, "userDefined:URL") ?? null,
+        status:      "Published",
         date:        dt(p, "Date"),
       } as ExperimentItem;
     }));
-
-    return mapped.length > 0 ? mapped : FALLBACK_EXPERIMENTS;
+    return items;
   } catch(e) {
-    console.error("[getExperiments] error:", String(e));
-    return FALLBACK_EXPERIMENTS;
+    console.error("[getExperiments]", String(e));
+    return [];
   }
 }
+
 
 export async function getFeaturedWork() { return (await getWorkItems()).slice(0,3); }
 export async function getFeaturedThink() {
