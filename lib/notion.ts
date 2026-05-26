@@ -4,6 +4,38 @@ import { NotionToMarkdown } from "notion-to-md";
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const n2m = new NotionToMarkdown({ notionClient: notion as any });
 
+// Custom block renderers for better site compatibility
+n2m.setCustomTransformer("image", async (block: any) => {
+  const img = block?.image;
+  const url = img?.file?.url ?? img?.external?.url ?? "";
+  const caption = img?.caption?.map((c: any) => c.plain_text).join("") ?? "";
+  if (!url) return "";
+  return `![${caption}](${url})`;
+});
+n2m.setCustomTransformer("callout", async (block: any) => {
+  const text = block?.callout?.rich_text?.map((t: any) => t.plain_text).join("") ?? "";
+  const icon = block?.callout?.icon?.emoji ?? "💡";
+  return `> ${icon} ${text}`;
+});
+n2m.setCustomTransformer("toggle", async (block: any) => {
+  const text = block?.toggle?.rich_text?.map((t: any) => t.plain_text).join("") ?? "";
+  return `**${text}**`;
+});
+n2m.setCustomTransformer("button", async (block: any) => {
+  const label = block?.button?.label ?? "Link";
+  const url   = block?.button?.url ?? block?.button?.action?.url ?? "#";
+  return `[${label}](${url})`;
+});
+n2m.setCustomTransformer("embed", async (block: any) => {
+  const url = block?.embed?.url ?? "";
+  return url ? `[View embed](${url})` : "";
+});
+n2m.setCustomTransformer("bookmark", async (block: any) => {
+  const url     = block?.bookmark?.url ?? "";
+  const caption = block?.bookmark?.caption?.map((c: any) => c.plain_text).join("") || url;
+  return url ? `[${caption}](${url})` : "";
+});
+
 const PORTFOLIO_DS = process.env.NOTION_PORTFOLIO_DB_ID!;
 const THINK_DS = process.env.NOTION_THINK_DB_ID!;
 const ACHIEVEMENTS_DS = process.env.NOTION_ACHIEVEMENTS_DB_ID!;
@@ -149,52 +181,57 @@ const FALLBACK_EXPERIMENTS: ExperimentItem[] = [
 ];
 
 export async function getExperiments(): Promise<ExperimentItem[]> {
+  if (!EXPERIMENTS_DS) return FALLBACK_EXPERIMENTS;
   try {
-    // Use notion.search to find pages in the Experiments DB —
-    // works with any token that has access to the workspace.
-    // Filter by parent database ID and Status = Published client-side.
-    const dbId = EXPERIMENTS_DS.replace(/-/g, "");
-    const r = await notion.search({
-      filter: { value: "page", property: "object" },
-      page_size: 50,
-    } as any);
-    const results: any[] = (r as any).results ?? [];
-    // Keep only pages whose parent is our Experiments DB
-    const expPages = results.filter((p: any) => {
-      const parentDb = p.parent?.database_id?.replace(/-/g, "") ?? "";
-      // Also accept parent data_source_id
-      const parentDs = p.parent?.data_source_id?.replace(/-/g, "") ?? "";
-      return parentDb === dbId || parentDs === dbId;
+    // Primary: dataSources.query — fastest, works when token has DS access
+    const r = await queryDS(EXPERIMENTS_DS);
+    const allResults: any[] = r ?? [];
+
+    // Secondary: if dataSources returned nothing, try broader search
+    let results = allResults;
+    if (results.length === 0) {
+      try {
+        const dbId = EXPERIMENTS_DS.replace(/-/g, "");
+        const sr = await (notion as any).search({
+          filter: { value: "page", property: "object" }, page_size: 100,
+        });
+        results = ((sr as any).results ?? []).filter((p: any) => {
+          const pid = (p.parent?.database_id ?? p.parent?.data_source_id ?? "").replace(/-/g, "");
+          return pid === dbId;
+        });
+      } catch { /* ignore search failure */ }
+    }
+
+    if (results.length === 0) return FALLBACK_EXPERIMENTS;
+
+    const published = results.filter((p: any) => {
+      const s = sel(p, "Status") ?? "";
+      return s === "Published";
     });
-    if (expPages.length === 0) return FALLBACK_EXPERIMENTS;
-    const mapped = expPages
-      .filter((p: any) => {
-        const status = sel(p, "Status") || "";
-        return status === "Published";
-      })
-      .map((p: any) => ({
+    if (published.length === 0) return FALLBACK_EXPERIMENTS;
+
+    const mapped = await Promise.all(published.map(async (p: any) => {
+      let content = "";
+      try {
+        const blocks = await n2m.pageToMarkdown(p.id);
+        content = n2m.toMarkdownString(blocks).parent ?? "";
+      } catch { /* no content */ }
+      return {
         id:          p.id,
         title:       pageTitle(p),
         description: richText(p, "Description"),
-        content:     "",
+        content,
         imageUrl:    fileUrl(p, "Cover") ?? null,
         tags:        mSel(p, "Tags"),
         url:         pUrl(p, "userDefined:URL") ?? pUrl(p, "URL") ?? null,
-        status:      sel(p, "Status"),
+        status:      sel(p, "Status") ?? "",
         date:        dt(p, "Date"),
-      }));
-    if (mapped.length === 0) return FALLBACK_EXPERIMENTS;
-    // Fetch page body markdown for modal content
-    const withContent = await Promise.all(mapped.map(async (exp) => {
-      try {
-        const blocks = await n2m.pageToMarkdown(exp.id);
-        exp.content = n2m.toMarkdownString(blocks).parent ?? "";
-      } catch { exp.content = ""; }
-      return exp;
+      } as ExperimentItem;
     }));
-    return withContent;
+
+    return mapped.length > 0 ? mapped : FALLBACK_EXPERIMENTS;
   } catch(e) {
-    console.error("[getExperiments] error:", e);
+    console.error("[getExperiments] error:", String(e));
     return FALLBACK_EXPERIMENTS;
   }
 }
