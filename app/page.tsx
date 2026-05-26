@@ -3,6 +3,7 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Portrait from "../components/Portrait";
 import QuotesCarousel from "../components/QuotesCarousel";
+import ThinkCarousel from "../components/ThinkCarousel";
 import CtaBanner from "../components/CtaBanner";
 import { getFeaturedWork, getFeaturedThink, getActiveCta } from "../lib/notion";
 
@@ -302,43 +303,8 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Think articles */}
-          {think.length > 0 ? (
-            think.slice(0,1).map(item => (
-              <Link
-                key={item.id}
-                href={`/think/${item.slug}`}
-                className="glow-card reveal"
-                style={{
-                  padding:"32px 28px",
-                  flexDirection:"column", gap:"14px",
-                  borderLeft:"none",
-                  ["--gc" as string]: THINK_GLOW.gc,
-                  ["--gc-line" as string]: THINK_GLOW.gcLine,
-                  ["--gc-text" as string]: THINK_GLOW.gcText,
-                } as React.CSSProperties}
-              >
-                <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)" }}>
-                  {item.type} · {item.readTime}
-                </div>
-                <div className="gc-title" style={{ fontSize:"15px", fontWeight:400, letterSpacing:"-0.3px", lineHeight:1.4 }}>
-                  {item.title}
-                </div>
-                {item.whyQuestion && (
-                  <p style={{ fontSize:"12px", fontWeight:300, color:"var(--ink2)", lineHeight:1.7 }}>
-                    "{item.whyQuestion}"
-                  </p>
-                )}
-                <div className="gc-arr" style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"auto" }}>
-                  Read →
-                </div>
-              </Link>
-            ))
-          ) : (
-            <div style={{ padding:"36px 28px", display:"flex", alignItems:"center" }}>
-              <p style={{ fontFamily:MONO, fontSize:"12px", color:"var(--ink3)" }}>Essays and experiments coming soon.</p>
-            </div>
-          )}
+          {/* Think articles — carousel */}
+          <ThinkCarousel items={think} glowGc={THINK_GLOW.gc} glowGcLine={THINK_GLOW.gcLine} glowGcText={THINK_GLOW.gcText} />
         </div>
       </section>
 
@@ -379,10 +345,7 @@ export default async function Home() {
               <link.Icon />
             </div>
             <div style={{ padding:"0 24px" }}>
-              <div className="gc-title" style={{ fontFamily:SANS, fontSize:"14px", fontWeight:400 }}>
-                {link.label}
-              </div>
-              <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"3px" }}>
+              <div style={{ fontFamily:MONO, fontSize:"12px", color:"var(--ink2)", marginTop:"0" }} className="gc-title">
                 {link.sub}
               </div>
             </div>
