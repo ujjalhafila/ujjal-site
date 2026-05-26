@@ -165,23 +165,39 @@ export async function getAchievements(): Promise<AchievementItem[]> {
 
 export async function getExperiments(): Promise<ExperimentItem[]> {
   if (!EXPERIMENTS_DS) return [];
+  const token = process.env.NOTION_TOKEN ?? "";
   try {
-    // Try dataSources.query first; fall back to notion.search if it returns nothing
-    let results = await queryDS(EXPERIMENTS_DS);
-    if (results.length === 0) {
-      // notion.search finds pages shared with the integration via UI
-      const dbId = EXPERIMENTS_DS.replace(/-/g, "");
-      const sr = await (notion as any).search({
-        filter: { value: "page", property: "object" },
-        page_size: 100,
-      });
-      results = ((sr as any).results ?? []).filter((p: any) =>
-        (p.parent?.database_id ?? "").replace(/-/g,"") === dbId
-      );
+    // Use raw Notion REST API — works with both integration secrets and user OAuth tokens
+    const url = `https://api.notion.com/v1/databases/${EXPERIMENTS_DS}/query`;
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+    if (!resp.ok) {
+      console.error("[exp] REST query failed:", resp.status);
+      return [];
     }
-    const published = results.filter((p: any) => sel(p, "Status") === "Published");
+    const data = await resp.json() as any;
+    const results: any[] = data.results ?? [];
+    const published = results.filter((p: any) => {
+      const s = p.properties?.Status?.select?.name ?? p.properties?.Status?.status?.name ?? "";
+      return s === "Published";
+    });
     if (published.length === 0) return [];
+    // REST API returns standard Notion page objects — same shape as dataSources results
     const items = await Promise.all(published.map(async (p: any) => {
+      const titleProp = p.properties?.Name?.title?.[0]?.plain_text ?? p.properties?.title?.title?.[0]?.plain_text ?? "";
+      const descProp  = p.properties?.Description?.rich_text?.map((t:any)=>t.plain_text).join("") ?? "";
+      const coverFiles= p.properties?.Cover?.files ?? [];
+      const coverUrl  = coverFiles[0]?.file?.url ?? coverFiles[0]?.external?.url ?? null;
+      const tagsList  = (p.properties?.Tags?.multi_select ?? []).map((t:any)=>t.name);
+      const urlProp   = p.properties?.URL?.url ?? p.properties?.userDefined_URL?.url ?? null;
+      const dateProp  = p.properties?.Date?.date?.start ?? null;
       let content = "";
       try {
         const blocks = await n2m.pageToMarkdown(p.id);
@@ -189,14 +205,14 @@ export async function getExperiments(): Promise<ExperimentItem[]> {
       } catch { /**/ }
       return {
         id:          p.id,
-        title:       pageTitle(p),
-        description: richText(p, "Description"),
+        title:       titleProp,
+        description: descProp,
         content,
-        imageUrl:    fileUrl(p, "Cover") ?? null,
-        tags:        mSel(p, "Tags"),
-        url:         pUrl(p, "userDefined:URL") ?? null,
+        imageUrl:    coverUrl,
+        tags:        tagsList,
+        url:         urlProp,
         status:      "Published",
-        date:        dt(p, "Date"),
+        date:        dateProp,
       } as ExperimentItem;
     }));
     return items;
