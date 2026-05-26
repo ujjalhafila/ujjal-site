@@ -159,49 +159,26 @@ blockquote { font-weight: 400; }
 .glow-btn {
   position: relative; overflow: visible; cursor: pointer;
   display: inline-flex; align-items: center; text-decoration: none;
-  transition: color 0.2s, border-color 0.2s, transform 0.15s;
+  transition: color 0.2s, transform 0.15s;
 }
 
-/* Primary (filled) button: sweeping colour outline — colour travels around the border */
+/* Primary (filled) button: animated border-image outline — no fill, no glow */
+/* border-image with a conic-gradient paints ONLY the border ring, never the interior */
 .glow-btn:not(.glow-btn-outline) {
-  isolation: isolate;
-  /* Ensure the button itself has an opaque background that ::before can match */
-  background: var(--ink) !important;
+  border: 2px solid transparent;
 }
-/* ::after = the full rotating conic arc (extends 2px outside the button) */
-.glow-btn:not(.glow-btn-outline)::after {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  background: conic-gradient(
-    from var(--angle, 0deg),
-    var(--gc, #D42B45) 0deg,
-    transparent 50deg,
-    transparent 310deg,
-    var(--gc, #D42B45) 360deg
-  );
-  z-index: -2;
-  opacity: 0;
-  transition: opacity 0.25s;
-  pointer-events: none;
+.glow-btn:not(.glow-btn-outline):hover {
+  transform: translateY(-1px);
+  border-image: conic-gradient(
+    from var(--btn-angle, 0deg),
+    transparent 0deg,
+    var(--gc, #D42B45) 40deg,
+    transparent 80deg
+  ) 1;
+  animation: btn-border-spin 2s linear infinite;
 }
-/* ::before = solid fill exactly covering the button interior,
-   so the conic arc is only visible in the 2px ring at the edge */
-.glow-btn:not(.glow-btn-outline)::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--ink);
-  z-index: -1;
-  pointer-events: none;
-}
-.glow-btn:not(.glow-btn-outline):hover::after {
-  opacity: 1;
-  animation: border-travel 2s linear infinite;
-}
-@property --angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
-@keyframes border-travel { to { --angle: 360deg; } }
-.glow-btn:not(.glow-btn-outline):hover { transform: translateY(-1px); }
+@property --btn-angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes btn-border-spin { to { --btn-angle: 360deg; } }
 .glow-btn:not(.glow-btn-outline) > * { position: relative; z-index: 1; }
 
 /* Outline button: inner cursor-tracked radial glow */

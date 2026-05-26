@@ -28,41 +28,45 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
   const [activeExp, setActiveExp] = useState<ExpItem | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Re-run glow tracking whenever tab changes so new cards get trackers
+  // Re-run glow tracking whenever tab changes so new cards get trackers.
+  // setTimeout(0) defers until after React has committed + painted the new cards.
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const timer = setTimeout(() => {
+      const container = containerRef.current;
+      if (!container) return;
 
-    // Use a flag on the element to avoid double-attaching
-    function attachTracker(el: Element) {
-      const h = el as HTMLElement;
-      if (h.dataset.glowAttached) return;
-      h.dataset.glowAttached = "1";
+      function attachTracker(el: Element) {
+        const h = el as HTMLElement;
+        if (h.dataset.glowAttached) return;
+        h.dataset.glowAttached = "1";
 
-      let targetX = 0, targetY = 0, currentX = 0, currentY = 0, raf: number | null = null;
-      function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
-      function animate() {
-        currentX = lerp(currentX, targetX, 0.18);
-        currentY = lerp(currentY, targetY, 0.18);
-        h.style.setProperty("--mx", currentX.toFixed(1) + "px");
-        h.style.setProperty("--my", currentY.toFixed(1) + "px");
-        if (Math.abs(currentX - targetX) > 0.5 || Math.abs(currentY - targetY) > 0.5) {
-          raf = requestAnimationFrame(animate);
-        } else { raf = null; }
+        let targetX = 0, targetY = 0, currentX = 0, currentY = 0, raf: number | null = null;
+        function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
+        function animate() {
+          currentX = lerp(currentX, targetX, 0.18);
+          currentY = lerp(currentY, targetY, 0.18);
+          h.style.setProperty("--mx", currentX.toFixed(1) + "px");
+          h.style.setProperty("--my", currentY.toFixed(1) + "px");
+          if (Math.abs(currentX - targetX) > 0.5 || Math.abs(currentY - targetY) > 0.5) {
+            raf = requestAnimationFrame(animate);
+          } else { raf = null; }
+        }
+        h.addEventListener("mousemove", (e: MouseEvent) => {
+          const r = h.getBoundingClientRect();
+          targetX = e.clientX - r.left;
+          targetY = e.clientY - r.top;
+          if (!raf) raf = requestAnimationFrame(animate);
+        });
+        h.addEventListener("mouseleave", () => {
+          if (raf) { cancelAnimationFrame(raf); raf = null; }
+        });
       }
-      h.addEventListener("mousemove", (e: MouseEvent) => {
-        const r = h.getBoundingClientRect();
-        targetX = e.clientX - r.left;
-        targetY = e.clientY - r.top;
-        if (!raf) raf = requestAnimationFrame(animate);
-      });
-      h.addEventListener("mouseleave", () => {
-        if (raf) { cancelAnimationFrame(raf); raf = null; }
-      });
-    }
 
-    container.querySelectorAll(".glow-card").forEach(attachTracker);
-  }, [tab]); // re-run when tab switches so experiments cards get attached
+      container.querySelectorAll(".glow-card").forEach(attachTracker);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [tab]);
 
   return (
     <>
