@@ -161,7 +161,10 @@ export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClos
 
       <style>{`
         .em-close:hover { color: var(--ink) !important; }
-        .modal-link-btn:hover { background: #4DFFB4 !important; color: #0C0C0C !important; }
+        /* Theme-aware CTA: red in light, teal in dark */
+        :root, .light, [data-theme="light"] { --modal-cta: #D42B45; }
+        .dark, [data-theme="dark"] { --modal-cta: #4DFFB4; }
+        .modal-link-btn:hover { background: var(--modal-cta) !important; color: var(--bg) !important; }
 
         /* Scrollbar — fades when idle, consistent with design language */
         .em-scroll-body { scrollbar-width: thin; scrollbar-color: transparent transparent; transition: scrollbar-color 0.3s; }

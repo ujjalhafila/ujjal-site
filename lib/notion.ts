@@ -247,30 +247,57 @@ const DEFAULT_CTA: CtaItem = {
   accent: "blue",
 };
 
+// Notion page ID for the Site CTA page — read and edit this page in Notion to update the CTA.
+const CTA_PAGE_ID = "36c8afe6-24ae-814b-8fd1-e26449db1c0c";
+
+function parseCtaSection(md: string, section: string): string {
+  const regex = new RegExp(`## ${section}\\n([^#]+)`, "i");
+  return md.match(regex)?.[1]?.trim() ?? "";
+}
+
 export async function getActiveCta(): Promise<CtaItem | null> {
   try {
     const token = process.env.NOTION_TOKEN ?? "";
-    const dbId = CTA_DS || "bb2bfb72-2af1-4f68-bfd5-8d0ca44d42bc";
-    const resp = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${token}`, "Notion-Version": "2022-06-28", "Content-Type": "application/json" },
-      body: JSON.stringify({}),
+    // Fetch the page blocks to read content
+    const resp = await fetch(`https://api.notion.com/v1/blocks/${CTA_PAGE_ID}/children?page_size=50`, {
+      headers: { "Authorization": `Bearer ${token}`, "Notion-Version": "2022-06-28" },
       next: { revalidate: 300 },
     });
     if (!resp.ok) return DEFAULT_CTA;
     const data = await resp.json() as any;
-    const active = (data.results ?? []).find((p: any) => p.properties?.Active?.checkbox === true);
-    if (!active) return DEFAULT_CTA;
-    const props = active.properties;
-    const heading  = props?.Heading?.rich_text?.[0]?.plain_text ?? "";
-    const ctaUrl   = props?.["CTA URL"]?.url ?? "";
-    if (!heading || !ctaUrl) return DEFAULT_CTA;
+    const blocks: any[] = data.results ?? [];
+
+    // Parse heading2 blocks as section keys, paragraph/heading3 below as values
+    let currentSection = "";
+    const sections: Record<string, string> = {};
+    for (const block of blocks) {
+      const type = block.type;
+      if (type === "heading_2") {
+        currentSection = (block.heading_2?.rich_text ?? []).map((t: any) => t.plain_text).join("").trim();
+        sections[currentSection] = "";
+      } else if (currentSection && (type === "paragraph" || type === "heading_3")) {
+        const key = type === "paragraph" ? "paragraph" : "heading_3";
+        const text = (block[key]?.rich_text ?? []).map((t: any) => t.plain_text).join("").trim();
+        if (text) sections[currentSection] = (sections[currentSection] ? sections[currentSection] + " " : "") + text;
+      } else if (type === "heading_2") {
+        currentSection = "";
+      }
+    }
+
+    const heading  = sections["Heading"] ?? "";
+    const ctaUrl   = sections["CTA URL"] ?? "";
+    if (!heading && !ctaUrl) return DEFAULT_CTA;
+
+    const VALID_ACCENTS = ["teal","red","purple","blue","yellow","orange"] as const;
+    const accentRaw = sections["Accent"]?.toLowerCase().trim() ?? "blue";
+    const accent = (VALID_ACCENTS.includes(accentRaw as any) ? accentRaw : "blue") as CtaItem["accent"];
+
     return {
-      heading,
-      description: props?.Description?.rich_text?.[0]?.plain_text ?? "",
-      ctaLabel:    props?.["CTA Label"]?.rich_text?.[0]?.plain_text ?? "Learn more →",
-      ctaUrl,
-      accent:      (props?.Accent?.select?.name ?? "teal") as CtaItem["accent"],
+      heading:     heading || DEFAULT_CTA.heading,
+      description: sections["Description"] || DEFAULT_CTA.description,
+      ctaLabel:    sections["CTA Label"]   || DEFAULT_CTA.ctaLabel,
+      ctaUrl:      ctaUrl  || DEFAULT_CTA.ctaUrl,
+      accent,
     };
   } catch { return DEFAULT_CTA; }
 }
