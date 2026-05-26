@@ -149,13 +149,27 @@ const FALLBACK_EXPERIMENTS: ExperimentItem[] = [
 ];
 
 export async function getExperiments(): Promise<ExperimentItem[]> {
-  if (!EXPERIMENTS_DS) return FALLBACK_EXPERIMENTS;
   try {
-    const r = await (notion as any).dataSources.query({ data_source_id: EXPERIMENTS_DS });
-    const results: any[] = r?.results ?? [];
-    const mapped = results
+    // Use notion.search to find pages in the Experiments DB —
+    // works with any token that has access to the workspace.
+    // Filter by parent database ID and Status = Published client-side.
+    const dbId = EXPERIMENTS_DS.replace(/-/g, "");
+    const r = await notion.search({
+      filter: { value: "page", property: "object" },
+      page_size: 50,
+    } as any);
+    const results: any[] = (r as any).results ?? [];
+    // Keep only pages whose parent is our Experiments DB
+    const expPages = results.filter((p: any) => {
+      const parentDb = p.parent?.database_id?.replace(/-/g, "") ?? "";
+      // Also accept parent data_source_id
+      const parentDs = p.parent?.data_source_id?.replace(/-/g, "") ?? "";
+      return parentDb === dbId || parentDs === dbId;
+    });
+    if (expPages.length === 0) return FALLBACK_EXPERIMENTS;
+    const mapped = expPages
       .filter((p: any) => {
-        const status = sel(p, "Status") || p.properties?.Status?.status?.name || "";
+        const status = sel(p, "Status") || "";
         return status === "Published";
       })
       .map((p: any) => ({
@@ -163,14 +177,14 @@ export async function getExperiments(): Promise<ExperimentItem[]> {
         title:       pageTitle(p),
         description: richText(p, "Description"),
         content:     "",
-        imageUrl:    fileUrl(p, "Cover") ?? fileUrl(p, "Image") ?? fileUrl(p, "Thumbnail"),
+        imageUrl:    fileUrl(p, "Cover") ?? null,
         tags:        mSel(p, "Tags"),
-        url:         pUrl(p, "userDefined:URL") ?? pUrl(p, "URL"),
+        url:         pUrl(p, "userDefined:URL") ?? pUrl(p, "URL") ?? null,
         status:      sel(p, "Status"),
         date:        dt(p, "Date"),
       }));
     if (mapped.length === 0) return FALLBACK_EXPERIMENTS;
-    // Fetch markdown content for each experiment
+    // Fetch page body markdown for modal content
     const withContent = await Promise.all(mapped.map(async (exp) => {
       try {
         const blocks = await n2m.pageToMarkdown(exp.id);
