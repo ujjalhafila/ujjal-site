@@ -159,26 +159,60 @@ blockquote { font-weight: 400; }
 .glow-btn {
   position: relative; overflow: visible; cursor: pointer;
   display: inline-flex; align-items: center; text-decoration: none;
-  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  transition: color 0.2s, border-color 0.2s, transform 0.15s;
 }
 
-/* Primary (filled) button: organic drifting glow outside the button via box-shadow */
+/* Primary (filled) button: animated colour outline that travels around the border */
 .glow-btn:not(.glow-btn-outline) {
-  box-shadow: none;
+  --ol-c: var(--gc, rgba(210,43,69,1));
 }
-.glow-btn:not(.glow-btn-outline):hover {
-  transform: translateY(-1px);
-  animation: glow-orbit 3s ease-in-out infinite;
+/* Conic-gradient outline via outline+mask technique — uses pseudo for the travelling line */
+.glow-btn:not(.glow-btn-outline)::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(
+    from var(--angle, 0deg),
+    transparent 0deg,
+    var(--ol-c) 60deg,
+    transparent 120deg
+  );
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  z-index: -1;
+  animation: none;
 }
+/* Mask: only show the outline ring, not the fill */
+.glow-btn:not(.glow-btn-outline)::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: var(--bg);
+  /* clip the center so only a ~2px ring shows */
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 2px;
+  border-radius: 1px;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.glow-btn:not(.glow-btn-outline):hover::after,
+.glow-btn:not(.glow-btn-outline):hover::before {
+  opacity: 1;
+  animation: outline-spin 1.8s linear infinite;
+}
+@property --angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes outline-spin { to { --angle: 360deg; } }
+.glow-btn:not(.glow-btn-outline):hover { transform: translateY(-1px); }
 .glow-btn:not(.glow-btn-outline) > * { position: relative; z-index: 1; }
-@keyframes glow-orbit {
-  0%   { box-shadow: -6px -2px 20px 4px var(--gc, rgba(210,43,69,0.40)),  2px  4px 8px 0px var(--gc, rgba(210,43,69,0.20)); }
-  25%  { box-shadow:  4px -4px 22px 4px var(--gc, rgba(210,43,69,0.35)), -2px  2px 8px 0px var(--gc, rgba(210,43,69,0.15)); }
-  50%  { box-shadow:  6px  3px 20px 4px var(--gc, rgba(210,43,69,0.40)),  0px -3px 8px 0px var(--gc, rgba(210,43,69,0.20)); }
-  75%  { box-shadow: -3px  5px 22px 4px var(--gc, rgba(210,43,69,0.35)),  3px -1px 8px 0px var(--gc, rgba(210,43,69,0.15)); }
-  100% { box-shadow: -6px -2px 20px 4px var(--gc, rgba(210,43,69,0.40)),  2px  4px 8px 0px var(--gc, rgba(210,43,69,0.20)); }
-}
-.glow-btn:active { transform: translateY(0) !important; animation: none !important; box-shadow: none !important; }
+.glow-btn:active { transform: translateY(0) !important; animation: none !important; }
 
 /* Outline button: inner cursor-tracked radial glow */
 .glow-btn-outline {
