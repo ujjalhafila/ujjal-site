@@ -234,8 +234,11 @@ export type CtaItem = {
   accent: "teal" | "red" | "purple" | "blue" | "yellow";
 };
 
-// Shown when Notion CTA DB is inaccessible — mirrors the active Notion row.
-// Update this whenever you update the Notion "Site CTA" database.
+// ── Site CTA — edit this to match your Notion "Site CTA" database row ────
+// The site's NOTION_TOKEN cannot access this DB directly (created in a
+// different MCP namespace). DEFAULT_CTA is always what renders on the site.
+// To update the CTA: change the values here, then redeploy.
+// Your Notion row (for reference):  Heading / Description / CTA Label / CTA URL / Accent
 const DEFAULT_CTA: CtaItem = {
   heading: "Shaping my next work — need your take",
   description: "I'm researching how product designers navigate tool overload and AI adoption. Takes 3 minutes — your input shapes what I write and build next.",

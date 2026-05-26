@@ -140,7 +140,7 @@ export default async function Home() {
               fontFamily:MONO, fontSize:"12px", padding:"9px 22px",
               background:"var(--ink)", color:"var(--bg)",
               border:"1px solid var(--ink)",
-              ["--gc" as string]:"rgba(0,168,107,0.35)",
+              ["--gc" as string]:"rgba(210,43,69,0.40)",
             }}>
               View Work →
             </Link>
@@ -148,7 +148,7 @@ export default async function Home() {
               fontFamily:MONO, fontSize:"12px", padding:"9px 22px",
               background:"transparent", color:"var(--ink2)",
               border:"1px solid var(--rule)",
-              ["--gc" as string]:"rgba(237,234,226,0.08)",
+              ["--gc-in" as string]:"rgba(200,200,200,0.14)",
             }}>
               Think Space →
             </Link>
@@ -428,8 +428,9 @@ export default async function Home() {
       if (raf) { cancelAnimationFrame(raf); raf = null; }
     });
   }
-  /* Cards and rows get organic cursor glow; buttons use CSS-only box-shadow */
+  /* Cards and rows get organic cursor glow; outline buttons get inner cursor glow */
   document.querySelectorAll('.glow-card, .glow-row').forEach(trackGlow);
+  document.querySelectorAll('.glow-btn-outline').forEach(trackGlow);
 
   /* Quote rotation (kept from original) */
   var slides = document.querySelectorAll('.quote-slide');
