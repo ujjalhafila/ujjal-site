@@ -166,8 +166,11 @@ export async function getAchievements(): Promise<AchievementItem[]> {
 export async function getExperiments(): Promise<ExperimentItem[]> {
   if (!EXPERIMENTS_DS) return [];
   try {
+    console.log("[exp] querying DS:", EXPERIMENTS_DS);
     const results = await queryDS(EXPERIMENTS_DS);
+    console.log("[exp] total rows:", results.length, "statuses:", results.map((p:any)=>sel(p,"Status")));
     const published = results.filter((p: any) => sel(p, "Status") === "Published");
+    console.log("[exp] published:", published.length);
     if (published.length === 0) return [];
     const items = await Promise.all(published.map(async (p: any) => {
       let content = "";
