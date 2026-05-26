@@ -162,11 +162,10 @@ blockquote { font-weight: 400; }
   transition: color 0.2s, border-color 0.2s, transform 0.15s;
 }
 
-/* Primary (filled) button: animated colour outline that travels around the border */
+/* Primary (filled) button: moving colour outline on hover */
 .glow-btn:not(.glow-btn-outline) {
-  --ol-c: var(--gc, rgba(210,43,69,1));
+  --ol-c: var(--gc, rgba(210,43,69,0.9));
 }
-/* Conic-gradient outline via outline+mask technique — uses pseudo for the travelling line */
 .glow-btn:not(.glow-btn-outline)::after {
   content: "";
   position: absolute;
@@ -174,44 +173,40 @@ blockquote { font-weight: 400; }
   background: conic-gradient(
     from var(--angle, 0deg),
     transparent 0deg,
-    var(--ol-c) 60deg,
-    transparent 120deg
+    var(--ol-c) 50deg,
+    transparent 100deg
   );
-  border-radius: 1px;
+  border-radius: 2px;
+  z-index: 0;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.25s;
   pointer-events: none;
-  z-index: -1;
-  animation: none;
 }
-/* Mask: only show the outline ring, not the fill */
+/* Inner mask punches out button area leaving only ~2px border ring */
 .glow-btn:not(.glow-btn-outline)::before {
   content: "";
   position: absolute;
   inset: -2px;
-  background: var(--bg);
-  /* clip the center so only a ~2px ring shows */
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
+  border-radius: 2px;
+  background: var(--ink);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   padding: 2px;
-  border-radius: 1px;
-  z-index: -1;
-  pointer-events: none;
+  z-index: 1;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.25s;
+  pointer-events: none;
 }
 .glow-btn:not(.glow-btn-outline):hover::after,
 .glow-btn:not(.glow-btn-outline):hover::before {
   opacity: 1;
-  animation: outline-spin 1.8s linear infinite;
+  animation: outline-spin 1.6s linear infinite;
 }
 @property --angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
 @keyframes outline-spin { to { --angle: 360deg; } }
 .glow-btn:not(.glow-btn-outline):hover { transform: translateY(-1px); }
-.glow-btn:not(.glow-btn-outline) > * { position: relative; z-index: 1; }
+.glow-btn:not(.glow-btn-outline) > * { position: relative; z-index: 2; }
 .glow-btn:active { transform: translateY(0) !important; animation: none !important; }
 
 /* Outline button: inner cursor-tracked radial glow */
