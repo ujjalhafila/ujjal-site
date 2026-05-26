@@ -44,7 +44,7 @@ function mediaCard(url: string, alt = "", type: "image" | "video" | "figma") {
       ? `<img src="${escAttr(url)}" alt="${escAttr(alt)}" loading="lazy" class="media-thumb-img"/><div class="media-zoom-badge">⊕ View</div>`
       : thumb
       ? `<img src="${escAttr(thumb)}" alt="${escAttr(platform)} preview" loading="lazy" class="media-thumb-img"/><div class="media-play-overlay"><div class="media-play-btn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#c84b2f"><polygon points="6,3 20,12 6,21"/></svg></div><span class="media-platform-label">${platform}</span></div>`
-      : `<div class="media-no-thumb"><div class="media-play-btn"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></div><span class="media-platform-label">${platform || "Video"}</span>${driveNote}</div>`
+      : `<div class="media-no-thumb"><div class="media-play-circle"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="8,5 19,12 8,19"/></svg></div><span class="media-play-label">▶&nbsp;Play ${platform || "Video"}</span></div>`
   }</div>`;
 }
 
@@ -86,10 +86,13 @@ function parseTables(md: string): string {
       trimmed !== "" &&
       (lines[i + 1]?.trim().startsWith("|") || trimmed.endsWith("|"))
     ) {
-      // Continuation: sandwiched between pipe rows OR ends with | (dangling cell text)
-      // Strip trailing | if present, then append to the previous row
+      // Continuation: sandwiched between pipe rows OR ends with |
+      // Strip trailing | from continuation text, then rebuild row ending with |
       const cont = trimmed.endsWith("|") ? trimmed.slice(0, -1).trim() : trimmed;
-      merged[merged.length - 1] += " " + cont;
+      const prev = merged[merged.length - 1];
+      // Strip the trailing | from the accumulated row, append cont, re-add |
+      const prevBase = prev.trimEnd().endsWith("|") ? prev.trimEnd().slice(0, -1).trimEnd() : prev.trimEnd();
+      merged[merged.length - 1] = prevBase + " " + cont + " |";
     } else {
       merged.push(lines[i]);
     }
