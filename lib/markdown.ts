@@ -134,10 +134,6 @@ export function markdownToHtml(md: string): string {
   html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
   html = html.replace(/`([^`\n]+)`/g, "<code>$1</code>");
   html = html.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>");
-  // Button blocks (from n2m custom transformer, rendered as [label](url))
-  // Already handled by link replacement below — no special treatment needed.
-  // Toggle headings: **bold text** at start of line → styled toggle header
-  html = html.replace(/^\*\*(.+)\*\*$/gm, "<p><strong>$1</strong></p>");
   html = html.replace(/^---+$/gm, "<hr/>");
 
   // ── Lists ─────────────────────────────────────────────────────────────────
@@ -154,6 +150,11 @@ export function markdownToHtml(md: string): string {
       const type = isFigma(url) ? "figma" : "video";
       return mediaCard(url, label, type);
     }
+  );
+  // Button blocks from Notion: [button:Label](url) → styled button
+  html = html.replace(
+    /\[button:([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener" class="notion-btn">$1 ↗</a>'
   );
   // Regular links
   html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="prose-link">$1 ↗</a>');

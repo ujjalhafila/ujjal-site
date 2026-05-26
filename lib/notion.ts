@@ -4,42 +4,42 @@ import { NotionToMarkdown } from "notion-to-md";
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const n2m = new NotionToMarkdown({ notionClient: notion as any });
 
-// Custom block renderers for better site compatibility
-n2m.setCustomTransformer("image", async (block: any) => {
-  const img = block?.image;
-  const url = img?.file?.url ?? img?.external?.url ?? "";
-  const caption = img?.caption?.map((c: any) => c.plain_text).join("") ?? "";
-  if (!url) return "";
-  return `![${caption}](${url})`;
+// ── Block type transformers ───────────────────────────────────────────────
+n2m.setCustomTransformer("button", async (block: any) => {
+  const label = block?.button?.label ?? block?.button?.text ?? "Open";
+  const url   = block?.button?.url ?? block?.button?.action?.url ?? "";
+  if (!url) return `**${label}**`;
+  return `[button:${label}](${url})`;
 });
 n2m.setCustomTransformer("callout", async (block: any) => {
-  const text = block?.callout?.rich_text?.map((t: any) => t.plain_text).join("") ?? "";
+  const text = (block?.callout?.rich_text ?? []).map((t: any) => t.plain_text).join("");
   const icon = block?.callout?.icon?.emoji ?? "💡";
   return `> ${icon} ${text}`;
 });
 n2m.setCustomTransformer("toggle", async (block: any) => {
-  const text = block?.toggle?.rich_text?.map((t: any) => t.plain_text).join("") ?? "";
+  const text = (block?.toggle?.rich_text ?? []).map((t: any) => t.plain_text).join("");
   return `**${text}**`;
 });
-n2m.setCustomTransformer("button", async (block: any) => {
-  const label = block?.button?.label ?? "Link";
-  const url   = block?.button?.url ?? block?.button?.action?.url ?? "#";
-  return `[${label}](${url})`;
+n2m.setCustomTransformer("image", async (block: any) => {
+  const img  = block?.image;
+  const url  = img?.file?.url ?? img?.external?.url ?? "";
+  const cap  = (img?.caption ?? []).map((t: any) => t.plain_text).join("") || "";
+  return url ? `![${cap}](${url})` : "";
 });
 n2m.setCustomTransformer("embed", async (block: any) => {
   const url = block?.embed?.url ?? "";
-  return url ? `[View embed](${url})` : "";
+  return url ? `[View embed ↗](${url})` : "";
 });
 n2m.setCustomTransformer("bookmark", async (block: any) => {
-  const url     = block?.bookmark?.url ?? "";
-  const caption = block?.bookmark?.caption?.map((c: any) => c.plain_text).join("") || url;
-  return url ? `[${caption}](${url})` : "";
+  const url = block?.bookmark?.url ?? "";
+  const cap = (block?.bookmark?.caption ?? []).map((t: any) => t.plain_text).join("") || url;
+  return url ? `[${cap}](${url})` : "";
 });
 
 const PORTFOLIO_DS = process.env.NOTION_PORTFOLIO_DB_ID!;
 const THINK_DS = process.env.NOTION_THINK_DB_ID!;
 const ACHIEVEMENTS_DS = process.env.NOTION_ACHIEVEMENTS_DB_ID!;
-const EXPERIMENTS_DS  = process.env.NOTION_EXPERIMENTS_DB_ID ?? "6fd8b573-3419-4ecd-96e5-cb7031752c58";
+const EXPERIMENTS_DS  = process.env.NOTION_EXPERIMENTS_DB_ID ?? "a42b63ae-25b4-4b07-98ae-f7be3c6046e6";
 
 export type WorkItem = {
   id: string; title: string; description: string; status: string;
@@ -163,65 +163,59 @@ export async function getAchievements(): Promise<AchievementItem[]> {
   }));
 }
 
+// Fallback experiments shown when the Experiments Notion DB is inaccessible.
+// Replace by setting NOTION_EXPERIMENTS_DB_ID in Vercel env vars once you
+// share your Experiments DB with the Notion integration.
+const FALLBACK_EXPERIMENTS: ExperimentItem[] = [
+  {
+    id: "fallback-1",
+    title: "Confidence-Based Element Resolver",
+    description: "A scoring algorithm that identifies UI elements on desktop apps by weighting AutomationId, ControlType, and positional heuristics — built for Whatfix Journeys.",
+    content: "## What is this?\n\nA confidence-based scoring algorithm for resolving UI elements on native desktop applications — targeting SAP and similar enterprise tools.\n\n## Approach\n\nScore each candidate element across five weighted signals: AutomationId (0.40), ControlType (0.25), Name/Label (0.20), Position proximity (0.10), Sibling context (0.05). Pick the candidate with score > 0.72.\n\n## Status\n\nInternal prototype validated in early testing of Journeys hybrid flow authoring on SAP desktop.",
+    imageUrl: null,
+    tags: ["Prototype", "AI", "Tool", "System Design"],
+    url: "https://github.com/ujjalhafila",
+    status: "Published",
+    date: "2025-05-01",
+  },
+];
+
 export async function getExperiments(): Promise<ExperimentItem[]> {
-  if (!EXPERIMENTS_DS) return [];
-  const token = process.env.NOTION_TOKEN ?? "";
+  if (!EXPERIMENTS_DS) return FALLBACK_EXPERIMENTS;
   try {
-    // Use raw Notion REST API — works with both integration secrets and user OAuth tokens
-    const url = `https://api.notion.com/v1/databases/${EXPERIMENTS_DS}/query`;
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Notion-Version": "2022-06-28",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}),
-    });
-    if (!resp.ok) {
-      console.error("[exp] REST query failed:", resp.status);
-      return [];
-    }
-    const data = await resp.json() as any;
-    const results: any[] = data.results ?? [];
-    const published = results.filter((p: any) => {
-      const s = p.properties?.Status?.select?.name ?? p.properties?.Status?.status?.name ?? "";
-      return s === "Published";
-    });
-    if (published.length === 0) return [];
-    // REST API returns standard Notion page objects — same shape as dataSources results
-    const items = await Promise.all(published.map(async (p: any) => {
-      const titleProp = p.properties?.Name?.title?.[0]?.plain_text ?? p.properties?.title?.title?.[0]?.plain_text ?? "";
-      const descProp  = p.properties?.Description?.rich_text?.map((t:any)=>t.plain_text).join("") ?? "";
-      const coverFiles= p.properties?.Cover?.files ?? [];
-      const coverUrl  = coverFiles[0]?.file?.url ?? coverFiles[0]?.external?.url ?? null;
-      const tagsList  = (p.properties?.Tags?.multi_select ?? []).map((t:any)=>t.name);
-      const urlProp   = p.properties?.URL?.url ?? p.properties?.userDefined_URL?.url ?? null;
-      const dateProp  = p.properties?.Date?.date?.start ?? null;
-      let content = "";
-      try {
-        const blocks = await n2m.pageToMarkdown(p.id);
-        content = n2m.toMarkdownString(blocks).parent ?? "";
-      } catch { /**/ }
-      return {
+    const r = await (notion as any).dataSources.query({ data_source_id: EXPERIMENTS_DS });
+    const results: any[] = r?.results ?? [];
+    const mapped = results
+      .filter((p: any) => {
+        const status = sel(p, "Status") || p.properties?.Status?.status?.name || "";
+        return status === "Published";
+      })
+      .map((p: any) => ({
         id:          p.id,
-        title:       titleProp,
-        description: descProp,
-        content,
-        imageUrl:    coverUrl,
-        tags:        tagsList,
-        url:         urlProp,
-        status:      "Published",
-        date:        dateProp,
-      } as ExperimentItem;
+        title:       pageTitle(p),
+        description: richText(p, "Description"),
+        content:     "",
+        imageUrl:    fileUrl(p, "Cover") ?? fileUrl(p, "Image") ?? fileUrl(p, "Thumbnail"),
+        tags:        mSel(p, "Tags"),
+        url:         pUrl(p, "userDefined:URL") ?? pUrl(p, "URL"),
+        status:      sel(p, "Status"),
+        date:        dt(p, "Date"),
+      }));
+    if (mapped.length === 0) return FALLBACK_EXPERIMENTS;
+    // Fetch markdown content for each experiment
+    const withContent = await Promise.all(mapped.map(async (exp) => {
+      try {
+        const blocks = await n2m.pageToMarkdown(exp.id);
+        exp.content = n2m.toMarkdownString(blocks).parent ?? "";
+      } catch { exp.content = ""; }
+      return exp;
     }));
-    return items;
+    return withContent;
   } catch(e) {
-    console.error("[getExperiments]", String(e));
-    return [];
+    console.error("[getExperiments] error:", e);
+    return FALLBACK_EXPERIMENTS;
   }
 }
-
 
 export async function getFeaturedWork() { return (await getWorkItems()).slice(0,3); }
 export async function getFeaturedThink() {

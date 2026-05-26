@@ -57,6 +57,19 @@ html.dark, html[data-theme="dark"] {
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
+/* ── Scrollbar — design-language consistent ─────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--rule2, rgba(128,128,128,0.15));
+  border-radius: 0;
+  transition: background 0.3s;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ink3); }
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+*:hover { scrollbar-color: var(--rule2, rgba(128,128,128,0.2)) transparent; }
+
 
 body {
   background: var(--bg);
@@ -264,6 +277,15 @@ input:focus, textarea:focus { border-color: var(--rule2); outline: none; }
 .notion-table td { padding: 0.65rem 1rem; color: var(--ink); border-bottom: 1px solid var(--rule); vertical-align: top; }
 .notion-table tr:last-child td { border-bottom: none; }
 .notion-table tbody tr:hover td { background: var(--surface); }
+.notion-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px;
+  text-transform: uppercase; text-decoration: none;
+  color: #4DFFB4; border: 1px solid #4DFFB4;
+  padding: 7px 16px; margin: 4px 6px 4px 0;
+  transition: background 0.2s, color 0.2s;
+}
+.notion-btn:hover { background: #4DFFB4; color: #0C0C0C; }
 
 /* ─── LEGACY BUTTONS ───────────────────────────────────────────────────── */
 .btn-primary, a.btn-primary { font-family: 'DM Mono', monospace; font-size: 12px; padding: 9px 22px; background: var(--ink); color: var(--bg); border: 1px solid var(--ink); cursor: pointer; display: inline-flex; align-items: center; text-decoration: none; transition: opacity 0.2s; }

@@ -117,7 +117,7 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
           {experiments.length === 0 ? (
             <div style={{ padding:"4rem 28px" }}>
               <p style={{ fontFamily:MONO, fontSize:"12px", color:"var(--ink3)", lineHeight:1.75 }}>
-                No experiments yet — add entries in your Notion Experiments database with Status → Published.
+                No experiments published yet.
               </p>
             </div>
           ) : (
