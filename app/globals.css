@@ -162,31 +162,31 @@ blockquote { font-weight: 400; }
   transition: color 0.2s, border-color 0.2s, transform 0.15s;
 }
 
-/* Primary (filled) button: travelling colour outline only — no fill, no glow */
-/* Uses SVG-like approach: ::after is the spinning arc layer, ::before punches out
-   the button interior so only the 2px border ring is visible */
+/* Primary (filled) button: sweeping colour outline — colour travels around the border */
 .glow-btn:not(.glow-btn-outline) {
-  isolation: isolate; /* create stacking context */
+  isolation: isolate;
+  /* Ensure the button itself has an opaque background that ::before can match */
+  background: var(--ink) !important;
 }
+/* ::after = the full rotating conic arc (extends 2px outside the button) */
 .glow-btn:not(.glow-btn-outline)::after {
   content: "";
   position: absolute;
   inset: -2px;
-  border-radius: 1px;
   background: conic-gradient(
     from var(--angle, 0deg),
-    transparent 0deg,
-    var(--gc, #D42B45) 40deg,
-    transparent 80deg
+    var(--gc, #D42B45) 0deg,
+    transparent 50deg,
+    transparent 310deg,
+    var(--gc, #D42B45) 360deg
   );
   z-index: -2;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.25s;
   pointer-events: none;
 }
-/* This layer sits ON TOP of ::after but BELOW button content.
-   It is exactly the button's own background — covers the interior,
-   leaving only the 2px ring between inset:-2px and inset:0 visible */
+/* ::before = solid fill exactly covering the button interior,
+   so the conic arc is only visible in the 2px ring at the edge */
 .glow-btn:not(.glow-btn-outline)::before {
   content: "";
   position: absolute;
@@ -197,12 +197,11 @@ blockquote { font-weight: 400; }
 }
 .glow-btn:not(.glow-btn-outline):hover::after {
   opacity: 1;
-  animation: border-travel 1.4s linear infinite;
+  animation: border-travel 2s linear infinite;
 }
 @property --angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
 @keyframes border-travel { to { --angle: 360deg; } }
 .glow-btn:not(.glow-btn-outline):hover { transform: translateY(-1px); }
-/* Button text must be above ::before (z-index:-1) */
 .glow-btn:not(.glow-btn-outline) > * { position: relative; z-index: 1; }
 
 /* Outline button: inner cursor-tracked radial glow */

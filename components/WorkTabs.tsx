@@ -28,45 +28,41 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
   const [activeExp, setActiveExp] = useState<ExpItem | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Re-run glow tracking whenever tab changes so new cards get trackers
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    // Use a flag on the element to avoid double-attaching
     function attachTracker(el: Element) {
+      const h = el as HTMLElement;
+      if (h.dataset.glowAttached) return;
+      h.dataset.glowAttached = "1";
+
       let targetX = 0, targetY = 0, currentX = 0, currentY = 0, raf: number | null = null;
       function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
       function animate() {
         currentX = lerp(currentX, targetX, 0.18);
         currentY = lerp(currentY, targetY, 0.18);
-        (el as HTMLElement).style.setProperty("--mx", currentX.toFixed(1) + "px");
-        (el as HTMLElement).style.setProperty("--my", currentY.toFixed(1) + "px");
+        h.style.setProperty("--mx", currentX.toFixed(1) + "px");
+        h.style.setProperty("--my", currentY.toFixed(1) + "px");
         if (Math.abs(currentX - targetX) > 0.5 || Math.abs(currentY - targetY) > 0.5) {
           raf = requestAnimationFrame(animate);
         } else { raf = null; }
       }
-      el.addEventListener("mousemove", (e: Event) => {
-        const me = e as MouseEvent;
-        const r = (el as HTMLElement).getBoundingClientRect();
-        targetX = me.clientX - r.left;
-        targetY = me.clientY - r.top;
+      h.addEventListener("mousemove", (e: MouseEvent) => {
+        const r = h.getBoundingClientRect();
+        targetX = e.clientX - r.left;
+        targetY = e.clientY - r.top;
         if (!raf) raf = requestAnimationFrame(animate);
       });
-      el.addEventListener("mouseleave", () => {
+      h.addEventListener("mouseleave", () => {
         if (raf) { cancelAnimationFrame(raf); raf = null; }
       });
     }
 
-    const cards = container.querySelectorAll(".glow-card");
-    cards.forEach(attachTracker);
-
-    // Re-attach when tab changes (new cards rendered)
-    const observer = new MutationObserver(() => {
-      container.querySelectorAll(".glow-card").forEach(attachTracker);
-    });
-    observer.observe(container, { childList: true, subtree: true });
-
-    return () => observer.disconnect();
-  }, []);
+    container.querySelectorAll(".glow-card").forEach(attachTracker);
+  }, [tab]); // re-run when tab switches so experiments cards get attached
 
   return (
     <>
