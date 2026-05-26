@@ -26,6 +26,12 @@ n2m.setCustomTransformer("image", async (block: any) => {
   const cap  = (img?.caption ?? []).map((t: any) => t.plain_text).join("") || "";
   return url ? `![${cap}](${url})` : "";
 });
+n2m.setCustomTransformer("video", async (block: any) => {
+  const v = block?.video;
+  const url = v?.file?.url ?? v?.external?.url ?? "";
+  const cap = (v?.caption ?? []).map((t: any) => t.plain_text).join("") || "";
+  return url ? `![${cap}](${url})` : "";
+});
 n2m.setCustomTransformer("embed", async (block: any) => {
   const url = block?.embed?.url ?? "";
   return url ? `[View embed ↗](${url})` : "";
@@ -40,6 +46,7 @@ const PORTFOLIO_DS = process.env.NOTION_PORTFOLIO_DB_ID!;
 const THINK_DS = process.env.NOTION_THINK_DB_ID!;
 const ACHIEVEMENTS_DS = process.env.NOTION_ACHIEVEMENTS_DB_ID!;
 const EXPERIMENTS_DS  = process.env.NOTION_EXPERIMENTS_DB_ID ?? "a42b63ae-25b4-4b07-98ae-f7be3c6046e6";
+const CTA_DS          = process.env.NOTION_CTA_DB_ID ?? "bb2bfb72-2af1-4f68-bfd5-8d0ca44d42bc";
 
 export type WorkItem = {
   id: string; title: string; description: string; status: string;
@@ -215,6 +222,39 @@ export async function getExperiments(): Promise<ExperimentItem[]> {
     console.error("[getExperiments] error:", e);
     return FALLBACK_EXPERIMENTS;
   }
+}
+
+export type CtaItem = {
+  heading: string;
+  description: string;
+  ctaLabel: string;
+  ctaUrl: string;
+  accent: "teal" | "red" | "purple" | "blue" | "yellow";
+};
+
+export async function getActiveCta(): Promise<CtaItem | null> {
+  if (!CTA_DS) return null;
+  try {
+    const token = process.env.NOTION_TOKEN ?? "";
+    const resp = await fetch(`https://api.notion.com/v1/databases/${CTA_DS}/query`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${token}`, "Notion-Version": "2022-06-28", "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+      next: { revalidate: 300 }, // cache 5 min
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json() as any;
+    const active = (data.results ?? []).find((p: any) => p.properties?.Active?.checkbox === true);
+    if (!active) return null;
+    const props = active.properties;
+    return {
+      heading:     props?.Heading?.rich_text?.[0]?.plain_text ?? "",
+      description: props?.Description?.rich_text?.[0]?.plain_text ?? "",
+      ctaLabel:    props?.["CTA Label"]?.rich_text?.[0]?.plain_text ?? "Learn more →",
+      ctaUrl:      props?.["CTA URL"]?.url ?? "#",
+      accent:      (props?.Accent?.select?.name ?? "teal") as CtaItem["accent"],
+    };
+  } catch { return null; }
 }
 
 export async function getFeaturedWork() { return (await getWorkItems()).slice(0,3); }

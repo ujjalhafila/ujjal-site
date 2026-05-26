@@ -3,7 +3,8 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Portrait from "../components/Portrait";
 import QuotesCarousel from "../components/QuotesCarousel";
-import { getFeaturedWork, getFeaturedThink } from "../lib/notion";
+import CtaBanner from "../components/CtaBanner";
+import { getFeaturedWork, getFeaturedThink, getActiveCta } from "../lib/notion";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +69,7 @@ const QUOTES = [
 const MARQUEE_ITEMS = ["Product Design","Systems Thinking","Digital Adoption","Agentic UX","Journey Design","Research & Synthesis","Why-First Design","Interaction Design"];
 
 export default async function Home() {
-  const [work, think] = await Promise.all([getFeaturedWork(), getFeaturedThink()]);
+  const [work, think, cta] = await Promise.all([getFeaturedWork(), getFeaturedThink(), getActiveCta()]);
 
   return (
     <main style={{ background:"var(--bg)", color:"var(--ink)" }}>
@@ -340,6 +341,9 @@ export default async function Home() {
           )}
         </div>
       </section>
+
+      {/* ── CTA BANNER ───────────────────────────────────────────────── */}
+      {cta && <CtaBanner cta={cta} />}
 
       {/* ── CONNECT ───────────────────────────────────────────────────── */}
       <section style={{ borderBottom:"1px solid var(--rule)" }}>
