@@ -68,85 +68,55 @@ function parseColumns(md: string): string {
 }
 
 // ── Notion/GFM tables → styled HTML table ───────────────────────────────────
-// Handles multiline cell content: Notion sometimes puts newlines inside cells.
-// Strategy: collect all lines that start with | (table lines), join non-pipe
-// continuation lines back into the preceding cell.
+// Two-pass approach:
+// Pass 1: join continuation lines (non-pipe lines between pipe lines) back
+//         into the preceding pipe row with a space separator.
+// Pass 2: run original regex match on the cleaned markdown.
 function parseTables(md: string): string {
+  // Pass 1 — merge multiline cells
   const lines = md.split("\n");
-  const out: string[] = [];
-  let tableLines: string[] = [];
-
-  function flushTable() {
-    if (tableLines.length < 3) { out.push(...tableLines); tableLines = []; return; }
-    // Separate header, separator, body
-    const rows: string[] = [];
-    let current = "";
-    for (const line of tableLines) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith("|")) {
-        if (current) rows.push(current);
-        current = trimmed;
-      } else {
-        // Continuation line — append to previous cell (replace newline with space)
-        current += " " + trimmed;
-      }
-    }
-    if (current) rows.push(current);
-
-    const parseRow = (row: string) =>
-      row.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
-
-    const header = rows[0];
-    const sepIdx = rows.findIndex((r, i) => i > 0 && /^\|[-:| ]+\|$/.test(r));
-    const bodyRows = rows.slice(sepIdx > 0 ? sepIdx + 1 : 2);
-
-    const headerCells = parseRow(header);
-    const colCount = headerCells.length;
-
-    const thead = `<thead><tr>${headerCells.map(c => `<th>${c}</th>`).join("")}</tr></thead>`;
-    const tbody = `<tbody>${bodyRows
-      .filter(r => r.trim() && !/^\|[-:| ]+\|$/.test(r))
-      .map(r => {
-        const cells = parseRow(r);
-        // Pad missing cells to match header column count
-        while (cells.length < colCount) cells.push("");
-        return `<tr>${cells.slice(0, colCount).map(c => `<td>${c}</td>`).join("")}</tr>`;
-      })
-      .join("")}</tbody>`;
-
-    out.push(`<div class="notion-table-wrap"><table class="notion-table">${thead}${tbody}</table></div>`);
-    tableLines = [];
-  }
-
-  let inTable = false;
+  const merged: string[] = [];
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
-    const isTableLine = trimmed.startsWith("|") && trimmed.endsWith("|");
-    const isSep = /^\|[-:| ]+\|$/.test(trimmed);
-
-    if (isTableLine || isSep) {
-      inTable = true;
-      tableLines.push(line);
-    } else if (inTable && trimmed && !isTableLine) {
-      // Check if next line is a table line (continuation scenario)
-      const nextLine = lines[i + 1]?.trim() ?? "";
-      if (nextLine.startsWith("|")) {
-        // This is a continuation of the previous cell
-        tableLines.push(line);
-      } else {
-        // End of table
-        flushTable();
-        inTable = false;
-        out.push(line);
-      }
+    const trimmed = lines[i].trim();
+    if (trimmed.startsWith("|")) {
+      merged.push(lines[i]);
+    } else if (
+      merged.length > 0 &&
+      merged[merged.length - 1].trim().startsWith("|") &&
+      trimmed !== "" &&
+      lines[i + 1]?.trim().startsWith("|")
+    ) {
+      // Non-pipe line sandwiched between two pipe lines → continuation cell text
+      merged[merged.length - 1] += " " + trimmed;
     } else {
-      if (inTable) { flushTable(); inTable = false; }
-      out.push(line);
+      merged.push(lines[i]);
     }
   }
-  if (inTable) flushTable();
-  return out.join("\n");
+  const clean = merged.join("\n");
+
+  // Pass 2 — regex table parser (original, proven logic)
+  return clean.replace(
+    /((?:^|\n)(\|.+\|[ \t]*\n)(\|[-| :]+\|[ \t]*\n)((?:\|.+\|[ \t]*\n?)*))/g,
+    (_, _full, headerLine, _sep, bodyBlock) => {
+      const parseRow = (row: string) =>
+        row.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+
+      const headerCells = parseRow(headerLine);
+      const colCount = headerCells.length;
+      const bodyRows = bodyBlock.trim().split("\n").filter((r: string) => r.trim());
+
+      const thead = `<thead><tr>${headerCells.map((c: string) => `<th>${c}</th>`).join("")}</tr></thead>`;
+      const tbody = `<tbody>${bodyRows
+        .map((r: string) => {
+          const cells = parseRow(r);
+          while (cells.length < colCount) cells.push("");
+          return `<tr>${cells.slice(0, colCount).map((c: string) => `<td>${c}</td>`).join("")}</tr>`;
+        })
+        .join("")}</tbody>`;
+
+      return `\n<div class="notion-table-wrap"><table class="notion-table">${thead}${tbody}</table></div>`;
+    }
+  );
 }
 
 export function markdownToHtml(md: string): string {
