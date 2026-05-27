@@ -162,36 +162,22 @@ blockquote { font-weight: 400; }
   transition: color 0.2s, transform 0.15s;
 }
 
-/* Primary (filled) button: colour arc travels around the button perimeter on hover.
-   ::before is a slightly-larger layer (inset:-3px) sitting BEHIND the button surface.
-   The conic-gradient arc rotates around it — visible only in the 3px ring outside
-   the button's own background footprint. Button fill/text are untouched. */
+/* Primary (filled) button: canvas arc drawn by JS on hover */
 .glow-btn:not(.glow-btn-outline) {
   isolation: isolate;
 }
-.glow-btn:not(.glow-btn-outline)::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  z-index: -1; /* behind the button's own stacking context (isolation:isolate) */
-  background: conic-gradient(
-    from var(--btn-angle, 0deg),
-    transparent 0deg,
-    var(--gc, #D42B45) 30deg,
-    transparent 60deg
-  );
-  opacity: 0;
-  transition: opacity 0.25s;
-  pointer-events: none;
-}
-.glow-btn:not(.glow-btn-outline):hover::before {
-  opacity: 1;
-  animation: btn-border-spin 2s linear infinite;
-}
-@property --btn-angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
-@keyframes btn-border-spin { to { --btn-angle: 360deg; } }
 .glow-btn:not(.glow-btn-outline):hover { transform: translateY(-1px); }
 .glow-btn:not(.glow-btn-outline) > * { position: relative; z-index: 1; }
+/* The canvas is injected by JS — sits behind the button at z-index:-1 */
+.glow-btn-canvas {
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  top: 0; left: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.glow-btn:hover .glow-btn-canvas { opacity: 1; }
 
 /* Outline button: inner cursor-tracked radial glow */
 .glow-btn-outline {

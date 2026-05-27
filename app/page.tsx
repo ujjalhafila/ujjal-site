@@ -395,6 +395,99 @@ export default async function Home() {
   document.querySelectorAll('.glow-card, .glow-row').forEach(trackGlow);
   document.querySelectorAll('.glow-btn-outline').forEach(trackGlow);
 
+  /* Primary glow-btn: canvas arc that travels around the button outline */
+  document.querySelectorAll('.glow-btn:not(.glow-btn-outline)').forEach(function(btn) {
+    var PAD = 3;   /* px outside the button edge */
+    var ARC = 0.28; /* arc length as fraction of full perimeter */
+    var color = btn.style.getPropertyValue('--gc') || '#D42B45';
+
+    var cvs = document.createElement('canvas');
+    cvs.className = 'glow-btn-canvas';
+    btn.appendChild(cvs);
+
+    var angle = 0; /* 0–1 fraction of perimeter */
+    var raf = null;
+    var visible = false;
+
+    function resize() {
+      var r = btn.getBoundingClientRect();
+      var w = r.width  + PAD * 2;
+      var h = r.height + PAD * 2;
+      cvs.width  = w * devicePixelRatio;
+      cvs.height = h * devicePixelRatio;
+      cvs.style.width  = w + 'px';
+      cvs.style.height = h + 'px';
+      cvs.style.left   = -PAD + 'px';
+      cvs.style.top    = -PAD + 'px';
+    }
+
+    function drawFrame() {
+      var w = cvs.width, h = cvs.height;
+      var ctx = cvs.getContext('2d');
+      ctx.clearRect(0, 0, w, h);
+
+      /* Perimeter path: top → right → bottom → left */
+      var dpr = devicePixelRatio;
+      var bw = w, bh = h;
+      var perim = 2 * (bw + bh);
+      var arcLen = ARC * perim;
+      var start = angle * perim;
+
+      ctx.save();
+      ctx.lineWidth = 2 * dpr;
+      ctx.lineCap = 'round';
+
+      /* Walk the perimeter */
+      var points = [];
+      var walked = 0;
+      var pos = start % perim;
+      var steps = 60;
+      for (var i = 0; i <= steps; i++) {
+        var p = (pos + (arcLen * i / steps)) % perim;
+        points.push(perimPoint(p, bw, bh));
+      }
+
+      /* Gradient along the arc */
+      var p0 = points[0], pN = points[steps];
+      var grad = ctx.createLinearGradient(p0[0], p0[1], pN[0], pN[1]);
+      grad.addColorStop(0,   'transparent');
+      grad.addColorStop(0.3, color);
+      grad.addColorStop(0.7, color);
+      grad.addColorStop(1,   'transparent');
+
+      ctx.strokeStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], points[0][1]);
+      for (var j = 1; j <= steps; j++) ctx.lineTo(points[j][0], points[j][1]);
+      ctx.stroke();
+      ctx.restore();
+
+      angle = (angle + 0.004) % 1;
+      if (visible) raf = requestAnimationFrame(drawFrame);
+    }
+
+    function perimPoint(p, bw, bh) {
+      /* Returns [x, y] along the rectangle perimeter (clockwise from top-left) */
+      if (p < bw)                  return [p,         0       ]; /* top */
+      p -= bw;
+      if (p < bh)                  return [bw,        p       ]; /* right */
+      p -= bh;
+      if (p < bw)                  return [bw - p,    bh      ]; /* bottom */
+      p -= bw;
+                                   return [0,          bh - p  ]; /* left */
+    }
+
+    btn.addEventListener('mouseenter', function() {
+      visible = true;
+      resize();
+      if (!raf) raf = requestAnimationFrame(drawFrame);
+    });
+    btn.addEventListener('mouseleave', function() {
+      visible = false;
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+    });
+  });
+
   /* Quote rotation (kept from original) */
   var slides = document.querySelectorAll('.quote-slide');
   var dots   = document.querySelectorAll('.quote-dot');
