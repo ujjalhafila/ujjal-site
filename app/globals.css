@@ -162,23 +162,37 @@ blockquote { font-weight: 400; }
   transition: color 0.2s, transform 0.15s;
 }
 
-/* Primary (filled) button: animated border-image outline — no fill, no glow */
-/* border-image with a conic-gradient paints ONLY the border ring, never the interior */
+/* Primary (filled) button: colour travels around the button outline on hover.
+   Technique: ::before is a slightly-larger background surface (inset:-3px).
+   It has a conic-gradient that rotates via --btn-angle, making the colour
+   appear to run around the perimeter. The button itself is unchanged. */
 .glow-btn:not(.glow-btn-outline) {
-  border: 2px solid transparent;
+  z-index: 0;
 }
-.glow-btn:not(.glow-btn-outline):hover {
-  transform: translateY(-1px);
-  border-image: conic-gradient(
+.glow-btn:not(.glow-btn-outline)::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  z-index: -1;
+  border-radius: 1px;
+  background: conic-gradient(
     from var(--btn-angle, 0deg),
     transparent 0deg,
-    var(--gc, #D42B45) 40deg,
-    transparent 80deg
-  ) 1;
+    var(--gc, #D42B45) 30deg,
+    transparent 60deg
+  );
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+  animation: none;
+}
+.glow-btn:not(.glow-btn-outline):hover::before {
+  opacity: 1;
   animation: btn-border-spin 2s linear infinite;
 }
 @property --btn-angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
 @keyframes btn-border-spin { to { --btn-angle: 360deg; } }
+.glow-btn:not(.glow-btn-outline):hover { transform: translateY(-1px); }
 .glow-btn:not(.glow-btn-outline) > * { position: relative; z-index: 1; }
 
 /* Outline button: inner cursor-tracked radial glow */

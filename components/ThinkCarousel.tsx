@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 
 const MONO = "'DM Mono',monospace";
@@ -16,7 +16,24 @@ interface Props {
 }
 
 export default function ThinkCarousel({ items, glowGc, glowGcLine, glowGcText }: Props) {
-  const [idx, setIdx] = useState(0);
+  const [cur, setCur] = useState(0);
+  const [animating, setAnimating] = useState(false);
+
+  const go = useCallback((n: number) => {
+    if (animating || items.length <= 1) return;
+    setAnimating(true);
+    setTimeout(() => {
+      setCur((n + items.length) % items.length);
+      setAnimating(false);
+    }, 200);
+  }, [animating, items.length]);
+
+  // Auto-advance every 5s — same as Design Principles carousel
+  useEffect(() => {
+    if (items.length <= 1) return;
+    const t = setInterval(() => go(cur + 1), 5000);
+    return () => clearInterval(t);
+  }, [cur, go, items.length]);
 
   if (!items.length) {
     return (
@@ -26,11 +43,41 @@ export default function ThinkCarousel({ items, glowGc, glowGcLine, glowGcText }:
     );
   }
 
-  const item = items[idx];
+  const item = items[cur];
   const multi = items.length > 1;
 
   return (
-    <div style={{ position:"relative" }} className="think-carousel-wrap">
+    <div style={{ position:"relative" }}>
+      {/* Label row — matches Design Principles section header */}
+      {multi && (
+        <div style={{
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+          padding:"0 28px", height:"40px", borderBottom:"1px solid var(--rule)",
+        }}>
+          <div style={{ display:"flex", gap:"4px", alignItems:"center" }}>
+            {items.map((_, i) => (
+              <button key={i} onClick={() => go(i)} aria-label={`Thought ${i+1}`}
+                style={{
+                  background: i === cur ? "var(--ink)" : "var(--rule2)",
+                  border:"none", cursor:"pointer", padding:0,
+                  width: i === cur ? "20px" : "6px",
+                  height:"6px",
+                  transition:"width 0.3s ease, background 0.3s ease",
+                }} />
+            ))}
+          </div>
+          <div style={{ display:"flex", gap:"4px" }}>
+            <button onClick={() => go(cur - 1)}
+              style={{ background:"none", border:"1px solid var(--rule)", color:"var(--ink3)", width:"28px", height:"28px", cursor:"pointer", fontFamily:MONO, fontSize:"14px", display:"flex", alignItems:"center", justifyContent:"center", transition:"color 0.2s, border-color 0.2s" }}
+              className="carousel-btn" aria-label="Previous">‹</button>
+            <button onClick={() => go(cur + 1)}
+              style={{ background:"none", border:"1px solid var(--rule)", color:"var(--ink3)", width:"28px", height:"28px", cursor:"pointer", fontFamily:MONO, fontSize:"14px", display:"flex", alignItems:"center", justifyContent:"center", transition:"color 0.2s, border-color 0.2s" }}
+              className="carousel-btn" aria-label="Next">›</button>
+          </div>
+        </div>
+      )}
+
+      {/* Card — fades + slides like Design Principles */}
       <Link
         href={`/think/${item.slug}`}
         className="glow-card reveal think-carousel-card"
@@ -38,6 +85,10 @@ export default function ThinkCarousel({ items, glowGc, glowGcLine, glowGcText }:
           display:"flex", padding:"32px 28px",
           flexDirection:"column", gap:"14px",
           borderLeft:"none",
+          opacity: animating ? 0 : 1,
+          transform: animating ? "translateY(6px)" : "translateY(0)",
+          transition:"opacity 0.22s ease, transform 0.22s ease",
+          minHeight:"140px",
           ["--gc" as string]: glowGc,
           ["--gc-line" as string]: glowGcLine,
           ["--gc-text" as string]: glowGcText,
@@ -54,62 +105,16 @@ export default function ThinkCarousel({ items, glowGc, glowGcLine, glowGcText }:
             "{item.whyQuestion}"
           </p>
         )}
-        {/* "Read →" appears only on hover via CSS */}
-        <div className="think-read-cta" style={{
-          fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"auto",
-        }}>
+        {/* "Read →" fades in on hover */}
+        <div className="think-read-cta" style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"auto" }}>
           Read →
         </div>
       </Link>
 
-      {/* Nav buttons — only visible on hover of the parent wrap */}
-      {multi && (
-        <div className="think-nav" aria-label="Browse thoughts">
-          <button
-            onClick={e => { e.preventDefault(); setIdx(i => (i - 1 + items.length) % items.length); }}
-            aria-label="Previous thought"
-            style={{
-              background:"none", border:"1px solid var(--rule)",
-              color:"var(--ink3)", width:"28px", height:"28px",
-              cursor:"pointer", fontFamily:MONO, fontSize:"14px",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              transition:"color 0.2s, border-color 0.2s",
-            }}
-            className="think-nav-btn"
-          >‹</button>
-
-          <span style={{ fontFamily:MONO, fontSize:"10px", color:"var(--ink3)", letterSpacing:"0.5px" }}>
-            {idx + 1}/{items.length}
-          </span>
-
-          <button
-            onClick={e => { e.preventDefault(); setIdx(i => (i + 1) % items.length); }}
-            aria-label="Next thought"
-            style={{
-              background:"none", border:"1px solid var(--rule)",
-              color:"var(--ink3)", width:"28px", height:"28px",
-              cursor:"pointer", fontFamily:MONO, fontSize:"14px",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              transition:"color 0.2s, border-color 0.2s",
-            }}
-            className="think-nav-btn"
-          >›</button>
-        </div>
-      )}
-
       <style>{`
-        /* "Read →" hidden at rest, fades in on card hover */
         .think-carousel-card .think-read-cta { opacity: 0; transition: opacity 0.2s; }
         .think-carousel-card:hover .think-read-cta { opacity: 1; }
-
-        /* Nav buttons hidden at rest, visible on wrap hover */
-        .think-nav {
-          position: absolute; top: 12px; right: 12px;
-          display: flex; align-items: center; gap: 6px;
-          opacity: 0; transition: opacity 0.2s; pointer-events: none;
-        }
-        .think-carousel-wrap:hover .think-nav { opacity: 1; pointer-events: auto; }
-        .think-nav-btn:hover { color: var(--ink) !important; border-color: var(--rule2) !important; }
+        .carousel-btn:hover { color: var(--ink) !important; border-color: var(--rule2) !important; }
       `}</style>
     </div>
   );
