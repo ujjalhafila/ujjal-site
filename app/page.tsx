@@ -141,7 +141,7 @@ export default async function Home() {
               fontFamily:MONO, fontSize:"12px", padding:"9px 22px",
               background:"var(--ink)", color:"var(--bg)",
               border:"1px solid var(--ink)",
-              ["--gc" as string]:"rgba(210,43,69,0.40)",
+              ["--gc" as string]:"#D42B45",
             }}>
               View Work →
             </Link>

@@ -162,19 +162,18 @@ blockquote { font-weight: 400; }
   transition: color 0.2s, transform 0.15s;
 }
 
-/* Primary (filled) button: colour travels around the button outline on hover.
-   Technique: ::before is a slightly-larger background surface (inset:-3px).
-   It has a conic-gradient that rotates via --btn-angle, making the colour
-   appear to run around the perimeter. The button itself is unchanged. */
+/* Primary (filled) button: colour arc travels around the button perimeter on hover.
+   ::before is a slightly-larger layer (inset:-3px) sitting BEHIND the button surface.
+   The conic-gradient arc rotates around it — visible only in the 3px ring outside
+   the button's own background footprint. Button fill/text are untouched. */
 .glow-btn:not(.glow-btn-outline) {
-  z-index: 0;
+  isolation: isolate;
 }
 .glow-btn:not(.glow-btn-outline)::before {
   content: "";
   position: absolute;
   inset: -3px;
-  z-index: -1;
-  border-radius: 1px;
+  z-index: -1; /* behind the button's own stacking context (isolation:isolate) */
   background: conic-gradient(
     from var(--btn-angle, 0deg),
     transparent 0deg,
@@ -184,7 +183,6 @@ blockquote { font-weight: 400; }
   opacity: 0;
   transition: opacity 0.25s;
   pointer-events: none;
-  animation: none;
 }
 .glow-btn:not(.glow-btn-outline):hover::before {
   opacity: 1;
