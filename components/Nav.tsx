@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./ThemeProvider";
 
 function LinkedInIcon() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2zm2-5a2 2 0 110 4 2 2 0 010-4z"/></svg>; }
@@ -18,6 +19,7 @@ const SOCIALS = [
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <>
@@ -43,20 +45,23 @@ export default function Nav() {
 
         {/* Desktop nav links */}
         <div style={{ display:"flex", alignItems:"stretch" }} className="desktop-nav">
-          {NAV_LINKS.map(([label, href], i) => (
-            <Link key={href} href={href}
-              className="nav-link"
-              style={{
-                display:"flex", alignItems:"center", padding:"0 20px",
-                fontFamily:MONO, fontSize:"12px", color:"var(--ink2)",
-                borderRight:"1px solid var(--rule)", textDecoration:"none",
-                transition:"color 0.2s",
-                /* override nav-link::after colour per index */
-                ["--nl-color" as string]: NAV_COLORS[i],
-              }}>
-              {label}
-            </Link>
-          ))}
+          {NAV_LINKS.map(([label, href], i) => {
+            const isActive = pathname === href || pathname.startsWith(String(href) + '/');
+            return (
+              <Link key={href} href={href}
+                className="nav-link"
+                style={{
+                  display:"flex", alignItems:"center", padding:"0 20px",
+                  fontFamily:MONO, fontSize:"12px",
+                  color: isActive ? "var(--ink)" : "var(--ink2)",
+                  borderRight:"1px solid var(--rule)", textDecoration:"none",
+                  transition:"color 0.2s",
+                  ["--nl-color" as string]: NAV_COLORS[i],
+                }}>
+                {label}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Right side */}
@@ -91,10 +96,14 @@ export default function Nav() {
               display:"none", alignItems:"center", justifyContent:"center",
               padding:"0 16px", background:"none", border:"none",
               borderLeft:"1px solid var(--rule)", color:"var(--ink)",
-              cursor:"pointer", fontFamily:MONO, fontSize:"16px",
+              cursor:"pointer",
             }}
-            aria-label="Menu">
-            {open ? "✕" : "☰"}
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}>
+            {open
+              ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            }
           </button>
         </div>
       </nav>
@@ -106,20 +115,24 @@ export default function Nav() {
           background:"var(--bg)", borderBottom:"1px solid var(--rule)",
           animation:"fadeIn 0.15s ease",
         }}>
-          {NAV_LINKS.map(([label, href]) => (
-            <Link key={href} href={href} onClick={() => setOpen(false)}
-              style={{
-                display:"block", fontFamily:MONO, fontSize:"12px",
-                letterSpacing:"1px", textTransform:"uppercase",
-                color:"var(--ink2)", textDecoration:"none",
-                padding:"14px 24px", borderBottom:"1px solid var(--rule)",
-                transition:"color 0.2s, padding-left 0.2s",
-              }}
-              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color="var(--ink)"; el.style.paddingLeft="32px"; }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color="var(--ink2)"; el.style.paddingLeft="24px"; }}>
-              {label}
-            </Link>
-          ))}
+          {NAV_LINKS.map(([label, href]) => {
+            const isActive = pathname === href || pathname.startsWith(String(href) + '/');
+            return (
+              <Link key={href} href={href} onClick={() => setOpen(false)}
+                style={{
+                  display:"block", fontFamily:MONO, fontSize:"12px",
+                  letterSpacing:"1px", textTransform:"uppercase",
+                  color: isActive ? "var(--ink)" : "var(--ink2)",
+                  textDecoration:"none",
+                  padding:"14px 24px", borderBottom:"1px solid var(--rule)",
+                  transition:"color 0.2s, padding-left 0.2s",
+                }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color="var(--ink)"; el.style.paddingLeft="32px"; }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color=isActive?"var(--ink)":"var(--ink2)"; el.style.paddingLeft="24px"; }}>
+                {label}
+              </Link>
+            );
+          })}
           <div style={{ display:"flex", gap:0, borderBottom:"1px solid var(--rule)" }}>
             {SOCIALS.map(({ href, Icon, label }) => (
               <a key={label} href={href}

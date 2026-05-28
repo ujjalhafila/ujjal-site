@@ -178,10 +178,10 @@ export default async function Home() {
       <div style={{
         borderBottom:"1px solid var(--rule)", overflow:"hidden",
         height:"34px", display:"flex", alignItems:"center",
-      }}>
+      }} aria-hidden="true">
         <div style={{ display:"flex", animation:"marquee 26s linear infinite", whiteSpace:"nowrap", alignItems:"center" }}>
           {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
-            <span key={i} style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", padding:"0 24px", flexShrink:0 }}>
+            <span key={`m-${i}`} style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", padding:"0 24px", flexShrink:0 }}>
               {item}
               {i < MARQUEE_ITEMS.length * 2 - 1 && (
                 <span style={{ opacity:0.28, margin:"0 0 0 24px" }}>·</span>
@@ -250,8 +250,10 @@ export default async function Home() {
                   {/* Body */}
                   <div style={{ padding:"20px 20px 24px", display:"flex", flexDirection:"column", gap:"10px", flex:1 }}>
                     <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", display:"flex", justifyContent:"space-between" }}>
-                      <span>0{i+1}</span>
-                      <span className="gc-arr" style={{ fontSize:"16px" }}>↗</span>
+                      <span>{String(i + 1).padStart(2, "0")}</span>
+                      <span className="gc-arr">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+                      </span>
                     </div>
                     <div className="gc-title" style={{ fontSize:"16px", fontWeight:400, letterSpacing:"-0.3px", lineHeight:1.25 }}>
                       {item.title}
@@ -349,7 +351,9 @@ export default async function Home() {
                 {link.sub}
               </div>
             </div>
-            <span className="gc-arr" style={{ fontSize:"16px", color:"var(--ink3)" }}>↗</span>
+            <span className="gc-arr" style={{ color:"var(--ink3)" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+            </span>
           </a>
         ))}
       </section>
@@ -399,7 +403,7 @@ export default async function Home() {
   document.querySelectorAll('.glow-btn:not(.glow-btn-outline)').forEach(function(btn) {
     var PAD = 3;   /* px outside the button edge */
     var ARC = 0.28; /* arc length as fraction of full perimeter */
-    var color = btn.style.getPropertyValue('--gc') || '#D42B45';
+    var color = getComputedStyle(btn).getPropertyValue('--gc').trim() || '#D42B45';
 
     var cvs = document.createElement('canvas');
     cvs.className = 'glow-btn-canvas';

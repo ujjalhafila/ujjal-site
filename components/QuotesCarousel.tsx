@@ -40,11 +40,15 @@ export default function QuotesCarousel({ quotes }: { quotes: Quote[] }) {
         {/* Prev / Next */}
         <div style={{ display:"flex", gap:"4px" }}>
           <button onClick={() => go(cur - 1)}
-            style={{ background:"none", border:"1px solid var(--rule)", color:"var(--ink3)", width:"28px", height:"28px", cursor:"pointer", fontFamily:MONO, fontSize:"14px", display:"flex", alignItems:"center", justifyContent:"center", transition:"color 0.2s, border-color 0.2s" }}
-            className="carousel-btn" aria-label="Previous">‹</button>
+            style={{ background:"none", border:"1px solid var(--rule)", color:"var(--ink3)", width:"28px", height:"28px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", transition:"color 0.2s, border-color 0.2s" }}
+            className="carousel-btn" aria-label="Previous">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
           <button onClick={() => go(cur + 1)}
-            style={{ background:"none", border:"1px solid var(--rule)", color:"var(--ink3)", width:"28px", height:"28px", cursor:"pointer", fontFamily:MONO, fontSize:"14px", display:"flex", alignItems:"center", justifyContent:"center", transition:"color 0.2s, border-color 0.2s" }}
-            className="carousel-btn" aria-label="Next">›</button>
+            style={{ background:"none", border:"1px solid var(--rule)", color:"var(--ink3)", width:"28px", height:"28px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", transition:"color 0.2s, border-color 0.2s" }}
+            className="carousel-btn" aria-label="Next">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
         </div>
       </div>
 
