@@ -8,13 +8,48 @@ export default function GlowProvider() {
   const pathname = usePathname();
 
   const attach = useCallback(() => {
-    // Glow tracker — writes --mx / --my CSS vars on mousemove
+    // Organic glow tracker — lerped position + velocity for ellipse deformation
     function trackGlow(el: Element) {
-      (el as HTMLElement).addEventListener("mousemove", (e: Event) => {
+      const h = el as HTMLElement;
+      if (h.dataset.glowAttached) return;
+      h.dataset.glowAttached = "1";
+
+      let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
+      let prevX = 0, prevY = 0, velX = 0, velY = 0;
+      let raf: number | null = null;
+
+      const lerp  = (a: number, b: number, t: number) => a + (b - a) * t;
+      const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+      function animate() {
+        currentX = lerp(currentX, targetX, 0.12);
+        currentY = lerp(currentY, targetY, 0.12);
+        const dx = currentX - prevX;
+        const dy = currentY - prevY;
+        velX = lerp(velX, clamp(dx * 0.05, -1, 1), 0.18);
+        velY = lerp(velY, clamp(dy * 0.05, -1, 1), 0.18);
+        prevX = currentX; prevY = currentY;
+
+        h.style.setProperty("--mx", currentX.toFixed(1) + "px");
+        h.style.setProperty("--my", currentY.toFixed(1) + "px");
+        h.style.setProperty("--vx", velX.toFixed(3));
+        h.style.setProperty("--vy", velY.toFixed(3));
+
+        const moving = Math.abs(targetX - currentX) > 0.4 || Math.abs(targetY - currentY) > 0.4
+                    || Math.abs(velX) > 0.002 || Math.abs(velY) > 0.002;
+        if (moving) { raf = requestAnimationFrame(animate); } else { raf = null; }
+      }
+
+      h.addEventListener("mousemove", (e: Event) => {
         const me = e as MouseEvent;
-        const r = (el as HTMLElement).getBoundingClientRect();
-        (el as HTMLElement).style.setProperty("--mx", (me.clientX - r.left) + "px");
-        (el as HTMLElement).style.setProperty("--my", (me.clientY - r.top) + "px");
+        const r = h.getBoundingClientRect();
+        targetX = me.clientX - r.left;
+        targetY = me.clientY - r.top;
+        if (!raf) raf = requestAnimationFrame(animate);
+      });
+      h.addEventListener("mouseleave", () => {
+        velX = 0; velY = 0;
+        if (raf) { cancelAnimationFrame(raf); raf = null; }
       });
     }
     document.querySelectorAll(".glow-card, .glow-row, .glow-btn").forEach(trackGlow);

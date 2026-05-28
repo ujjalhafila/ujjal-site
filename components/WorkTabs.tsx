@@ -40,16 +40,27 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
         if (h.dataset.glowAttached) return;
         h.dataset.glowAttached = "1";
 
-        let targetX = 0, targetY = 0, currentX = 0, currentY = 0, raf: number | null = null;
-        function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
+        let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
+        let prevX = 0, prevY = 0, velX = 0, velY = 0;
+        let raf: number | null = null;
+        const lerp  = (a: number, b: number, t: number) => a + (b - a) * t;
+        const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
         function animate() {
-          currentX = lerp(currentX, targetX, 0.18);
-          currentY = lerp(currentY, targetY, 0.18);
+          currentX = lerp(currentX, targetX, 0.12);
+          currentY = lerp(currentY, targetY, 0.12);
+          const dx = currentX - prevX;
+          const dy = currentY - prevY;
+          velX = lerp(velX, clamp(dx * 0.05, -1, 1), 0.18);
+          velY = lerp(velY, clamp(dy * 0.05, -1, 1), 0.18);
+          prevX = currentX; prevY = currentY;
           h.style.setProperty("--mx", currentX.toFixed(1) + "px");
           h.style.setProperty("--my", currentY.toFixed(1) + "px");
-          if (Math.abs(currentX - targetX) > 0.5 || Math.abs(currentY - targetY) > 0.5) {
-            raf = requestAnimationFrame(animate);
-          } else { raf = null; }
+          h.style.setProperty("--vx", velX.toFixed(3));
+          h.style.setProperty("--vy", velY.toFixed(3));
+          const moving = Math.abs(targetX - currentX) > 0.4 || Math.abs(targetY - currentY) > 0.4
+                      || Math.abs(velX) > 0.002 || Math.abs(velY) > 0.002;
+          if (moving) { raf = requestAnimationFrame(animate); } else { raf = null; }
         }
         h.addEventListener("mousemove", (e: MouseEvent) => {
           const r = h.getBoundingClientRect();
@@ -58,6 +69,7 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
           if (!raf) raf = requestAnimationFrame(animate);
         });
         h.addEventListener("mouseleave", () => {
+          velX = 0; velY = 0;
           if (raf) { cancelAnimationFrame(raf); raf = null; }
         });
       }
@@ -78,12 +90,12 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
         background:"var(--nav-bg)", backdropFilter:"blur(12px)",
       }}>
         {(["work","experiments"] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{
+          <button key={t} onClick={() => setTab(t)} className="work-tab-btn" style={{
             fontFamily:MONO, fontSize:"11px", letterSpacing:"1.5px", textTransform:"uppercase",
             padding:"0 28px", height:"44px", background:"none", border:"none", cursor:"pointer",
             color: tab===t ? "var(--ink)" : "var(--ink3)",
             borderBottom: tab===t ? "1.5px solid var(--ink)" : "1.5px solid transparent",
-            transition:"color 0.2s, border-color 0.2s",
+            transition:"color 0.2s, border-color 0.2s, opacity 0.07s, transform 0.07s",
             display:"flex", alignItems:"center", gap:"8px",
           }}>
             {t==="work" ? "Case Studies" : "Experiments"}
@@ -129,7 +141,9 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
                     <div style={{ padding:"24px 28px 32px", flex:1, display:"flex", flexDirection:"column", gap:"10px" }}>
                       <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                         <span>{String(i+1).padStart(2,"0")} / {item.type||"Project"}</span>
-                        <span className="gc-arr" style={{ fontSize:"16px" }}>↗</span>
+                        <span className="gc-arr">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+                        </span>
                       </div>
                       <h2 className="gc-title" style={{ fontFamily:SANS, fontSize:"clamp(1.2rem,2vw,1.6rem)", fontWeight:600, lineHeight:1.2, letterSpacing:"-0.3px" }}>
                         {item.title}
@@ -142,7 +156,10 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
                           <span key={t} style={{ fontFamily:MONO, fontSize:"10px", padding:"3px 9px", border:"1px solid var(--rule)", color:"var(--ink3)", borderRadius:"1px" }}>{t}</span>
                         ))}
                       </div>
-                      <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"4px" }}>View case study →</span>
+                      <span className="view-cs-link" style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"4px" }}>
+                        View case study
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+                      </span>
                     </div>
                   </a>
                 );
@@ -169,6 +186,7 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
                   <button
                     key={exp.id}
                     onClick={() => setActiveExp(exp)}
+                    className="exp-btn"
                     style={{
                       display:"block", width:"100%", textAlign:"left",
                       background:"none", border:"none", cursor:"pointer", padding:0,
@@ -199,10 +217,12 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
                       {/* Content */}
                       <div style={{ padding:"16px 18px 20px", flex:1, display:"flex", flexDirection:"column", gap:"8px" }}>
                         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:"8px" }}>
-                          <h3 className="gc-title" style={{ fontFamily:SANS, fontSize:"14px", fontWeight:600, lineHeight:1.3, letterSpacing:"-0.2px" }}>
+                          <h3 className="gc-title" style={{ fontFamily:SANS, fontSize:"14px", fontWeight:500, lineHeight:1.3, letterSpacing:"-0.2px" }}>
                             {exp.title}
                           </h3>
-                          <span className="gc-arr" style={{ fontSize:"14px", color:"var(--ink3)", flexShrink:0, marginTop:"1px" }}>↗</span>
+                          <span className="gc-arr" style={{ color:"var(--ink3)", flexShrink:0, marginTop:"1px" }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+                          </span>
                         </div>
                         {exp.description && (
                           <p style={{ fontFamily:SANS, fontSize:"12px", fontWeight:300, lineHeight:1.65, color:"var(--ink2)", margin:0 }}>
@@ -236,6 +256,20 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
         .work-grid-inner > *:nth-child(odd) { border-right:1px solid var(--rule); }
         .exp-grid { display:grid; grid-template-columns:repeat(3,1fr); }
         .exp-grid > *:nth-child(3n) .exp-card { border-right:none !important; }
+
+        /* Tab buttons */
+        .work-tab-btn:hover { color: var(--ink2) !important; }
+        .work-tab-btn:active { opacity: 0.7; transform: scale(0.97); transition-duration: 0.07s !important; }
+        .work-tab-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: -4px; }
+
+        /* Experiment card button wrapper */
+        .exp-btn:focus-visible .exp-card { outline: 2px solid var(--ink); outline-offset: -2px; }
+        .exp-btn:active .exp-card { transform: scale(0.99); transition: transform 0.07s; }
+
+        /* "View case study →" text — arrow shifts right on hover */
+        .view-cs-link { display:inline-flex; align-items:center; gap:4px; transition:gap 0.2s ease, color 0.2s ease; }
+        .glow-card:hover .view-cs-link { gap:7px; color: var(--gc-text, var(--ink3)); }
+
         @media (max-width:900px) {
           .exp-grid { grid-template-columns:repeat(2,1fr); }
           .exp-grid > *:nth-child(3n) .exp-card { border-right:1px solid var(--rule) !important; }

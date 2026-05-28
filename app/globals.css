@@ -107,9 +107,9 @@ blockquote { font-weight: 400; }
 .nav-link:hover::after { transform: scaleX(1); }
 
 /* ─── GLOW CARD ────────────────────────────────────────────────────────────
-   Cursor-tracked radial glow in ::before, thin colour top-line in ::after.
-   JS (GlowProvider) writes --mx / --my on mousemove.
-   Each element sets --gc (glow colour) and --gc-line inline.
+   Organic ellipse glow — shape stretches along cursor velocity direction.
+   JS writes --mx / --my (lerped position) and --vx / --vy (velocity -1…1).
+   CSS uses them to deform the ellipse radii and offset the centre.
 ─────────────────────────────────────────────────────────────────────────── */
 .glow-card {
   position: relative; overflow: hidden; cursor: pointer;
@@ -117,11 +117,26 @@ blockquote { font-weight: 400; }
 }
 .glow-card::before {
   content: ''; position: absolute; pointer-events: none;
-  width: 400px; height: 400px; border-radius: 50%;
-  background: radial-gradient(circle, var(--gc, rgba(240,237,230,0.0)) 0%, transparent 65%);
-  left: var(--mx, 50%); top: var(--my, 50%);
+  /*
+    Ellipse: base size 340px × 260px.
+    --vx stretches width (+80px at full speed), --vy stretches height.
+    calc() cannot do multiplication of two vars directly, so we use
+    a fixed step: each unit of velocity adds ~80px in the leading axis.
+    The centre is also nudged 20px in the velocity direction for organic feel.
+  */
+  width:  calc(340px + clamp(-80px, calc(var(--vx, 0) * 80px), 80px));
+  height: calc(260px + clamp(-60px, calc(var(--vy, 0) * 60px), 60px));
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    var(--gc, rgba(240,237,230,0.0)) 0%,
+    transparent 70%
+  );
+  left: calc(var(--mx, 50%) + clamp(-20px, calc(var(--vx, 0) * 20px), 20px));
+  top:  calc(var(--my, 50%) + clamp(-20px, calc(var(--vy, 0) * 20px), 20px));
   transform: translate(-50%, -50%);
-  opacity: 0; transition: opacity 0.4s ease; z-index: 0;
+  opacity: 0; transition: opacity 0.35s ease; z-index: 0;
+  will-change: width, height, left, top;
 }
 .glow-card:hover::before { opacity: 1; }
 .glow-card::after {
@@ -145,11 +160,19 @@ blockquote { font-weight: 400; }
 }
 .glow-row::before {
   content: ''; position: absolute; pointer-events: none;
-  width: 560px; height: 560px; border-radius: 50%;
-  background: radial-gradient(circle, var(--gc, rgba(240,237,230,0.0)) 0%, transparent 60%);
-  left: var(--mx, 0); top: 50%;
+  width:  calc(480px + clamp(-100px, calc(var(--vx, 0) * 100px), 100px));
+  height: calc(200px + clamp(-60px,  calc(var(--vy, 0) *  60px),  60px));
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    var(--gc, rgba(240,237,230,0.0)) 0%,
+    transparent 68%
+  );
+  left: calc(var(--mx, 0) + clamp(-24px, calc(var(--vx, 0) * 24px), 24px));
+  top:  50%;
   transform: translate(-50%, -50%);
-  opacity: 0; transition: opacity 0.4s ease; z-index: 0;
+  opacity: 0; transition: opacity 0.35s ease; z-index: 0;
+  will-change: width, height, left;
 }
 .glow-row:hover::before { opacity: 1; }
 .glow-row > * { position: relative; z-index: 1; }
@@ -206,11 +229,10 @@ blockquote { font-weight: 400; }
 }
 
 /* ─── CARD IMAGE ZOOM ──────────────────────────────────────────────────── */
-.glow-card:hover .thumb-img { transform: scale(1.04); filter: grayscale(0%); }
+.glow-card:hover .thumb-img { transform: scale(1.04); }
 .thumb-img {
   width: 100%; height: 100%; object-fit: cover; display: block;
-  filter: grayscale(8%);
-  transition: transform 0.6s cubic-bezier(0.4,0,0.2,1), filter 0.4s;
+  transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
 }
 
 /* ─── PORTRAIT ─────────────────────────────────────────────────────────── */

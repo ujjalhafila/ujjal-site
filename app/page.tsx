@@ -147,7 +147,8 @@ export default async function Home() {
           {/* Stats */}
           <div style={{
             display:"grid", gridTemplateColumns:"1fr 1fr",
-            borderTop:"1px solid var(--rule)", maxWidth:"260px",
+            borderTop:"1px solid var(--rule)",
+            width:"fit-content",
             animation:"fadeIn 0.7s ease 0.45s both",
           }}>
             {([[8, "+", "Years designing"], ["∞", "", "Systems built"]] as const).map(([n, sfx, l], i) => (
@@ -397,7 +398,6 @@ export default async function Home() {
   document.querySelectorAll('.glow-btn:not(.glow-btn-outline)').forEach(function(btn) {
     var PAD = 3;   /* px outside the button edge */
     var ARC = 0.28; /* arc length as fraction of full perimeter */
-    var color = getComputedStyle(btn).getPropertyValue('--gc').trim() || '#D42B45';
 
     var cvs = document.createElement('canvas');
     cvs.className = 'glow-btn-canvas';
@@ -420,6 +420,9 @@ export default async function Home() {
     }
 
     function drawFrame() {
+      /* Re-read colour every frame so cycling in ViewWorkBtn is reflected */
+      var color = getComputedStyle(btn).getPropertyValue('--gc').trim() || '#D42B45';
+
       var w = cvs.width, h = cvs.height;
       var ctx = cvs.getContext('2d');
       ctx.clearRect(0, 0, w, h);
@@ -437,7 +440,6 @@ export default async function Home() {
 
       /* Walk the perimeter */
       var points = [];
-      var walked = 0;
       var pos = start % perim;
       var steps = 60;
       for (var i = 0; i <= steps; i++) {
