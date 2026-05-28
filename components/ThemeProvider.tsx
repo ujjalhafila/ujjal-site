@@ -51,11 +51,15 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(next.value)}
-      title={`Switch to ${next.label}`}
+      title={`Switch to ${next.label} mode`}
+      data-tip={`Switch to ${next.label} mode`}
+      className="nav-tip"
+      aria-label={`Switch to ${next.label} mode`}
       style={{
         background:"none", border:"none", cursor:"pointer",
         fontFamily:"'DM Mono', monospace", fontSize:"13px",
         color:"var(--ink3)", transition:"color 0.2s", lineHeight:1, padding:0,
+        position:"relative",
       }}
       onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ink)"}
       onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ink3)"}>
