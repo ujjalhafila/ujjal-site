@@ -97,7 +97,7 @@ class SheetRenderer {
 
     // Cursor warps the sheet slightly — gentle bulge toward cursor
     const cx = this.smX, cy = this.smY;
-    const cWarp = Math.exp(-((u-cx)*(u-cx)*4 + (v-cy)*(v-cy)*8)) * 0.18;
+    const cWarp = Math.exp(-((u-cx)*(u-cx)*2.5 + (v-cy)*(v-cy)*5)) * 0.24;
 
     return w1 + w2 + cWarp;
   }
@@ -107,12 +107,13 @@ class SheetRenderer {
   project(u:number, v:number, z:number, W:number, H:number, intro:number):[number,number]{
     const ps = lerp(0.35, 1.0, u);  // perspective scale
 
-    // Centre line: bottom-left (3%x, 88%y) → top-right (97%x, 12%y)
-    const baseX = lerp(W * 0.03, W * 0.97, u);
+    // Centre line: left at (3%x, 88%y) → right at (115%x, 12%y)
+    // Right end is off-canvas — mesh is cropped by overflow:hidden
+    const baseX = lerp(W * 0.03, W * 1.15, u);
     const baseY = lerp(H * 0.88, H * 0.12, u);
 
-    // Ribbon spread: wide on right (close), narrow on left (far)
-    const spread = H * 0.32 * ps;
+    // Ribbon spread: 0.52H on right (wide/close), 0.18H on left (narrow/far)
+    const spread = lerp(H * 0.18, H * 0.52, u);
     const rowY   = baseY + (v - 0.5) * spread;
 
     // Z displacement scales with perspective — near side waves more
@@ -161,11 +162,8 @@ class SheetRenderer {
     // Glow pass: wide, blurred strokes along each row
     // Bright pass: thin crisp quads with Z-derived fill
 
-    // Edge fade function: dissolves at u<0.08 and u>0.92
-    const edgeFade = (u:number) => Math.min(
-      clamp(u/0.08,  0, 1),
-      clamp((1-u)/0.08, 0, 1)
-    );
+    // Edge fade: only dissolve at the left end (right is cropped by overflow:hidden)
+    const edgeFade = (u:number) => clamp(u / 0.12, 0, 1);
 
     // ── Pass 1: glow — draw filled strips with shadow ──────────────────
     ctx.save();
