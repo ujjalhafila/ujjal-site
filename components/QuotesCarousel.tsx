@@ -35,8 +35,8 @@ function easeOutCubic(t:number){return 1-Math.pow(1-t,3);}
 //   • Subtle motion: single slow wave, very small amplitude — no jitter
 // ──────────────────────────────────────────────────────────────────────────
 
-const COLS = 64;   // higher resolution → smoother ribbon body
-const ROWS = 3;    // ribbon thickness
+const COLS = 44;   // horizontal resolution
+const ROWS = 3;    // ribbon thickness (number of stacked rows)
 
 class SheetRenderer {
   cvs: HTMLCanvasElement;
@@ -45,20 +45,18 @@ class SheetRenderer {
   lastT = 0;
   raf:   number|null = null;
 
-  colA: [number,number,number] = [77,255,180];
-  colB: [number,number,number] = [77,159,255];
+  // Current and target colours — slow lerp for dreamy shifts
+  colA: [number,number,number] = [77,255,180];   // primary (crest colour)
+  colB: [number,number,number] = [77,159,255];   // secondary (trough tint)
   tColA: [number,number,number] = [77,255,180];
   tColB: [number,number,number] = [77,159,255];
 
+  // Cursor influence (normalised, smoothed)
   mX = 0.5; mY = 0.5;
   smX = 0.5; smY = 0.5;
-  prevSmX = 0.5; prevSmY = 0.5;  // for velocity
-  velX = 0;  velY = 0;            // smoothed cursor velocity
 
+  // Intro: 0→1 over 2s, eases amplitude in
   introT = 0;
-
-  // Rim breathing state
-  rimT = 0;
 
   constructor(cvs:HTMLCanvasElement){
     this.cvs=cvs;
@@ -85,45 +83,43 @@ class SheetRenderer {
     this.tColB=resolveRgb(QUOTE_COLOURS[(idx+1)%4],el);
   }
 
+  // Z displacement at grid position (u=0→1 across cols, v=0→1 across rows, t=time)
+  // Single slow diagonal wave + one small secondary — intentionally minimal
   z(u:number, v:number, t:number):number{
+    // Diagonal propagation direction: bottom-left → top-right
     const diag = u * 0.65 + v * 0.35;
+
+    // Primary wave: slow, large amplitude, travels diagonally
     const w1 = Math.sin(diag * Math.PI * 3.2 - t * 0.55) * 0.55;
+
+    // Secondary: orthogonal, slower, gentler
     const w2 = Math.sin((u * 0.4 - v * 0.8) * Math.PI * 2.1 + t * 0.28 + 1.4) * 0.22;
 
-    // Cursor: wider Gaussian, stronger amplitude, plus velocity ripple
+    // Cursor warps the sheet slightly — gentle bulge toward cursor
     const cx = this.smX, cy = this.smY;
-    const dist2 = (u-cx)*(u-cx)*2.5 + (v-cy)*(v-cy)*5.0;
-    const cWarp = Math.exp(-dist2) * 0.32;
+    const cWarp = Math.exp(-((u-cx)*(u-cx)*4 + (v-cy)*(v-cy)*8)) * 0.18;
 
-    // Velocity ripple — fast cursor movement creates a travelling wave
-    const speed = Math.sqrt(this.velX*this.velX + this.velY*this.velY);
-    const ripple = Math.sin(dist2 * 8 - t * 4) * speed * 0.4 * Math.exp(-dist2 * 0.5);
-
-    return w1 + w2 + cWarp + ripple;
+    return w1 + w2 + cWarp;
   }
 
-  // Project with perspective: right=close/wide, left=far/narrow
-  // scale(u) grows linearly — right side has larger row spread
+  // Perspective projection: right = close/wide, left = far/narrow.
+  // perspScale(u) linearly grows from 0.35 (left) to 1.0 (right).
   project(u:number, v:number, z:number, W:number, H:number, intro:number):[number,number]{
-    // Perspective scale: 0.38 at left edge → 1.0 at right edge
-    const perspective = lerp(0.38, 1.0, u);
+    const ps = lerp(0.35, 1.0, u);  // perspective scale
 
-    // Sheet centre line runs from (leftX, bottomY) to (rightX, topY)
-    const leftX  = W * 0.02;  const rightX = W * 0.98;
-    const bottomY= H * 0.85;  const topY   = H * 0.12;
-    const baseX  = lerp(leftX, rightX, u);
-    const baseY  = lerp(bottomY, topY, u);
+    // Centre line: bottom-left (3%x, 88%y) → top-right (97%x, 12%y)
+    const baseX = lerp(W * 0.03, W * 0.97, u);
+    const baseY = lerp(H * 0.88, H * 0.12, u);
 
-    // Row offset: v=0 is top edge, v=1 is bottom edge of ribbon
-    // On the right (close) the ribbon is wide; on left (far) it's narrow
-    const ribbonSpread = H * 0.35 * perspective;
-    const rowY = baseY + (v - 0.5) * ribbonSpread;
+    // Ribbon spread: wide on right (close), narrow on left (far)
+    const spread = H * 0.32 * ps;
+    const rowY   = baseY + (v - 0.5) * spread;
 
-    // Z displacement — perspective: near side (right) gets more Z movement
-    const zScale = H * 0.12 * perspective * intro;
-    const zShiftX = z * W * 0.025 * perspective * intro;  // horizontal parallax
+    // Z displacement scales with perspective — near side waves more
+    const zScale    = H * 0.11 * ps * intro;
+    const zParallax = z * W * 0.022 * ps * intro;
 
-    return [baseX + zShiftX, rowY + z * zScale];
+    return [baseX + zParallax, rowY + z * zScale];
   }
 
   frame(now:number){
@@ -135,16 +131,9 @@ class SheetRenderer {
     this.introT = Math.min(1, this.introT + dt/2.0);
     const intro = easeOutCubic(this.introT);
 
-    // Smooth cursor — faster response (0.06 vs 0.03)
-    this.prevSmX = this.smX; this.prevSmY = this.smY;
-    this.smX = lerp(this.smX, this.mX, 0.06);
-    this.smY = lerp(this.smY, this.mY, 0.06);
-    // Velocity — smoothed delta
-    this.velX = lerp(this.velX, (this.smX - this.prevSmX) / Math.max(dt, 0.008), 0.2);
-    this.velY = lerp(this.velY, (this.smY - this.prevSmY) / Math.max(dt, 0.008), 0.2);
-
-    // Rim breathing timer
-    this.rimT += dt;
+    // Smooth cursor
+    this.smX = lerp(this.smX, this.mX, 0.03);   // very slow — no jitter
+    this.smY = lerp(this.smY, this.mY, 0.03);
 
     // Slow colour lerp
     this.colA = lerpRgb(this.colA, this.tColA, 0.012);
@@ -168,144 +157,108 @@ class SheetRenderer {
       }
     }
 
-    // Edge fade: softer ramp — dissolves over 15% at each end
+    // ── Draw two passes: glow then bright ─────────────────────────────
+    // Glow pass: wide, blurred strokes along each row
+    // Bright pass: thin crisp quads with Z-derived fill
+
+    // Edge fade function: dissolves at u<0.08 and u>0.92
     const edgeFade = (u:number) => Math.min(
-      clamp(u / 0.15,     0, 1),
-      clamp((1 - u) / 0.15, 0, 1)
+      clamp(u/0.08,  0, 1),
+      clamp((1-u)/0.08, 0, 1)
     );
 
-    // Perspective scale at a given u (for rim width, etc.)
-    const perspScale = (u:number) => lerp(0.38, 1.0, u);
-
-    // ── Pass 1: glow layer via ctx.filter blur ─────────────────────────
-    // Draw all quads into a single filter-blurred pass — continuous smooth glow
+    // ── Pass 1: glow — draw filled strips with shadow ──────────────────
     ctx.save();
-    ctx.filter = "blur(14px)";
     for(let row=0; row<ROWS; row++){
       for(let col=0; col<COLS; col++){
-        const u=(col+0.5)/COLS;
-        const fade=edgeFade(u)*intro;
-        if(fade<0.04) continue;
+        const u = (col+0.5)/COLS;
+        const fade = edgeFade(u) * intro;
+        if(fade<0.03) continue;
 
-        const TL=verts[row][col], TR=verts[row][col+1];
-        const BL=verts[row+1][col], BR=verts[row+1][col+1];
-        const avgZ=(TL.z+TR.z+BL.z+BR.z)/4;
-        const zT=clamp((avgZ+1)*0.5,0,1);
-        const[r,g,b]=lerpRgb(this.colB,this.colA,zT);
-        const ps=perspScale(u);
-        const glowA=fade*lerp(0.06,0.18,zT)*ps;
+        const TL=verts[row][col];
+        const TR=verts[row][col+1];
+        const BL=verts[row+1][col];
+        const BR=verts[row+1][col+1];
 
-        ctx.fillStyle=`rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${glowA.toFixed(3)})`;
+        const avgZ = (TL.z+TR.z+BL.z+BR.z)/4;
+        // Z maps to colour blend: hills = colA, valleys = colB
+        const zT = clamp((avgZ+1)*0.5, 0, 1);
+        const [r,g,b] = lerpRgb(this.colB, this.colA, zT);
+
+        const glowAlpha = fade * lerp(0.04, 0.11, zT);
+        ctx.shadowColor=`rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${glowAlpha.toFixed(3)})`;
+        ctx.shadowBlur = lerp(8, 22, zT);
+        ctx.fillStyle  = `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${(glowAlpha*0.6).toFixed(3)})`;
+
         ctx.beginPath();
-        ctx.moveTo(TL.x,TL.y); ctx.lineTo(TR.x,TR.y);
-        ctx.lineTo(BR.x,BR.y); ctx.lineTo(BL.x,BL.y);
-        ctx.closePath(); ctx.fill();
+        ctx.moveTo(TL.x, TL.y);
+        ctx.lineTo(TR.x, TR.y);
+        ctx.lineTo(BR.x, BR.y);
+        ctx.lineTo(BL.x, BL.y);
+        ctx.closePath();
+        ctx.fill();
       }
     }
-    ctx.filter="none";
     ctx.restore();
 
-    // ── Pass 2: soft mid glow (medium blur) ───────────────────────────
+    // ── Pass 2: bright surface ─────────────────────────────────────────
     ctx.save();
-    ctx.filter="blur(5px)";
     for(let row=0; row<ROWS; row++){
       for(let col=0; col<COLS; col++){
         const u=(col+0.5)/COLS;
         const fade=edgeFade(u)*intro;
-        if(fade<0.04) continue;
-        const TL=verts[row][col], TR=verts[row][col+1];
-        const BL=verts[row+1][col], BR=verts[row+1][col+1];
+        if(fade<0.03) continue;
+
+        const TL=verts[row][col];
+        const TR=verts[row][col+1];
+        const BL=verts[row+1][col];
+        const BR=verts[row+1][col+1];
+
         const avgZ=(TL.z+TR.z+BL.z+BR.z)/4;
         const zT=clamp((avgZ+1)*0.5,0,1);
-        const[r,g,b]=lerpRgb(this.colB,this.colA,zT);
-        const ps=perspScale(u);
-        const alpha=fade*lerp(0.03,0.14,Math.pow(zT,1.4))*ps;
+        const [r,g,b]=lerpRgb(this.colB,this.colA,zT);
+
+        // Surface brightness: crests are bright, troughs are near-invisible
+        // This is the main 3D depth cue — simulates directional lighting
+        const brightness = Math.pow(zT, 1.6);
+        const alpha = fade * lerp(0.02, 0.32, brightness);
 
         ctx.fillStyle=`rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha.toFixed(3)})`;
         ctx.beginPath();
-        ctx.moveTo(TL.x,TL.y); ctx.lineTo(TR.x,TR.y);
-        ctx.lineTo(BR.x,BR.y); ctx.lineTo(BL.x,BL.y);
-        ctx.closePath(); ctx.fill();
-      }
-    }
-    ctx.filter="none";
-    ctx.restore();
-
-    // ── Pass 3: sharp bright surface ──────────────────────────────────
-    ctx.save();
-    for(let row=0; row<ROWS; row++){
-      for(let col=0; col<COLS; col++){
-        const u=(col+0.5)/COLS;
-        const fade=edgeFade(u)*intro;
-        if(fade<0.04) continue;
-        const TL=verts[row][col], TR=verts[row][col+1];
-        const BL=verts[row+1][col], BR=verts[row+1][col+1];
-        const avgZ=(TL.z+TR.z+BL.z+BR.z)/4;
-        const zT=clamp((avgZ+1)*0.5,0,1);
-        const[r,g,b]=lerpRgb(this.colB,this.colA,zT);
-        const ps=perspScale(u);
-        // Only the bright crests show sharply; troughs are transparent
-        const brightness=Math.pow(zT,2.0);
-        const alpha=fade*lerp(0.0,0.38,brightness)*ps;
-        if(alpha<0.01) continue;
-        ctx.fillStyle=`rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha.toFixed(3)})`;
-        ctx.beginPath();
-        ctx.moveTo(TL.x,TL.y); ctx.lineTo(TR.x,TR.y);
-        ctx.lineTo(BR.x,BR.y); ctx.lineTo(BL.x,BL.y);
-        ctx.closePath(); ctx.fill();
+        ctx.moveTo(TL.x,TL.y);
+        ctx.lineTo(TR.x,TR.y);
+        ctx.lineTo(BR.x,BR.y);
+        ctx.lineTo(BL.x,BL.y);
+        ctx.closePath();
+        ctx.fill();
       }
     }
     ctx.restore();
 
-    // ── Pass 4: rim lines — breathing width, perspective-scaled ───────
-    // Top rim (row 0) and bottom rim (row ROWS)
-    // Width = base + sin(rimT) * amp, scaled by perspScale(u)
-    // Top rim breathes at different frequency than bottom for organic feel
-    const rimData = [
-      { edgeRow:0,    baseW:1.4, ampW:0.7, freq:0.55, phase:0.0,  alpha:0.65 },
-      { edgeRow:ROWS, baseW:0.8, ampW:0.4, freq:0.38, phase:1.8,  alpha:0.40 },
-    ];
-    for(const rim of rimData){
-      const breathe = rim.baseW + Math.sin(this.rimT * rim.freq * Math.PI * 2 + rim.phase) * rim.ampW;
-      const[ra,ga,ba]=this.colA;
-
-      // Glow stroke
+    // ── Pass 3: edge highlight lines (the "rim" of the sheet) ─────────
+    // Draw the top and bottom edge of the ribbon as thin glowing lines
+    // This defines the sheet boundary clearly and adds the neon rim look
+    for(let pass=0; pass<2; pass++){
+      const edgeRow = pass===0 ? 0 : ROWS;
       ctx.save();
-      ctx.filter="blur(3px)";
-      ctx.strokeStyle=`rgba(${Math.round(ra)},${Math.round(ga)},${Math.round(ba)},${(rim.alpha*0.5).toFixed(2)})`;
+      ctx.shadowColor=`rgba(${Math.round(this.colA[0])},${Math.round(this.colA[1])},${Math.round(this.colA[2])},0.35)`;
+      ctx.shadowBlur = pass===0 ? 12 : 8;
+      ctx.strokeStyle=`rgba(${Math.round(this.colA[0])},${Math.round(this.colA[1])},${Math.round(this.colA[2])},${pass===0?0.55:0.35})`;
+      ctx.lineWidth  = pass===0 ? 1.2 : 0.7;
       ctx.lineCap="round";
-      ctx.lineJoin="round";
       ctx.beginPath();
-      let started=false;
-      for(let col=0;col<=COLS;col++){
+      for(let col=0; col<=COLS; col++){
         const u=col/COLS;
         const fade=edgeFade(u)*intro;
-        if(fade<0.04){started=false;continue;}
-        const pt=verts[rim.edgeRow][col];
-        const lw=breathe*perspScale(u)*fade;
-        ctx.lineWidth=lw;
-        if(!started){ctx.moveTo(pt.x,pt.y);started=true;}
-        else ctx.lineTo(pt.x,pt.y);
+        if(fade<0.03) continue;
+        const v=verts[edgeRow][col];
+        // Modulate alpha by edge fade
+        if(col===0||fade<0.03) ctx.moveTo(v.x,v.y);
+        else ctx.lineTo(v.x,v.y);
       }
+      ctx.globalAlpha=clamp(intro,0,1);
       ctx.stroke();
-      ctx.filter="none";
-      ctx.restore();
-
-      // Sharp rim stroke on top of glow
-      ctx.save();
-      ctx.strokeStyle=`rgba(${Math.round(ra)},${Math.round(ga)},${Math.round(ba)},${rim.alpha.toFixed(2)})`;
-      ctx.lineCap="round"; ctx.lineJoin="round";
-      ctx.beginPath(); started=false;
-      for(let col=0;col<=COLS;col++){
-        const u=col/COLS;
-        const fade=edgeFade(u)*intro;
-        if(fade<0.04){started=false;continue;}
-        const pt=verts[rim.edgeRow][col];
-        ctx.lineWidth=breathe*perspScale(u)*fade*0.6;
-        if(!started){ctx.moveTo(pt.x,pt.y);started=true;}
-        else ctx.lineTo(pt.x,pt.y);
-      }
-      ctx.stroke();
+      ctx.globalAlpha=1;
       ctx.restore();
     }
 
