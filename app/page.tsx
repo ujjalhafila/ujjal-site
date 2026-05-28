@@ -17,13 +17,13 @@ const SANS  = "'DM Sans', sans-serif";
 
 // Each work item gets its own glow colour
 const WORK_GLOWS = [
-  { gc:"rgba(255,77,109,0.16)",  gcLine:"#FF4D6D", gcText:"#FF4D6D"  },
-  { gc:"rgba(77,255,180,0.12)",  gcLine:"#4DFFB4", gcText:"#4DFFB4"  },
-  { gc:"rgba(180,77,255,0.14)",  gcLine:"#B44DFF", gcText:"#B44DFF"  },
-  { gc:"rgba(77,159,255,0.14)",  gcLine:"#4D9FFF", gcText:"#4D9FFF"  },
+  { gc:"rgba(255,77,109,0.16)",  gcLine:"var(--c-red)",    gcText:"var(--c-red)"    },
+  { gc:"rgba(77,255,180,0.12)",  gcLine:"var(--c-teal)",   gcText:"var(--c-teal)"   },
+  { gc:"rgba(180,77,255,0.14)",  gcLine:"var(--c-purple)", gcText:"var(--c-purple)" },
+  { gc:"rgba(77,159,255,0.14)",  gcLine:"var(--c-blue)",   gcText:"var(--c-blue)"   },
 ];
 
-const THINK_GLOW = { gc:"rgba(77,255,180,0.12)", gcLine:"#4DFFB4", gcText:"#4DFFB4" };
+const THINK_GLOW = { gc:"rgba(77,255,180,0.12)", gcLine:"var(--c-teal)", gcText:"var(--c-teal)" };
 
 // Notion icon (N letter mark, simplified)
 function NotionIcon() {
@@ -57,10 +57,10 @@ function PhoneIcon2() {
 }
 
 const CONNECT_LINKS = [
-  { label:"Notion Portfolio", sub:"ujjalhafila-portfolio.notion.site →",  href:"https://ujjalhafila-portfolio.notion.site/2478afe624ae80cc8e60ed2ccaa171ef?v=2478afe624ae813bb226000cb8044eb0", gc:"rgba(255,210,77,0.13)", gcText:"#FFD24D", Icon:NotionIcon },
-  { label:"LinkedIn",         sub:"linkedin.com/in/ujjalhafila →",         href:"https://www.linkedin.com/in/ujjalhafila/",  gc:"rgba(77,159,255,0.13)", gcText:"#4D9FFF", Icon:LinkedInIcon2 },
-  { label:"Email",            sub:"ujjalhafila@gmail.com →",               href:"mailto:ujjalhafila@gmail.com",              gc:"rgba(255,77,109,0.13)", gcText:"#FF4D6D", Icon:MailIcon2 },
-  { label:"Phone",            sub:"+91 70861 16844 →",                     href:"tel:+917086116844",                         gc:"rgba(77,255,180,0.12)", gcText:"#4DFFB4", Icon:PhoneIcon2 },
+  { label:"Notion Portfolio", sub:"ujjalhafila-portfolio.notion.site →",  href:"https://ujjalhafila-portfolio.notion.site/2478afe624ae80cc8e60ed2ccaa171ef?v=2478afe624ae813bb226000cb8044eb0", gc:"rgba(255,210,77,0.13)", gcText:"var(--c-gold)",   Icon:NotionIcon },
+  { label:"LinkedIn",         sub:"linkedin.com/in/ujjalhafila →",         href:"https://www.linkedin.com/in/ujjalhafila/",  gc:"rgba(77,159,255,0.13)", gcText:"var(--c-blue)",   Icon:LinkedInIcon2 },
+  { label:"Email",            sub:"ujjalhafila@gmail.com →",               href:"mailto:ujjalhafila@gmail.com",              gc:"rgba(255,77,109,0.13)", gcText:"var(--c-red)",    Icon:MailIcon2 },
+  { label:"Phone",            sub:"+91 70861 16844 →",                     href:"tel:+917086116844",                         gc:"rgba(77,255,180,0.12)", gcText:"var(--c-teal)",   Icon:PhoneIcon2 },
 ];
 
 const QUOTES = [
@@ -222,18 +222,19 @@ export default async function Home() {
                   {/* Thumbnail — padded frame, 8px gap around image */}
                   <div style={{
                     width:"100%", aspectRatio:"16/9",
-                    borderBottom:"1px solid var(--rule)", background:"var(--surface)",
+                    borderBottom:"1px solid var(--rule)", background:"var(--thumb-gap)",
                     position:"relative", flexShrink:0, padding:"8px", overflow:"hidden",
                   }}>
                     {item.thumbnailUrl ? (
                       <img
                         src={item.thumbnailUrl} alt={item.title}
                         className="thumb-img" loading="lazy"
-                        style={{ position:"absolute", inset:"8px", width:"calc(100% - 16px)", height:"calc(100% - 16px)", objectFit:"cover" }}
+                        style={{ position:"absolute", inset:"8px", width:"calc(100% - 16px)", height:"calc(100% - 16px)", objectFit:"cover", borderRadius:"3px" }}
                       />
                     ) : (
                       <div style={{
-                        position:"absolute", inset:"8px",
+                        position:"absolute", inset:"8px", borderRadius:"3px",
+                        background:"var(--surface)",
                         display:"flex", alignItems:"center", justifyContent:"center",
                       }}>
                         <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)" }}>{item.title}</span>

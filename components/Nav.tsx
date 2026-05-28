@@ -14,7 +14,7 @@ const NAV_LINKS = [
   { label: "Think", href: "/think", tip: "Writing"  },
   { label: "About", href: "/about", tip: "About me" },
 ] as const;
-const NAV_COLORS = ["#FF4D6D", "#4DFFB4", "#4D9FFF"] as const;
+const NAV_COLORS = ["var(--c-red)", "var(--c-teal)", "var(--c-blue)"] as const;
 const SOCIALS = [
   { href: "https://www.linkedin.com/in/ujjalhafila/", Icon: LinkedInIcon, label: "LinkedIn", tip: "LinkedIn" },
   { href: "https://github.com/ujjalhafila",           Icon: GitHubIcon,   label: "GitHub",   tip: "GitHub"   },

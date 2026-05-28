@@ -2,20 +2,16 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 
-// 5 hues cycle on hover — only the border/glow/arc colour changes, fill stays neutral
+// All CSS vars — automatically accessible in both light and dark mode
 const COLOURS = [
-  "#D42B45",  // crimson
-  "#FF8C42",  // ember
-  "#4DFFB4",  // seafoam
-  "#4D9FFF",  // electric
-  "#C77DFF",  // violet
+  "var(--c-red)",
+  "var(--c-orange)",
+  "var(--c-teal)",
+  "var(--c-blue)",
+  "var(--c-purple)",
 ];
 
 const MONO = "'DM Mono', monospace";
-
-function hexToRgb(hex: string) {
-  return `${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)}`;
-}
 
 export default function ViewWorkBtn() {
   const [colIdx, setColIdx]   = useState(0);
@@ -59,7 +55,7 @@ export default function ViewWorkBtn() {
         color: "var(--bg)",
         border: `1px solid ${hovered ? col : "var(--ink)"}`,
         boxShadow: hovered
-          ? `0 0 0 1px ${col}, 0 0 20px rgba(${hexToRgb(col)}, 0.35)`
+          ? `0 0 0 1px ${col}, 0 0 20px color-mix(in srgb, ${col} 35%, transparent)`
           : "none",
         transition: "border-color 0.35s ease, box-shadow 0.35s ease, transform 0.15s ease",
         transform: hovered ? "translateY(-1px)" : "none",

@@ -10,7 +10,7 @@ const S = { mono: "'DM Mono',monospace", sans: "'DM Sans',sans-serif" };
 // We inject a <style> that defines --toc-active for each theme.
 const TOC_ACTIVE_STYLE = `
   :root, .light, [data-theme="light"] { --toc-active: #D42B45; --toc-active-bg: rgba(212,43,69,0.07); }
-  .dark, [data-theme="dark"]           { --toc-active: #4DFFB4; --toc-active-bg: rgba(77,255,180,0.08); }
+  .dark, [data-theme="dark"]           { --toc-active: var(--c-teal); --toc-active-bg: color-mix(in srgb, var(--c-teal) 10%, transparent); }
 `;
 
 function slugify(text: string) {

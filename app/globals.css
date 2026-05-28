@@ -17,6 +17,17 @@
   --surface:  rgba(240,237,230,0.05);
   --nav-bg:   rgba(12,12,12,0.85);
 
+  /* Semantic accent colours — dark default */
+  --c-teal:   #4DFFB4;
+  --c-blue:   #4D9FFF;
+  --c-red:    #FF4D6D;
+  --c-gold:   #FFD24D;
+  --c-purple: #B44DFF;
+  --c-orange: #FF824D;
+
+  /* Thumbnail padding gap colour */
+  --thumb-gap: rgba(240,237,230,0.04);
+
   /* legacy aliases — inner pages still reference these */
   --paper:    #0C0C0C;
   --accent:   #F0EDE6;
@@ -34,6 +45,17 @@ html.light, html[data-theme="light"] {
   --surface:  rgba(24,22,15,0.04);
   --nav-bg:   rgba(248,247,242,0.90);
 
+  /* Semantic accent colours — darkened for light mode readability */
+  --c-teal:   #007A5E;
+  --c-blue:   #1A5FA6;
+  --c-red:    #B31B33;
+  --c-gold:   #8A6800;
+  --c-purple: #6B1FA6;
+  --c-orange: #B04500;
+
+  /* Thumbnail padding gap — slight warm grey in light mode */
+  --thumb-gap: rgba(24,22,15,0.07);
+
   --paper:    #F8F7F2;
   --accent:   #18160F;
   --muted:    rgba(24,22,15,0.68);
@@ -49,6 +71,18 @@ html.dark, html[data-theme="dark"] {
   --rule2:    rgba(240,237,230,0.20);
   --surface:  rgba(240,237,230,0.05);
   --nav-bg:   rgba(12,12,12,0.85);
+
+  /* Semantic accent colours — vivid in dark mode */
+  --c-teal:   #4DFFB4;
+  --c-blue:   #4D9FFF;
+  --c-red:    #FF4D6D;
+  --c-gold:   #FFD24D;
+  --c-purple: #B44DFF;
+  --c-orange: #FF824D;
+
+  /* Thumbnail padding gap */
+  --thumb-gap: rgba(240,237,230,0.04);
+
   --paper:    #0C0C0C;
   --accent:   #F0EDE6;
   --muted:    rgba(240,237,230,0.72);
@@ -220,11 +254,10 @@ blockquote { font-weight: 400; }
   transition-duration: 0.08s;
 }
 
-/* ─── CARD IMAGE ZOOM ──────────────────────────────────────────────────── */
-.glow-card:hover .thumb-img { transform: scale(1.04); }
+/* ─── CARD IMAGE ────────────────────────────────────────────────────────── */
 .thumb-img {
   width: 100%; height: 100%; object-fit: cover; display: block;
-  transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+  border-radius: 3px;
 }
 
 /* ─── PORTRAIT ─────────────────────────────────────────────────────────── */
@@ -553,15 +586,15 @@ input:focus, textarea:focus { border-color: var(--rule2); outline: none; }
   display: inline-flex; align-items: center; gap: 6px;
   font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.5px;
   text-transform: uppercase; text-decoration: none;
-  color: #4DFFB4; border: 1px solid #4DFFB4;
+  color: var(--c-teal); border: 1px solid var(--c-teal);
   padding: 7px 16px; margin: 4px 6px 4px 0;
   transition: background 0.22s ease, color 0.22s ease,
               transform 0.15s ease, box-shadow 0.22s ease;
 }
 .notion-btn:hover {
-  background: #4DFFB4; color: #0C0C0C;
+  background: var(--c-teal); color: var(--bg);
   transform: translateY(-1px);
-  box-shadow: 0 0 16px rgba(77,255,180,0.3);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c-teal) 40%, transparent);
 }
 .notion-btn:active {
   transform: translateY(1px) scale(0.97);
@@ -569,7 +602,7 @@ input:focus, textarea:focus { border-color: var(--rule2); outline: none; }
   transition-duration: 0.07s;
 }
 .notion-btn:focus-visible {
-  outline: 2px solid #4DFFB4;
+  outline: 2px solid var(--c-teal);
   outline-offset: 3px;
 }
 

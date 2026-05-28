@@ -150,8 +150,8 @@ export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClos
 
       <style>{`
         .em-close:hover { color: var(--ink) !important; }
-        :root, .light, [data-theme="light"] { --modal-cta: #D42B45; }
-        .dark, [data-theme="dark"] { --modal-cta: #4DFFB4; }
+        :root, .light, [data-theme="light"] { --modal-cta: var(--c-red); }
+        .dark, [data-theme="dark"] { --modal-cta: var(--c-teal); }
         .modal-link-btn:hover { background: var(--modal-cta) !important; color: var(--bg) !important; }
 
         .em-scroll-body { scrollbar-width: thin; scrollbar-color: transparent transparent; }

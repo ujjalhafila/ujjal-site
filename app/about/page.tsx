@@ -12,7 +12,7 @@ const MONO = "'DM Mono',monospace";
 const SANS = "'DM Sans',sans-serif";
 
 const TYPE_META: Record<string, string> = {
-  Publication:"#4D9FFF", Patent:"#B44DFF", Award:"#FFD24D", Recognition:"#4DFFB4",
+  Publication:"var(--c-blue)", Patent:"var(--c-purple)", Award:"var(--c-gold)", Recognition:"var(--c-teal)",
 };
 
 const DEFAULT_BIO = [
