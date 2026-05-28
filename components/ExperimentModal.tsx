@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
+import ProseContent from "./ProseContent";
+import { markdownToHtml } from "../lib/markdown";
 
 const MONO = "'DM Mono',monospace";
 const SANS = "'DM Sans',sans-serif";
@@ -9,119 +11,9 @@ interface ExpItem {
   imageUrl: string | null; tags: string[]; url: string | null; date: string | null;
 }
 
-// ── URL classifiers ──────────────────────────────────────────────────────
-function ytId(url: string) {
-  return url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] ?? null;
-}
-function vimeoId(url: string) { return url.match(/vimeo\.com\/(\d+)/)?.[1] ?? null; }
-function loomId(url: string)  { return url.match(/loom\.com\/share\/([a-zA-Z0-9]+)/)?.[1] ?? null; }
-function figmaUrl(url: string) { return url.includes("figma.com"); }
-
-function isVideoFile(url: string) {
-  return /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
-}
-function isImageFile(url: string) {
-  return /\.(png|jpe?g|gif|webp|svg|avif)(\?|$)/i.test(url);
-}
-
-function renderEmbed(url: string, caption: string): string {
-  const yt = ytId(url);
-  if (yt) {
-    return `<div class="em-embed-wrap"><iframe src="https://www.youtube.com/embed/${yt}" title="${caption || "YouTube video"}" allowfullscreen allow="autoplay; encrypted-media" loading="lazy"></iframe></div>`;
-  }
-  const vi = vimeoId(url);
-  if (vi) {
-    return `<div class="em-embed-wrap"><iframe src="https://player.vimeo.com/video/${vi}" title="${caption || "Vimeo video"}" allowfullscreen loading="lazy"></iframe></div>`;
-  }
-  const lo = loomId(url);
-  if (lo) {
-    return `<div class="em-embed-wrap"><iframe src="https://www.loom.com/embed/${lo}" title="${caption || "Loom video"}" allowfullscreen loading="lazy"></iframe></div>`;
-  }
-  if (figmaUrl(url)) {
-    return `<div class="em-embed-wrap"><iframe src="https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(url)}" title="${caption || "Figma prototype"}" allowfullscreen loading="lazy"></iframe></div>`;
-  }
-  if (isVideoFile(url)) {
-    return `<video class="em-video" controls preload="metadata"><source src="${url}" /><p class="em-video-fallback"><a href="${url}" target="_blank" rel="noopener">Watch video ↗</a></p></video>`;
-  }
-  // Generic embed fallback
-  return `<a class="em-link" href="${url}" target="_blank" rel="noopener">${caption || url} ↗</a>`;
-}
-
-function mdToHtml(md: string): string {
-  if (!md.trim()) return "";
-  let s = md;
-
-  // Fenced code blocks first
-  s = s.replace(/```[\w]*\n?([\s\S]*?)```/g,
-    (_, c) => `<pre class="em-pre"><code>${c.replace(/</g, "&lt;")}</code></pre>`);
-
-  // [video:caption](url) — from Notion video blocks
-  s = s.replace(/\[video:([^\]]*)\]\(([^)]+)\)/g, (_, cap, url) => renderEmbed(url, cap));
-
-  // [embed:](url) — from Notion embed blocks
-  s = s.replace(/\[embed:[^\]]*\]\(([^)]+)\)/g, (_, url) => renderEmbed(url, ""));
-
-  // Images — Notion image blocks
-  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, url) => {
-    if (isVideoFile(url)) return renderEmbed(url, alt);
-    return `<img class="em-img" src="${url}" alt="${alt}" loading="lazy" />`;
-  });
-
-  // Notion buttons: [button:Label](url)
-  s = s.replace(/\[button:([^\]]+)\]\(([^)]+)\)/g,
-    '<a class="em-btn" href="$2" target="_blank" rel="noopener">$1 ↗</a>');
-
-  // Regular links
-  s = s.replace(/(?<![\[!])\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a class="em-link" href="$2" target="_blank" rel="noopener">$1 ↗</a>');
-
-  // Headings
-  s = s.replace(/^####\s(.+)$/gm, '<h4 class="em-h4">$1</h4>');
-  s = s.replace(/^###\s(.+)$/gm,  '<h3 class="em-h3">$1</h3>');
-  s = s.replace(/^##\s(.+)$/gm,   '<h2 class="em-h2">$1</h2>');
-  s = s.replace(/^#\s(.+)$/gm,    '<h2 class="em-h2">$1</h2>');
-
-  // Bold / inline code
-  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  s = s.replace(/`([^`]+)`/g, '<code class="em-code">$1</code>');
-
-  // Callouts (> text)
-  s = s.replace(/^>\s*(.+)$/gm, '<div class="em-callout">$1</div>');
-
-  // HR
-  s = s.replace(/^---+$/gm, '<hr class="em-hr"/>');
-
-  // Tables
-  s = s.replace(/^(\|.+\|\n?)+/gm, tb => {
-    const rows = tb.trim().split("\n")
-      .filter(r => !/^\|[\s|:-]+\|$/.test(r));
-    if (!rows.length) return "";
-    const cells = (r: string) => r.split("|").slice(1,-1).map(c => c.trim());
-    const [head, ...body] = rows;
-    return `<div class="em-tbl-wrap"><table class="em-tbl">` +
-      `<thead><tr>${cells(head).map(c=>`<th>${c}</th>`).join("")}</tr></thead>` +
-      `<tbody>${body.map(r=>`<tr>${cells(r).map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>` +
-      `</table></div>`;
-  });
-
-  // Lists
-  s = s.replace(/^[-*]\s+(.+)$/gm, "<li>$1</li>");
-  s = s.replace(/^\d+\.\s+(.+)$/gm, '<li class="li-ol">$1</li>');
-  s = s.replace(/(<li>[\s\S]*?<\/li>\n?)+/g, m =>
-    m.includes("li-ol") ?
-      `<ol class="em-ol">${m.replace(/ class="li-ol"/g,"")}</ol>` :
-      `<ul class="em-ul">${m}</ul>`);
-
-  // Paragraphs
-  s = s.replace(/^(?!<)(.+)$/gm, "<p>$1</p>");
-  s = s.replace(/<p><\/p>/g, "");
-  return s;
-}
-
 export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClose: () => void }) {
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Escape key, scroll lock, focus management
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     closeBtnRef.current?.focus();
@@ -134,6 +26,8 @@ export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClos
       prev?.focus();
     };
   }, [onClose]);
+
+  const html = exp.content ? markdownToHtml(exp.content) : "";
 
   return (
     <div
@@ -198,11 +92,15 @@ export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClos
 
           {/* Cover image */}
           {exp.imageUrl && (
-            <div style={{ width:"100%", aspectRatio:"16/9", overflow:"hidden", borderBottom:"1px solid var(--rule)", background:"var(--surface)", flexShrink:0 }}>
+            <div style={{
+              width:"100%", aspectRatio:"16/9", overflow:"hidden",
+              borderBottom:"1px solid var(--rule)", background:"var(--surface)",
+              flexShrink:0, position:"relative",
+            }}>
               <img
                 src={exp.imageUrl}
                 alt={exp.title}
-                style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+                style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", display:"block" }}
               />
             </div>
           )}
@@ -210,14 +108,19 @@ export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClos
           {/* Description */}
           {exp.description && (
             <div style={{ padding:"20px 24px", borderBottom:"1px solid var(--rule)" }}>
-              <p style={{ fontFamily:SANS, fontSize:"14px", fontWeight:300, lineHeight:1.8, color:"var(--ink2)", margin:0 }}>{exp.description}</p>
+              <p style={{ fontFamily:SANS, fontSize:"14px", fontWeight:300, lineHeight:1.8, color:"var(--ink2)", margin:0 }}>
+                {exp.description}
+              </p>
             </div>
           )}
 
-          {/* Notion page body — images, videos, embeds, prose */}
-          {exp.content && (
-            <div className="em-prose" style={{ padding:"20px 24px 12px" }}
-              dangerouslySetInnerHTML={{ __html: mdToHtml(exp.content) }} />
+          {/* Notion page body — images, videos, embeds and prose
+              Uses the same ProseContent + markdownToHtml pipeline as
+              the work detail page, so all media types are handled identically. */}
+          {html && (
+            <div style={{ padding:"20px 24px 12px" }}>
+              <ProseContent html={html} />
+            </div>
           )}
 
           {/* Footer */}
@@ -257,62 +160,6 @@ export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClos
         .em-scroll-body::-webkit-scrollbar-track { background: transparent; }
         .em-scroll-body::-webkit-scrollbar-thumb { background: transparent; }
         .em-scroll-body:hover::-webkit-scrollbar-thumb { background: var(--rule2); }
-
-        .em-prose p    { font-family:${SANS}; font-size:14px; font-weight:300; color:var(--ink2); line-height:1.8; margin:0 0 12px; }
-        .em-prose p:last-child { margin-bottom:8px; }
-        .em-h2  { font-family:${SANS}; font-size:16px; font-weight:600; color:var(--ink); margin:24px 0 8px; letter-spacing:-0.2px; }
-        .em-h3  { font-family:${SANS}; font-size:14px; font-weight:600; color:var(--ink); margin:20px 0 6px; }
-        .em-h4  { font-family:${SANS}; font-size:13px; font-weight:600; color:var(--ink2); margin:16px 0 5px; }
-        .em-code{ font-family:${MONO}; font-size:12px; background:var(--surface); border:1px solid var(--rule); padding:1px 6px; border-radius:2px; color:var(--ink2); }
-        .em-pre { font-family:${MONO}; font-size:12px; background:var(--surface); border:1px solid var(--rule); padding:16px; overflow-x:auto; margin:12px 0; line-height:1.6; white-space:pre-wrap; }
-        .em-pre code { background:none; border:none; padding:0; }
-        .em-link{ color:#4DFFB4; text-decoration:none; border-bottom:1px solid rgba(77,255,180,0.3); }
-        .em-link:hover { border-bottom-color:#4DFFB4; }
-        .em-btn { display:inline-flex; align-items:center; gap:6px; font-family:${MONO}; font-size:11px; letter-spacing:0.5px; text-transform:uppercase; text-decoration:none; color:#4DFFB4; border:1px solid #4DFFB4; padding:6px 14px; margin:4px 6px 4px 0; transition:background 0.2s, color 0.2s; }
-        .em-btn:hover { background:#4DFFB4; color:#0C0C0C; }
-        .em-hr  { border:none; border-top:1px solid var(--rule); margin:20px 0; }
-        .em-ul,.em-ol { margin:4px 0 12px 18px; padding:0; }
-        .em-ul li, .em-ol li { font-family:${SANS}; font-size:13px; font-weight:300; color:var(--ink2); margin-bottom:5px; line-height:1.6; }
-
-        /* Images from Notion page body */
-        .em-img {
-          max-width: 100%; height: auto; display: block;
-          margin: 16px 0; border: 1px solid var(--rule);
-          object-fit: cover;
-        }
-
-        /* Video file element */
-        .em-video {
-          width: 100%; display: block; margin: 16px 0;
-          border: 1px solid var(--rule); background: #000;
-          max-height: 480px;
-        }
-        .em-video-fallback { padding: 8px; font-family: ${MONO}; font-size: 12px; }
-
-        /* Embed wrapper — YouTube, Vimeo, Loom, Figma */
-        .em-embed-wrap {
-          position: relative;
-          padding-bottom: 56.25%; /* 16:9 */
-          height: 0;
-          overflow: hidden;
-          margin: 16px 0;
-          border: 1px solid var(--rule);
-          background: var(--surface);
-        }
-        .em-embed-wrap iframe {
-          position: absolute;
-          top: 0; left: 0;
-          width: 100%; height: 100%;
-          border: none;
-        }
-
-        .em-callout { background:var(--surface); border-left:2px solid var(--rule2); padding:10px 14px; margin:12px 0; font-family:${SANS}; font-size:13px; color:var(--ink2); font-weight:300; line-height:1.6; }
-        .em-tbl-wrap { overflow-x:auto; margin:14px 0; border:1px solid var(--rule); }
-        .em-tbl { width:100%; border-collapse:collapse; min-width:260px; }
-        .em-tbl th { font-family:${MONO}; font-size:11px; font-weight:500; padding:9px 12px; background:var(--surface); border-bottom:1px solid var(--rule); color:var(--ink); text-align:left; white-space:nowrap; }
-        .em-tbl td { font-family:${SANS}; font-size:13px; font-weight:300; padding:9px 12px; border-bottom:1px solid var(--rule); color:var(--ink2); }
-        .em-tbl tr:last-child td { border-bottom:none; }
-        .em-tbl tr:nth-child(even) td { background:var(--surface); }
       `}</style>
     </div>
   );

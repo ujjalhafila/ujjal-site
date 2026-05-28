@@ -32,13 +32,13 @@ n2m.setCustomTransformer("video", async (block: any) => {
   const v = block?.video;
   const url = v?.file?.url ?? v?.external?.url ?? "";
   const cap = (v?.caption ?? []).map((t: any) => t.plain_text).join("") || "";
-  // Use distinct marker so mdToHtml can render a <video> element or iframe
-  return url ? `[video:${cap}](${url})` : "";
+  // Use standard image syntax — markdownToHtml detects video URLs and renders appropriately
+  return url ? `![${cap}](${url})` : "";
 });
 n2m.setCustomTransformer("embed", async (block: any) => {
   const url = block?.embed?.url ?? "";
-  // Use distinct marker so mdToHtml can render inline embed
-  return url ? `[embed:](${url})` : "";
+  // Bare URL — markdownToHtml picks up YouTube/Vimeo/Loom/Figma patterns
+  return url ? url : "";
 });
 n2m.setCustomTransformer("bookmark", async (block: any) => {
   const url = block?.bookmark?.url ?? "";
