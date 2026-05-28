@@ -98,10 +98,8 @@ export default function Nav() {
             ))}
           </div>
 
-          {/* Theme toggle */}
-          <div style={{ display:"flex", alignItems:"center", borderLeft:"1px solid var(--rule)", padding:"0 16px" }}>
-            <ThemeToggle />
-          </div>
+          {/* Theme toggle — direct flex item, same height pattern as socials */}
+          <ThemeToggle />
 
           {/* Mobile hamburger */}
           <button onClick={() => setOpen(o => !o)}

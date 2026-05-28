@@ -81,14 +81,17 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(next.value)}
-      data-tip={next.label}
+      data-tip="Toggle theme"
       className="nav-tip tip-right"
       aria-label={`Switch to ${next.label} mode`}
       style={{
         background:"none", border:"none", cursor:"pointer",
         color:"var(--ink3)", transition:"color 0.2s",
-        lineHeight:1, padding:0,
+        lineHeight:1, padding:"0 16px",
         display:"flex", alignItems:"center", justifyContent:"center",
+        borderLeft:"1px solid var(--rule)",
+        // Full height so top: calc(100% + 8px) measures from nav bottom — same as socials
+        alignSelf:"stretch",
         position:"relative",
       }}
       onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ink)"}
