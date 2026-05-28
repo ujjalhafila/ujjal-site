@@ -6,6 +6,7 @@ import QuotesCarousel from "../components/QuotesCarousel";
 import ThinkCarousel from "../components/ThinkCarousel";
 import CtaBanner from "../components/CtaBanner";
 import ViewWorkBtn from "../components/ViewWorkBtn";
+import ThinkSpaceBtn from "../components/ThinkSpaceBtn";
 import CountUp from "../components/CountUp";
 import { getFeaturedWork, getFeaturedThink, getActiveCta } from "../lib/notion";
 
@@ -140,14 +141,7 @@ export default async function Home() {
             animation:"fadeUp 0.6s ease 0.35s both",
           }}>
             <ViewWorkBtn />
-            <Link href="/think" className="glow-btn glow-btn-outline" style={{
-              fontFamily:MONO, fontSize:"12px", padding:"9px 22px",
-              background:"transparent", color:"var(--ink2)",
-              border:"1px solid var(--rule)",
-              ["--gc-in" as string]:"rgba(200,200,200,0.14)",
-            }}>
-              Think Space →
-            </Link>
+            <ThinkSpaceBtn />
           </div>
 
           {/* Stats */}

@@ -19,21 +19,6 @@ export default function GlowProvider() {
     }
     document.querySelectorAll(".glow-card, .glow-row, .glow-btn").forEach(trackGlow);
 
-    // 3D tilt on work cards
-    document.querySelectorAll<HTMLElement>(".glow-card").forEach(card => {
-      card.addEventListener("mousemove", (e) => {
-        const r = card.getBoundingClientRect();
-        const x = (e.clientX - r.left) / r.width  - 0.5;  // -0.5 … 0.5
-        const y = (e.clientY - r.top)  / r.height - 0.5;
-        card.classList.add("tilting");
-        card.style.transform = `perspective(800px) rotateY(${x * 5}deg) rotateX(${-y * 4}deg) translateZ(4px)`;
-      });
-      card.addEventListener("mouseleave", () => {
-        card.classList.remove("tilting");
-        card.style.transform = "";
-      });
-    });
-
     // Portrait 3D tilt
     document.querySelectorAll<HTMLElement>(".portrait-outer").forEach(outer => {
       const wrap = outer.querySelector<HTMLElement>(".portrait-wrap");

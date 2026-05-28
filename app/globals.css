@@ -134,6 +134,7 @@ blockquote { font-weight: 400; }
 .glow-card > * { position: relative; z-index: 2; }
 .glow-card:hover .gc-title { color: var(--gc-text, var(--ink)); }
 .glow-card:hover .gc-arr   { color: var(--gc-text, var(--ink)); transform: translate(3px,-3px); }
+.glow-card:active { transform: scale(0.99); transition-duration: 0.07s; }
 .gc-arr { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), color 0.3s; }
 .gc-title { transition: color 0.3s; }
 
@@ -154,6 +155,7 @@ blockquote { font-weight: 400; }
 .glow-row > * { position: relative; z-index: 1; }
 .glow-row:hover .gc-title { color: var(--gc-text, var(--ink)); transform: translateX(4px); }
 .glow-row:hover .gc-arr   { color: var(--gc-text, var(--ink)); transform: translate(3px,-3px); }
+.glow-row:active { background: var(--surface); transition-duration: 0.07s; }
 
 /* ─── GLOW BUTTON ──────────────────────────────────────────────────────── */
 .glow-btn {
@@ -167,6 +169,7 @@ blockquote { font-weight: 400; }
   isolation: isolate;
 }
 .glow-btn:not(.glow-btn-outline):hover { transform: translateY(-1px); }
+.glow-btn:not(.glow-btn-outline):active { transform: translateY(1px) scale(0.97); transition-duration: 0.08s; }
 .glow-btn:not(.glow-btn-outline) > * { position: relative; z-index: 1; }
 /* The canvas is injected by JS — sits behind the button at z-index:-1 */
 .glow-btn-canvas {
@@ -197,6 +200,10 @@ blockquote { font-weight: 400; }
   color: var(--ink) !important;
   transform: translateY(-1px);
 }
+.glow-btn-outline:active {
+  transform: translateY(1px) scale(0.97) !important;
+  transition-duration: 0.08s;
+}
 
 /* ─── CARD IMAGE ZOOM ──────────────────────────────────────────────────── */
 .glow-card:hover .thumb-img { transform: scale(1.04); filter: grayscale(0%); }
@@ -212,12 +219,34 @@ blockquote { font-weight: 400; }
 html.dark .portrait-img { filter: brightness(0.88) contrast(1.05); }
 
 /* ─── SECTION LINK HOVER (server-component safe) ──────────────────────── */
-.sec-link-hover { color: var(--ink3); transition: color 0.2s; }
-.sec-link-hover:hover { color: var(--ink); }
+/* ─── SEC LINK (section "All work →", back links) ──────────────────────── */
+.sec-link-hover {
+  color: var(--ink3);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s ease, gap 0.2s ease;
+}
+.sec-link-hover::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0; right: 0;
+  height: 1px;
+  background: var(--ink3);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease, background 0.2s ease;
+}
+.sec-link-hover:hover { color: var(--ink); gap: 7px; }
+.sec-link-hover:hover::after { transform: scaleX(1); background: var(--ink); }
+.sec-link-hover:active { opacity: 0.65; transition-duration: 0.06s; }
 
 /* ─── FOOTER LINKS ─────────────────────────────────────────────────────── */
-.footer-link { color: var(--ink3); transition: color 0.2s; }
-.footer-link:hover { color: var(--ink); }
+/* ─── FOOTER LINK ───────────────────────────────────────────────────────── */
+.footer-link { color: var(--ink3); transition: color 0.2s ease, transform 0.15s ease; }
+.footer-link:hover { color: var(--ink); transform: translateY(-1px); }
+.footer-link:active { color: var(--ink); transform: translateY(1px); transition-duration: 0.06s; }
 
 /* ─── CONTACT LINK ─────────────────────────────────────────────────────── */
 .contact-link { transition: padding-left 0.2s ease, color 0.2s ease; }
@@ -226,8 +255,26 @@ html.dark .portrait-img { filter: brightness(0.88) contrast(1.05); }
 /* ─── ACHIEVEMENT ──────────────────────────────────────────────────────── */
 .achievement-row { transition: background 0.18s; }
 .achievement-row:hover { background: var(--surface); }
-.achievement-link { transition: background 0.2s, color 0.2s, border-color 0.2s; }
-.achievement-link:hover { background: var(--ink) !important; color: var(--bg) !important; }
+/* ─── ACHIEVEMENT LINK ─────────────────────────────────────────────────── */
+.achievement-link {
+  transition: background 0.22s ease, color 0.22s ease, border-color 0.22s ease,
+              transform 0.15s ease, box-shadow 0.22s ease;
+}
+.achievement-link:hover {
+  background: var(--ink) !important;
+  color: var(--bg) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+}
+.achievement-link:active {
+  transform: translateY(1px) scale(0.97) !important;
+  box-shadow: none !important;
+  transition-duration: 0.07s;
+}
+.achievement-link:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
 
 /* ─── PROSE STYLES (inner work/think pages) ────────────────────────────── */
 .prose-ujjal h1,.prose-ujjal h2,.prose-ujjal h3,.prose-ujjal h4 {
@@ -345,9 +392,23 @@ input:focus, textarea:focus { border-color: var(--rule2); outline: none; }
   text-transform: uppercase; text-decoration: none;
   color: #4DFFB4; border: 1px solid #4DFFB4;
   padding: 7px 16px; margin: 4px 6px 4px 0;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.22s ease, color 0.22s ease,
+              transform 0.15s ease, box-shadow 0.22s ease;
 }
-.notion-btn:hover { background: #4DFFB4; color: #0C0C0C; }
+.notion-btn:hover {
+  background: #4DFFB4; color: #0C0C0C;
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(77,255,180,0.3);
+}
+.notion-btn:active {
+  transform: translateY(1px) scale(0.97);
+  box-shadow: none;
+  transition-duration: 0.07s;
+}
+.notion-btn:focus-visible {
+  outline: 2px solid #4DFFB4;
+  outline-offset: 3px;
+}
 
 /* ─── LEGACY BUTTONS ───────────────────────────────────────────────────── */
 .btn-primary, a.btn-primary { font-family: 'DM Mono', monospace; font-size: 12px; padding: 9px 22px; background: var(--ink); color: var(--bg); border: 1px solid var(--ink); cursor: pointer; display: inline-flex; align-items: center; text-decoration: none; transition: opacity 0.2s; }
@@ -438,21 +499,7 @@ input:focus, textarea:focus { border-color: var(--rule2); outline: none; }
   animation-play-state: paused;
 }
 
-/* ─── CARD 3D TILT ON HOVER ───────────────────────────────────────────── */
-.glow-card {
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-/* Tilt is driven by JS — CSS provides the transition */
-.glow-card {
-  transition: background 0.35s, transform 0.08s linear, box-shadow 0.35s;
-}
-/* Remove the transition while actively tilting for immediate tracking */
-.glow-card.tilting {
-  transition: background 0.35s, box-shadow 0.35s;
-}
-
-/* ─── CONNECT ROW STAGGER ─────────────────────────────────────────────── */
+/* ─── CARD IMAGE ZOOM ──────────────────────────────────────────────────── */
 .glow-row.reveal {
   opacity: 0;
   transform: translateX(-8px);
@@ -463,21 +510,40 @@ input:focus, textarea:focus { border-color: var(--rule2); outline: none; }
   transform: translateX(0);
 }
 
-/* ─── VIEW WORK BUTTON LABEL COLOUR NAME ─────────────────────────────── */
-.view-work-btn .colour-name {
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  opacity: 0;
-  max-width: 0;
-  overflow: hidden;
-  transition: opacity 0.3s ease, max-width 0.3s ease;
-}
-.view-work-btn:hover .colour-name {
-  opacity: 0.6;
-  max-width: 80px;
-}
-
-/* ─── PORTRAIT TILT ───────────────────────────────────────────────────── */
+/* ─── PORTRAIT TILT (driven by GlowProvider) ─────────────────────────── */
 .portrait-wrap {
   will-change: transform;
+  transition: transform 0.35s ease;
 }
+
+/* ─── PROJECT EXTERNAL LINK ────────────────────────────────────────────── */
+.project-ext-link {
+  color: var(--ink2);
+  position: relative;
+  transition: color 0.2s ease, gap 0.2s ease, transform 0.15s ease;
+}
+.project-ext-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0; right: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+}
+.project-ext-link:hover {
+  color: var(--ink);
+  gap: 7px;
+}
+.project-ext-link:hover::after { transform: scaleX(1); }
+.project-ext-link:active { opacity: 0.6; transform: translateY(1px); transition-duration: 0.06s; }
+.project-ext-link:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+/* ─── BACK LINK (work/think detail pages) ──────────────────────────────── */
+/* Uses sec-link-hover — SVG arrow shifts via gap animation */
+.sec-link-hover svg {
+  transition: transform 0.22s ease;
+  flex-shrink: 0;
+}
+.sec-link-hover:hover svg { transform: translateX(-3px); }

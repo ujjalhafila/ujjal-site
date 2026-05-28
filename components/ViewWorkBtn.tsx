@@ -2,55 +2,46 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 
-// 5 distinct hues that all read on a dark fill
+// 5 hues cycle on hover — only the border/glow/arc colour changes, fill stays neutral
 const COLOURS = [
-  { hex: "#D42B45", label: "crimson"  },
-  { hex: "#FF8C42", label: "ember"    },
-  { hex: "#4DFFB4", label: "seafoam"  },
-  { hex: "#4D9FFF", label: "electric" },
-  { hex: "#C77DFF", label: "violet"   },
+  "#D42B45",  // crimson
+  "#FF8C42",  // ember
+  "#4DFFB4",  // seafoam
+  "#4D9FFF",  // electric
+  "#C77DFF",  // violet
 ];
 
 const MONO = "'DM Mono', monospace";
 
-export default function ViewWorkBtn() {
-  const [colIdx, setColIdx] = useState(0);
-  const [hovered, setHovered] = useState(false);
-  const [transitioning, setTransitioning] = useState(false);
-  const cycleRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const btnRef = useRef<HTMLAnchorElement>(null);
+function hexToRgb(hex: string) {
+  return `${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)}`;
+}
 
-  // Start colour cycling on hover
+export default function ViewWorkBtn() {
+  const [colIdx, setColIdx]   = useState(0);
+  const [hovered, setHovered] = useState(false);
+  const cycleRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const btnRef   = useRef<HTMLAnchorElement>(null);
+
   function startCycle() {
     setHovered(true);
     cycleRef.current = setInterval(() => {
-      setTransitioning(true);
-      setTimeout(() => {
-        setColIdx(i => (i + 1) % COLOURS.length);
-        setTransitioning(false);
-      }, 160);
-    }, 900);
+      setColIdx(i => (i + 1) % COLOURS.length);
+    }, 800);
   }
 
   function stopCycle() {
     setHovered(false);
     if (cycleRef.current) { clearInterval(cycleRef.current); cycleRef.current = null; }
-    setTransitioning(true);
-    setTimeout(() => {
-      setColIdx(0);
-      setTransitioning(false);
-    }, 160);
+    setColIdx(0);
   }
 
-  useEffect(() => () => { if (cycleRef.current) clearInterval(cycleRef.current); }, []);
-
-  // Inject/update canvas arc when colour changes
+  // Keep --gc in sync so the canvas arc uses the live colour
   useEffect(() => {
-    const btn = btnRef.current;
-    if (!btn || !hovered) return;
-    // Update --gc so the canvas arc picks up the new colour
-    btn.style.setProperty("--gc", COLOURS[colIdx].hex);
-  }, [colIdx, hovered]);
+    btnRef.current?.style.setProperty("--gc", COLOURS[colIdx]);
+  }, [colIdx]);
+
+  useEffect(() => () => { if (cycleRef.current) clearInterval(cycleRef.current); }, []);
 
   const col = COLOURS[colIdx];
 
@@ -63,22 +54,19 @@ export default function ViewWorkBtn() {
         fontFamily: MONO,
         fontSize: "12px",
         padding: "9px 22px",
-        background: hovered ? col.hex : "var(--ink)",
-        color: hovered ? "#0C0C0C" : "var(--bg)",
-        border: `1px solid ${hovered ? col.hex : "var(--ink)"}`,
-        transition: `background ${transitioning ? "0.16s" : "0.35s"} ease,
-                     color ${transitioning ? "0.16s" : "0.35s"} ease,
-                     border-color ${transitioning ? "0.16s" : "0.35s"} ease,
-                     transform 0.15s ease,
-                     box-shadow 0.35s ease`,
+        // Fill stays var(--ink) — only border and glow cycle
+        background: "var(--ink)",
+        color: "var(--bg)",
+        border: `1px solid ${hovered ? col : "var(--ink)"}`,
         boxShadow: hovered
-          ? `0 0 24px rgba(${hexToRgb(col.hex)},0.45), 0 4px 16px rgba(${hexToRgb(col.hex)},0.25)`
+          ? `0 0 0 1px ${col}, 0 0 20px rgba(${hexToRgb(col)}, 0.35)`
           : "none",
-        transform: hovered ? "translateY(-2px)" : "none",
+        transition: "border-color 0.35s ease, box-shadow 0.35s ease, transform 0.15s ease",
+        transform: hovered ? "translateY(-1px)" : "none",
         display: "inline-flex",
         alignItems: "center",
         gap: "8px",
-        ["--gc" as string]: col.hex,
+        ["--gc" as string]: col,
       }}
       onMouseEnter={startCycle}
       onMouseLeave={stopCycle}
@@ -93,8 +81,8 @@ export default function ViewWorkBtn() {
         strokeLinecap="round"
         strokeLinejoin="round"
         style={{
-          transition: `transform 0.3s ease`,
-          transform: hovered ? "translate(2px, -2px)" : "none",
+          transition: "transform 0.25s ease",
+          transform: hovered ? "translate(2px,-2px)" : "none",
         }}
       >
         <path d="M7 17L17 7"/>
@@ -102,11 +90,4 @@ export default function ViewWorkBtn() {
       </svg>
     </Link>
   );
-}
-
-function hexToRgb(hex: string): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `${r},${g},${b}`;
 }

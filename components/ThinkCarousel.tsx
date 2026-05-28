@@ -116,9 +116,24 @@ export default function ThinkCarousel({ items, glowGc, glowGcLine, glowGcText }:
       </Link>
 
       <style>{`
+        .carousel-btn {
+          transition: color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+        }
+        .carousel-btn:hover {
+          color: var(--ink) !important;
+          border-color: var(--rule2) !important;
+          transform: scale(1.1);
+        }
+        .carousel-btn:active {
+          transform: scale(0.92) !important;
+          transition-duration: 0.07s;
+        }
+        .carousel-btn:focus-visible {
+          outline: 2px solid var(--ink);
+          outline-offset: 3px;
+        }
         .think-carousel-card .think-read-cta { opacity: 0; transition: opacity 0.2s; }
         .think-carousel-card:hover .think-read-cta { opacity: 1; }
-        .carousel-btn:hover { color: var(--ink) !important; border-color: var(--rule2) !important; }
       `}</style>
     </div>
   );

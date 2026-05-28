@@ -36,9 +36,10 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
 
         {/* Header */}
         <div style={{ padding:"3rem 2rem 2.5rem", borderBottom:"1px solid var(--rule)" }}>
-          <Link href="/work" style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:"var(--ink3)", textDecoration:"none", display:"inline-flex", alignItems:"center", gap:"0.4rem", marginBottom:"2rem", transition:"color 0.2s" }}
+          <Link href="/work" style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", textDecoration:"none", display:"inline-flex", alignItems:"center", gap:"0.4rem", marginBottom:"2rem" }}
             className="sec-link-hover">
-            ← Work
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            Work
           </Link>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"3rem", alignItems:"start" }} className="work-detail-header">
             <div>
@@ -67,8 +68,9 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
                 {item.tags.map(t=>(<span key={t} style={{ fontFamily:S.mono, fontSize:"9px", letterSpacing:"0.1em", textTransform:"uppercase", color:"var(--ink3)", border:"1px solid var(--rule)", padding:"0.2rem 0.5rem" }}>{t}</span>))}
               </div>
               {item.url && (
-                <a href={item.url} target="_blank" rel="noopener" style={{ display:"inline-flex", alignItems:"center", gap:"0.4rem", fontFamily:S.mono, fontSize:"12px", letterSpacing:"0.08em", textTransform:"uppercase", color:"var(--accent)", textDecoration:"none", borderBottom:"1px solid var(--accent)", paddingBottom:"2px", marginTop:"1rem" }}>
-                  View project ↗
+                <a href={item.url} target="_blank" rel="noopener" className="project-ext-link" style={{ display:"inline-flex", alignItems:"center", gap:"0.4rem", fontFamily:S.mono, fontSize:"12px", letterSpacing:"0.08em", textTransform:"uppercase", textDecoration:"none", marginTop:"1rem" }}>
+                  View project
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
                 </a>
               )}
             </div>
