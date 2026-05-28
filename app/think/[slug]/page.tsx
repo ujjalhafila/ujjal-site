@@ -41,8 +41,9 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
         {/* Header */}
         <div style={{ borderBottom:"1px solid var(--border)",padding:"3rem 2rem 2.5rem" }}>
           <div style={{ maxWidth:"760px",margin:"0 auto" }}>
-            <Link href="/think" style={{ fontFamily:S.mono,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",color:"var(--muted)",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:"0.4rem",marginBottom:"2rem" }}>
-              ← Think Space
+            <Link href="/think" className="back-link" style={{ marginBottom:"2rem" }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              Think Space
             </Link>
             <div style={{ display:"flex",alignItems:"center",gap:"0.75rem",marginBottom:"1.5rem",flexWrap:"wrap" }}>
               <span style={{ fontFamily:S.mono,fontSize:"10px",letterSpacing:"0.12em",textTransform:"uppercase",color,border:`1px solid ${color}`,padding:"0.2rem 0.75rem" }}>{item.type}</span>

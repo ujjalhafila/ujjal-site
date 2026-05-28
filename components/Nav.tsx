@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./ThemeProvider";
 
 function LinkedInIcon() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2zm2-5a2 2 0 110 4 2 2 0 010-4z"/></svg>; }
@@ -16,6 +17,7 @@ function LogoCircle() {
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const links = [["Work","/work"],["Think","/think"],["About","/about"]];
   const socials = [
     { href:"https://www.linkedin.com/in/ujjalhafila/", Icon:LinkedInIcon, label:"LinkedIn" },
@@ -30,9 +32,15 @@ export default function Nav() {
           <LogoCircle />
         </Link>
         <div style={{ display:"flex", alignItems:"center", gap:"2rem", flex:1, justifyContent:"center" }} className="desktop-nav">
-          {links.map(([label,href])=>(
-            <Link key={href} href={href} className="nav-link">{label}</Link>
-          ))}
+          {links.map(([label,href])=>{
+            const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+            return (
+              <Link key={href} href={href} className="nav-link"
+                style={{ color: isActive ? "var(--accent)" : undefined, fontWeight: isActive ? 500 : undefined }}>
+                {label}
+              </Link>
+            );
+          })}
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:"0.75rem" }}>
           <div style={{ display:"flex", alignItems:"center", gap:"0.5rem" }} className="desktop-nav">
@@ -47,23 +55,29 @@ export default function Nav() {
           </div>
           <ThemeToggle />
           <button onClick={()=>setOpen(o=>!o)} className="mobile-menu-btn"
-            style={{ background:"none", border:"none", cursor:"pointer", color:"var(--ink)", padding:"4px", display:"none", fontSize:"18px", lineHeight:1, transition:"transform 0.2s" }}
-            aria-label="Menu">
-            {open ? "✕" : "☰"}
+            style={{ background:"none", border:"none", cursor:"pointer", color:"var(--ink)", padding:"4px", display:"none", lineHeight:1, transition:"transform 0.2s" }}
+            aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open}>
+            {open
+              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            }
           </button>
         </div>
       </nav>
 
       {open && (
         <div style={{ position:"fixed", top:"57px", left:0, right:0, zIndex:99, background:"var(--paper)", borderBottom:"1px solid var(--border)", padding:"1rem 2rem", display:"flex", flexDirection:"column", gap:"0", animation:"fadeUp 0.2s ease" }}>
-          {links.map(([label,href])=>(
-            <Link key={href} href={href} onClick={()=>setOpen(false)}
-              style={{ fontFamily:"'DM Mono',monospace", fontSize:"13px", letterSpacing:"0.1em", color:"var(--ink)", textDecoration:"none", textTransform:"uppercase", padding:"0.85rem 0", borderBottom:"1px solid var(--border)", transition:"padding-left 0.2s" }}
-              onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.paddingLeft="0.5rem";}}
-              onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.paddingLeft="";}}>
-              {label}
-            </Link>
-          ))}
+          {links.map(([label,href])=>{
+            const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+            return (
+              <Link key={href} href={href} onClick={()=>setOpen(false)}
+                style={{ fontFamily:"'DM Mono',monospace", fontSize:"13px", letterSpacing:"0.1em", color: isActive ? "var(--accent)" : "var(--ink)", textDecoration:"none", textTransform:"uppercase", padding:"0.85rem 0", borderBottom:"1px solid var(--border)", transition:"padding-left 0.2s", fontWeight: isActive ? 500 : undefined }}
+                onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.paddingLeft="0.5rem";}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.paddingLeft="";}}>
+                {label}
+              </Link>
+            );
+          })}
           <div style={{ display:"flex", gap:"1.25rem", paddingTop:"1rem" }}>
             {socials.map(({href,Icon,label})=>(
               <a key={label} href={href} target={href.startsWith("http")?"_blank":undefined} rel="noopener" aria-label={label}

@@ -9,7 +9,7 @@ export default function Portrait({ className = "" }: { className?: string }) {
       padding: "1.5rem 0",
     }}>
       {/* Decorative accent ring */}
-      <div style={{
+      <div className="portrait-ring" style={{
         position: "absolute",
         width: "clamp(200px, 72%, 340px)",
         aspectRatio: "1",

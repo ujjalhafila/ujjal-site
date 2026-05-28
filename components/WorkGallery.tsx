@@ -67,8 +67,13 @@ function GalleryCard({ src, label, onClick }: { src: string; label: string; onCl
         justifyContent:"space-between", borderTop:"1px solid var(--border)" }}>
         <span style={{ fontFamily:M.mono, fontSize:"10px", letterSpacing:"0.08em",
           textTransform:"uppercase", color:"var(--muted)" }}>{label}</span>
-        <span style={{ color:"var(--accent)", fontSize:"12px", opacity:0.7 }}>
-          {type==="image" ? "⊕" : type==="figma" ? "↗" : "▶"}
+        <span style={{ color:"var(--accent)", fontSize:"12px", opacity:0.7, display:"flex", alignItems:"center" }}>
+          {type==="image"
+            ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+            : type==="figma"
+            ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17V7l10 5-10 5z"/></svg>
+            : <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          }
         </span>
       </div>
     </button>

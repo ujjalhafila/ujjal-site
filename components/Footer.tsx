@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 
 function LinkedInIcon() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2zm2-5a2 2 0 110 4 2 2 0 010-4z"/></svg>; }
@@ -21,12 +22,22 @@ export default function Footer() {
           { href:"tel:+917086116844", Icon:PhoneIcon, label:"+91 70861 16844" },
         ].map(({href,Icon,label})=>(
           <a key={label} href={href} target={href.startsWith("http")?"_blank":undefined} rel="noopener" aria-label={label}
-            style={{ color:"var(--muted)", display:"flex", alignItems:"center", gap:"0.35rem", fontFamily:S.mono, fontSize:"11px", textDecoration:"none", transition:"color 0.2s" }}>
+            style={{ color:"var(--muted)", display:"flex", alignItems:"center", gap:"0.35rem", fontFamily:S.mono, fontSize:"11px", textDecoration:"none", transition:"color 0.2s" }}
+            onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.color="var(--ink)";}}
+            onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.color="var(--muted)";}}>
             <Icon />{label}
           </a>
         ))}
       </div>
-      <a href="#" style={{ fontFamily:S.mono, fontSize:"11px", color:"var(--muted)", textDecoration:"none", letterSpacing:"0.08em" }}>↑ Top</a>
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className="back-to-top"
+        style={{ fontFamily:S.mono, fontSize:"11px", color:"var(--muted)", background:"none", border:"none", cursor:"pointer", letterSpacing:"0.08em", display:"flex", alignItems:"center", gap:"0.35rem", padding:0 }}
+        aria-label="Scroll to top"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+        Top
+      </button>
     </footer>
   );
 }

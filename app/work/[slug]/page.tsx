@@ -35,8 +35,9 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
 
         {/* Header */}
         <div style={{ padding:"3rem 2rem 2.5rem", borderBottom:"1px solid var(--border)" }}>
-          <Link href="/work" style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.1em", textTransform:"uppercase", color:"var(--muted)", textDecoration:"none", display:"inline-flex", alignItems:"center", gap:"0.4rem", marginBottom:"2rem" }}>
-            ← Work
+          <Link href="/work" className="back-link" style={{ marginBottom:"2rem" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            Work
           </Link>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"3rem", alignItems:"start" }} className="work-detail-header">
             <div>

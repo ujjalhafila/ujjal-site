@@ -2,19 +2,13 @@ import Link from "next/link";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Portrait from "../components/Portrait";
+import QuoteCarousel from "../components/QuoteCarousel";
 import { getFeaturedWork, getFeaturedThink } from "../lib/notion";
 
 // force-dynamic ensures fresh data on every navigation, not just full reload
 export const dynamic = "force-dynamic";
 
 const S = { serif:"'Playfair Display',Georgia,serif", mono:"'DM Mono',monospace", sans:"'DM Sans',sans-serif" };
-
-const QUOTES = [
-  { text:"Simplicity is not the absence of complexity — it's the mastery of it.", attr:"— on design craft" },
-  { text:"Good design asks the right question. Great design makes the answer obvious.", attr:"— on clarity" },
-  { text:"Every interface is a conversation. Most designers forget to listen.", attr:"— on empathy" },
-  { text:"The best systems are invisible. You only notice them when they're gone.", attr:"— on systems thinking" },
-];
 
 export default async function Home() {
   const [work, think] = await Promise.all([getFeaturedWork(), getFeaturedThink()]);
@@ -67,11 +61,14 @@ export default async function Home() {
       </section>
 
       {/* MARQUEE */}
-      <div style={{ borderTop:"1px solid var(--border)", borderBottom:"1px solid var(--border)", overflow:"hidden", padding:"0.8rem 0", background:"var(--ink)" }}>
+      <div style={{ borderTop:"1px solid var(--border)", borderBottom:"1px solid var(--border)", overflow:"hidden", padding:"0.8rem 0", background:"var(--ink)" }} aria-hidden="true">
         <div style={{ display:"flex", animation:"marquee 28s linear infinite", whiteSpace:"nowrap" }}>
-          {["Product Design","Systems Thinking","Digital Adoption","Agentic UX","Journey Design","Research & Synthesis","Why-First Design","Interaction Design",
-            "Product Design","Systems Thinking","Digital Adoption","Agentic UX","Journey Design","Research & Synthesis","Why-First Design","Interaction Design"].map((item,i)=>(
-            <span key={i} style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.12em", textTransform:"uppercase", color:"var(--paper)", padding:"0 2rem", opacity:0.65, flexShrink:0 }}>{item}</span>
+          {["Product Design","Systems Thinking","Digital Adoption","Agentic UX","Journey Design","Research & Synthesis","Why-First Design","Interaction Design"].map((item,i)=>(
+            <span key={`a-${i}`} style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.12em", textTransform:"uppercase", color:"var(--paper)", padding:"0 2rem", opacity:0.65, flexShrink:0 }}>{item}</span>
+          ))}
+          {/* Duplicate for seamless loop */}
+          {["Product Design","Systems Thinking","Digital Adoption","Agentic UX","Journey Design","Research & Synthesis","Why-First Design","Interaction Design"].map((item,i)=>(
+            <span key={`b-${i}`} aria-hidden="true" style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.12em", textTransform:"uppercase", color:"var(--paper)", padding:"0 2rem", opacity:0.65, flexShrink:0 }}>{item}</span>
           ))}
         </div>
       </div>
@@ -168,45 +165,10 @@ export default async function Home() {
         </div>
 
         {/* Quotes */}
-        <div style={{ padding:"clamp(2rem,5vw,5rem) clamp(1.5rem,3vw,2.5rem)", background:"var(--ink)", color:"var(--paper)", display:"flex", flexDirection:"column", justifyContent:"space-between", overflow:"hidden" }} id="quotes-panel">
-          <div id="quote-display">
-            {QUOTES.map((q, i) => (
-              <div key={i} className="quote-slide" style={{ display:i===0?"block":"none" }}>
-                <p style={{ fontFamily:S.serif, fontSize:"clamp(1.2rem,2.8vw,1.85rem)", fontStyle:"italic", fontWeight:700, lineHeight:1.45, color:"var(--paper)", opacity:0.9, maxWidth:"32ch" }}>
-                  "{q.text}"
-                </p>
-                <div style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.1em", color:"rgba(237,232,223,0.45)", marginTop:"1.25rem" }}>{q.attr}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ display:"flex", gap:"0.5rem", alignItems:"center", marginTop:"2rem" }}>
-            {QUOTES.map((_, i) => (
-              <button key={i} className="quote-dot" data-idx={String(i)}
-                style={{ width:i===0?"24px":"8px", height:"8px", borderRadius:"4px", background:i===0?"var(--accent)":"rgba(237,232,223,0.25)", border:"none", cursor:"pointer", padding:0, transition:"all 0.3s" }}
-                aria-label={`Quote ${i+1}`}/>
-            ))}
-          </div>
-        </div>
+        <QuoteCarousel />
       </section>
 
       <Footer />
-
-      <script dangerouslySetInnerHTML={{ __html: `
-(function(){
-  var slides=document.querySelectorAll('.quote-slide');
-  var dots=document.querySelectorAll('.quote-dot');
-  var cur=0;
-  function go(n){
-    slides[cur].style.display='none';
-    dots[cur].style.width='8px'; dots[cur].style.background='rgba(237,232,223,0.25)';
-    cur=(n+slides.length)%slides.length;
-    slides[cur].style.display='block'; slides[cur].style.animation='fadeIn 0.4s ease';
-    dots[cur].style.width='24px'; dots[cur].style.background='var(--accent)';
-  }
-  dots.forEach(function(d){ d.addEventListener('click',function(){ go(parseInt(d.dataset.idx)); }); });
-  setInterval(function(){ go(cur+1); }, 5000);
-})();
-      `}} />
 
       <style>{`
         @media (max-width: 900px) {
