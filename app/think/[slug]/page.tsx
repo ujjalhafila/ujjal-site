@@ -1,10 +1,10 @@
-import Link from "next/link";
 import Nav from "../../../components/Nav";
 import Footer from "../../../components/Footer";
 import Comments from "../../../components/Comments";
 import ShareBar from "../../../components/ShareBar";
 import ProseContent from "../../../components/ProseContent";
 import ThinkHeader from "../../../components/ThinkHeader";
+import ReadingBar from "../../../components/ReadingBar";
 import { getThinkItem, getThinkItems } from "../../../lib/notion";
 import { markdownToHtml } from "../../../lib/markdown";
 import { notFound } from "next/navigation";
@@ -38,6 +38,8 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
   return (
     <main>
       <Nav />
+      {/* Reading bar — fixed title strip, appears when header scrolls out of view */}
+      <ReadingBar title={item.title} sentinelId="think-header-sentinel" />
       <div style={{ paddingTop:"52px", animation:"fadeUp 0.5s ease" }}>
 
         {/* Header — client component owns ref + sticky-title logic */}
