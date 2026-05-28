@@ -178,7 +178,68 @@ export function markdownToHtml(md: string): string {
     (_, url) => mediaCard(url, "", "image")
   );
 
-  // ── Text formatting ───────────────────────────────────────────────────────
+  // ── Notion callout blocks [callout:emoji|color]text[/callout] ───────────
+  html = html.replace(
+    /\[callout:([^\|]+)\|([^\]]*)\]([\s\S]*?)\[\/callout\]/g,
+    (_, iconEnc, color, body) => {
+      const icon = decodeURIComponent(iconEnc);
+      // Map Notion background colors to CSS custom properties
+      const bgMap: Record<string, string> = {
+        gray_background:   "var(--surface)",
+        yellow_background: "rgba(255,220,80,0.12)",
+        blue_background:   "rgba(77,159,255,0.12)",
+        green_background:  "rgba(77,255,180,0.1)",
+        red_background:    "rgba(212,43,69,0.1)",
+        purple_background: "rgba(199,125,255,0.1)",
+        orange_background: "rgba(255,140,66,0.12)",
+        pink_background:   "rgba(255,100,150,0.1)",
+        brown_background:  "rgba(180,120,80,0.1)",
+      };
+      const bg = bgMap[color] || "var(--surface)";
+      const bodyHtml = markdownToHtml(body.trim());
+      return `<div class="notion-callout" style="background:${bg}"><span class="notion-callout-icon" aria-hidden="true">${icon}</span><div class="notion-callout-body">${bodyHtml}</div></div>`;
+    }
+  );
+
+  // ── Notion quote blocks [quote]text[/quote] ──────────────────────────────
+  html = html.replace(
+    /\[quote\]([\s\S]*?)\[\/quote\]/g,
+    (_, body) => `<blockquote class="notion-quote">${markdownToHtml(body.trim())}</blockquote>`
+  );
+
+  // ── Toggle blocks [toggle:encodedTitle]\n...children ────────────────────
+  // notion-to-md appends children after the opening marker on subsequent lines
+  // We detect [toggle:title] on its own line and wrap following indented content
+  html = html.replace(
+    /\[toggle:([^\]]+)\]\n([\s\S]*?)(?=\[toggle:|$)/g,
+    (_, titleEnc, body) => {
+      const title = decodeURIComponent(titleEnc);
+      const bodyHtml = markdownToHtml(body.trim());
+      return `<details class="notion-toggle"><summary class="notion-toggle-summary">${title}</summary><div class="notion-toggle-body">${bodyHtml}</div></details>`;
+    }
+  );
+  // Any remaining unpaired [toggle:...] → plain bold
+  html = html.replace(/\[toggle:([^\]]+)\]/g, (_, t) => `<strong>${decodeURIComponent(t)}</strong>`);
+
+  // ── To-do checkboxes [todo:0/1] text ─────────────────────────────────────
+  html = html.replace(
+    /^(\s*)\[todo:(0|1)\] (.+)$/gm,
+    (_, _indent, checked, text) =>
+      `<label class="notion-todo${checked === "1" ? " notion-todo--done" : ""}"><input type="checkbox" disabled${checked === "1" ? " checked" : ""} /><span>${text}</span></label>`
+  );
+
+  // ── Bookmark cards [bookmark:title|desc](url) ────────────────────────────
+  html = html.replace(
+    /\[bookmark:([^\|]+)\|([^\]]*)\]\(([^)]+)\)/g,
+    (_, titleEnc, descEnc, url) => {
+      const title = decodeURIComponent(titleEnc);
+      const desc  = decodeURIComponent(descEnc);
+      const host  = (() => { try { return new URL(url).hostname.replace("www.", ""); } catch { return url; } })();
+      return `<a href="${escAttr(url)}" target="_blank" rel="noopener" class="notion-bookmark"><span class="notion-bookmark-text"><span class="notion-bookmark-title">${escAttr(title)}</span>${desc ? `<span class="notion-bookmark-desc">${escAttr(desc)}</span>` : ""}<span class="notion-bookmark-host">${escAttr(host)}</span></span></a>`;
+    }
+  );
+
+
   html = html.replace(/^#### (.+)$/gm, "<h4>$1</h4>");
   html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
   html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>");

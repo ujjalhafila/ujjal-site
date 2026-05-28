@@ -3,6 +3,8 @@ import Nav from "../../../components/Nav";
 import Footer from "../../../components/Footer";
 import Comments from "../../../components/Comments";
 import ShareBar from "../../../components/ShareBar";
+import ProseContent from "../../../components/ProseContent";
+import TableOfContents from "../../../components/TableOfContents";
 import { getThinkItem, getThinkItems } from "../../../lib/notion";
 import { markdownToHtml } from "../../../lib/markdown";
 import { notFound } from "next/navigation";
@@ -104,20 +106,28 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
         )}
 
         {/* Body */}
-        <div style={{ display:"grid",gridTemplateColumns:"180px 1fr",maxWidth:"1100px" }} className="think-body-grid">
-          {/* Sidebar */}
-          <div style={{ padding:"2.5rem 1.5rem",borderRight:"1px solid var(--border)" }} className="think-sidebar">
-            <div style={{ fontFamily:S.mono,fontSize:"10px",letterSpacing:"0.12em",textTransform:"uppercase",color:"var(--muted)",marginBottom:"0.75rem" }}>Tags</div>
-            {item.tags.map(t=>(<div key={t} style={{ fontFamily:S.mono,fontSize:"11px",color:"var(--ink)",marginBottom:"0.3rem" }}>{t}</div>))}
-          </div>
+        <div style={{ display:"grid", gridTemplateColumns:"210px 1fr", maxWidth:"1140px", margin:"0 auto", alignItems:"start" }} className="think-body-grid">
+
+          {/* Desktop TOC sidebar */}
+          <aside className="think-toc-aside" aria-label="Page sections">
+            {html && <TableOfContents html={html} />}
+            <div style={{ marginTop:"2rem", paddingTop:"1.5rem", borderTop:"1px solid var(--rule)" }}>
+              <div style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.12em", textTransform:"uppercase", color:"var(--ink3)", marginBottom:"0.75rem" }}>Tags</div>
+              {item.tags.map(t=>(<div key={t} style={{ fontFamily:S.mono, fontSize:"11px", color:"var(--ink)", marginBottom:"0.3rem" }}>{t}</div>))}
+            </div>
+          </aside>
 
           {/* Content */}
-          <div style={{ padding:"3rem 2rem 4rem",maxWidth:"680px" }}>
+          <div style={{ padding:"2.5rem 2rem 4rem", maxWidth:"720px", minWidth:0 }}>
+            {/* Mobile TOC */}
+            <div className="think-toc-mobile">
+              {html && <TableOfContents html={html} />}
+            </div>
             <ShareBar title={item.title} slug={item.slug} />
             {html ? (
-              <div className="prose-ujjal" dangerouslySetInnerHTML={{ __html: html }} />
+              <ProseContent html={html} />
             ) : (
-              <p style={{ fontFamily:S.sans,fontStyle:"italic",fontSize:"1.1rem",color:"var(--muted)" }}>
+              <p style={{ fontFamily:S.sans, fontStyle:"italic", fontSize:"1.1rem", color:"var(--ink3)" }}>
                 Open this entry in Notion and write your content — it appears here automatically once published.
               </p>
             )}
@@ -129,8 +139,25 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
       <style>{`
         @media (max-width: 700px) {
           .think-body-grid { grid-template-columns: 1fr !important; }
-          .think-sidebar { display: none; }
         }
+        @media (max-width: 900px) {
+          .think-body-grid { grid-template-columns: 1fr !important; }
+          .think-toc-aside { display: none !important; }
+          .think-toc-mobile { display: block; margin-bottom: 1.5rem; }
+        }
+        .think-toc-aside {
+          position: sticky; top: 56px;
+          padding: 2.5rem 1rem 2rem 2rem;
+          max-height: calc(100vh - 60px); overflow-y: auto; scrollbar-width: none;
+          border-right: 1px solid var(--rule);
+        }
+        .think-toc-aside::-webkit-scrollbar { display: none; }
+        .think-toc-aside .toc-sidebar  { display: block; }
+        .think-toc-aside .toc-pills    { display: none !important; }
+        .think-toc-mobile { display: none; }
+        .think-toc-mobile .toc-sidebar { display: none !important; }
+        .think-toc-mobile .toc-pills   { display: block !important; }
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
       `}</style>
 
       <Footer />

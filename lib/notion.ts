@@ -5,46 +5,96 @@ const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const n2m = new NotionToMarkdown({ notionClient: notion as any });
 
 // ── Block type transformers ───────────────────────────────────────────────
+
+// Helper: extract plain text from rich_text array
+function rt(arr: any[]): string {
+  return (arr ?? []).map((t: any) => {
+    let s = t.plain_text ?? "";
+    if (t.annotations?.bold)          s = `**${s}**`;
+    if (t.annotations?.italic)        s = `*${s}*`;
+    if (t.annotations?.code)          s = `\`${s}\``;
+    if (t.annotations?.strikethrough) s = `~~${s}~~`;
+    if (t.href) s = `[${s}](${t.href})`;
+    return s;
+  }).join("");
+}
+
 n2m.setCustomTransformer("button", async (block: any) => {
   const b = block?.button ?? {};
-  // Notion button: rich_text for label, action.url for destination
-  const richText = (b.rich_text ?? []).map((t: any) => t.plain_text).join("") || b.label || b.text || "Open";
-  const url = b.url ?? b.action?.url ?? b.action?.type === "url" ? (b.action?.url ?? "") : "";
-  if (!url) return `**${richText}**`;
-  return `[button:${richText}](${url})`;
+  const label = rt(b.rich_text) || b.label || b.text || "Open";
+  const url = b.url ?? b.action?.url ?? "";
+  if (!url) return `**${label}**`;
+  return `[button:${label}](${url})`;
 });
+
 n2m.setCustomTransformer("callout", async (block: any) => {
-  const text = (block?.callout?.rich_text ?? []).map((t: any) => t.plain_text).join("");
-  const icon = block?.callout?.icon?.emoji ?? "💡";
-  return `> ${icon} ${text}`;
+  const text  = rt(block?.callout?.rich_text ?? []);
+  const icon  = block?.callout?.icon?.emoji ?? block?.callout?.icon?.external?.url ?? "💡";
+  const color = block?.callout?.color ?? "gray_background";
+  // Encode as a self-contained marker — markdownToHtml renders as styled card
+  return `[callout:${encodeURIComponent(icon)}|${color}]${text}[/callout]`;
 });
+
+n2m.setCustomTransformer("quote", async (block: any) => {
+  const text = rt(block?.quote?.rich_text ?? []);
+  // Notion quote = pull-quote, visually distinct from callout
+  return `[quote]${text}[/quote]`;
+});
+
 n2m.setCustomTransformer("toggle", async (block: any) => {
-  const text = (block?.toggle?.rich_text ?? []).map((t: any) => t.plain_text).join("");
-  return `**${text}**`;
+  const title   = rt(block?.toggle?.rich_text ?? []);
+  // Children are fetched and appended by notion-to-md as nested blocks
+  // We wrap with markers; the body is whatever notion-to-md provides after
+  return `[toggle:${encodeURIComponent(title)}]\n`;
+  // Note: notion-to-md appends child content, then we need a closing marker.
+  // Since n2m doesn't support post-child injection, we handle toggle
+  // children separately — the children will appear inline after the marker.
+  // A cleaner approach: treat each toggle as a details/summary block.
 });
+
+n2m.setCustomTransformer("to_do", async (block: any) => {
+  const text    = rt(block?.to_do?.rich_text ?? []);
+  const checked = block?.to_do?.checked ? "1" : "0";
+  return `[todo:${checked}] ${text}`;
+});
+
 n2m.setCustomTransformer("image", async (block: any) => {
   const img  = block?.image;
   const url  = img?.file?.url ?? img?.external?.url ?? "";
-  const cap  = (img?.caption ?? []).map((t: any) => t.plain_text).join("") || "";
+  const cap  = rt(img?.caption ?? []) || "";
   return url ? `![${cap}](${url})` : "";
 });
+
 n2m.setCustomTransformer("video", async (block: any) => {
   const v = block?.video;
   const url = v?.file?.url ?? v?.external?.url ?? "";
-  const cap = (v?.caption ?? []).map((t: any) => t.plain_text).join("") || "";
-  // Use standard image syntax — markdownToHtml detects video URLs and renders appropriately
+  const cap = rt(v?.caption ?? []) || "";
   return url ? `![${cap}](${url})` : "";
 });
+
 n2m.setCustomTransformer("embed", async (block: any) => {
   const url = block?.embed?.url ?? "";
-  // Bare URL — markdownToHtml picks up YouTube/Vimeo/Loom/Figma patterns
   return url ? url : "";
 });
+
 n2m.setCustomTransformer("bookmark", async (block: any) => {
-  const url = block?.bookmark?.url ?? "";
-  const cap = (block?.bookmark?.caption ?? []).map((t: any) => t.plain_text).join("") || url;
-  return url ? `[${cap}](${url})` : "";
+  const url  = block?.bookmark?.url ?? "";
+  const cap  = rt(block?.bookmark?.caption ?? []) || url;
+  const title = block?.bookmark?.title ?? "";
+  const desc  = block?.bookmark?.description ?? "";
+  if (!url) return "";
+  if (title) return `[bookmark:${encodeURIComponent(title)}|${encodeURIComponent(desc)}](${url})`;
+  return `[${cap}](${url})`;
 });
+
+n2m.setCustomTransformer("divider", async () => "---");
+
+n2m.setCustomTransformer("table_of_contents", async () => "");  // skip — we have our own TOC
+
+n2m.setCustomTransformer("breadcrumb", async () => "");
+
+// Synced blocks — just pass through (notion-to-md fetches children)
+n2m.setCustomTransformer("synced_block", async () => "");
 
 const PORTFOLIO_DS = process.env.NOTION_PORTFOLIO_DB_ID!;
 const THINK_DS = process.env.NOTION_THINK_DB_ID!;

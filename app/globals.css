@@ -309,13 +309,31 @@ html.dark .portrait-img { filter: brightness(0.88) contrast(1.05); }
 .prose-ujjal h3 { font-size: clamp(1.1rem,2vw,1.4rem); }
 .prose-ujjal h4 { font-size: 1.1rem; }
 .prose-ujjal p  { font-size: 15px; line-height: 1.85; color: var(--ink2); margin-bottom: 1.5rem; }
-.prose-ujjal blockquote {
-  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
-  line-height: 1.7; border-left: 2px solid var(--rule2); padding-left: 1.5rem;
-  margin: 2rem 0; color: var(--ink2);
+
+/* Quote — Notion blockquote styled as a pull-quote */
+.prose-ujjal blockquote,
+.notion-quote {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.75;
+  border-left: 3px solid var(--ink);
+  padding: 0.75rem 0 0.75rem 1.5rem;
+  margin: 2rem 0;
+  color: var(--ink);
+  background: transparent;
 }
-.prose-ujjal a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; opacity: 0.8; }
-.prose-ujjal a:hover { opacity: 1; }
+.prose-ujjal blockquote p,
+.notion-quote p {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.prose-ujjal a,.prose-link { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; opacity: 0.8; }
+.prose-ujjal a:hover,.prose-link:hover { opacity: 1; }
 .prose-ujjal ul,.prose-ujjal ol { padding-left: 1.5rem; margin-bottom: 1.5rem; color: var(--ink2); line-height: 1.8; }
 .prose-ujjal li { margin-bottom: 0.4rem; }
 .prose-ujjal code { font-family: 'DM Mono', monospace; font-size: 13px; background: var(--surface); padding: 2px 6px; border: 1px solid var(--rule); }
@@ -324,7 +342,137 @@ html.dark .portrait-img { filter: brightness(0.88) contrast(1.05); }
 .prose-ujjal hr { border: none; border-top: 1px solid var(--rule); margin: 3rem 0; }
 .prose-ujjal figure { margin: 2rem 0; }
 .prose-ujjal figcaption { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink3); margin-top: 0.5rem; }
-/* all italic globally stripped above */
+
+/* ─── NOTION CALLOUT ──────────────────────────────────────────────────── */
+.notion-callout {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  border: 1px solid var(--rule);
+  border-radius: 0;
+}
+.notion-callout-icon {
+  font-size: 1.1rem;
+  line-height: 1.75;
+  flex-shrink: 0;
+  user-select: none;
+}
+.notion-callout-body { flex: 1; min-width: 0; }
+.notion-callout-body p { font-size: 14px; line-height: 1.75; color: var(--ink2); margin: 0 0 0.5rem; }
+.notion-callout-body p:last-child { margin-bottom: 0; }
+
+/* ─── NOTION TOGGLE (details/summary) ────────────────────────────────── */
+.notion-toggle {
+  margin: 1rem 0;
+  border: 1px solid var(--rule);
+}
+.notion-toggle-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background 0.15s;
+}
+.notion-toggle-summary::-webkit-details-marker { display: none; }
+.notion-toggle-summary::before {
+  content: '';
+  display: inline-block;
+  width: 0; height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid var(--ink3);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.notion-toggle[open] .notion-toggle-summary::before { transform: rotate(90deg); }
+.notion-toggle-summary:hover { background: var(--surface); }
+.notion-toggle-body {
+  padding: 0.75rem 1rem 1rem 2.25rem;
+  border-top: 1px solid var(--rule);
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ink2);
+}
+.notion-toggle-body p { margin: 0 0 0.75rem; }
+.notion-toggle-body p:last-child { margin-bottom: 0; }
+
+/* ─── NOTION TO-DO CHECKBOXES ─────────────────────────────────────────── */
+.notion-todo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0.4rem 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink2);
+  cursor: default;
+}
+.notion-todo input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--ink);
+  width: 14px; height: 14px;
+  cursor: default;
+}
+.notion-todo--done span {
+  text-decoration: line-through;
+  color: var(--ink3);
+}
+
+/* ─── NOTION BOOKMARK CARD ────────────────────────────────────────────── */
+.notion-bookmark {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--rule);
+  text-decoration: none;
+  color: inherit;
+  margin: 1.5rem 0;
+  transition: border-color 0.2s, background 0.2s;
+  overflow: hidden;
+}
+.notion-bookmark:hover { border-color: var(--rule2); background: var(--surface); }
+.notion-bookmark-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0.85rem 1rem;
+  min-width: 0;
+}
+.notion-bookmark-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.notion-bookmark-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--ink3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.notion-bookmark-host {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink3);
+  margin-top: 2px;
+}
 
 /* ─── FORM INPUTS ──────────────────────────────────────────────────────── */
 input, textarea, select {
