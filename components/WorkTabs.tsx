@@ -159,7 +159,6 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
                       </div>
                       <span className="view-cs-link" style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"4px" }}>
                         View case study
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
                       </span>
                     </div>
                   </a>
@@ -266,9 +265,19 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
         .exp-btn:focus-visible .exp-card { outline: 2px solid var(--ink); outline-offset: -2px; }
         .exp-btn:active .exp-card { transform: scale(0.99); transition: transform 0.07s; }
 
-        /* "View case study →" text — arrow shifts right on hover */
-        .view-cs-link { display:inline-flex; align-items:center; gap:4px; transition:gap 0.2s ease, color 0.2s ease; }
-        .glow-card:hover .view-cs-link { gap:7px; color: var(--gc-text, var(--ink3)); }
+        /* "View case study" — hidden at rest, visible on card hover */
+        .view-cs-link {
+          display: inline-flex;
+          align-items: center;
+          opacity: 0;
+          transform: translateY(4px);
+          transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease;
+        }
+        .glow-card:hover .view-cs-link {
+          opacity: 1;
+          transform: translateY(0);
+          color: var(--gc-text, var(--ink3));
+        }
 
         @media (max-width:900px) {
           .exp-grid { grid-template-columns:repeat(2,1fr); }

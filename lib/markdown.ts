@@ -181,23 +181,34 @@ export function markdownToHtml(md: string): string {
   // ── Notion callout blocks [callout:emoji|color]text[/callout] ───────────
   html = html.replace(
     /\[callout:([^\|]+)\|([^\]]*)\]([\s\S]*?)\[\/callout\]/g,
-    (_, iconEnc, color, body) => {
-      const icon = decodeURIComponent(iconEnc);
-      // Map Notion background colors to CSS custom properties
+    (_, _iconEnc, color, body) => {
+      // No emoji — use left border accent colour only
       const bgMap: Record<string, string> = {
         gray_background:   "var(--surface)",
-        yellow_background: "rgba(255,220,80,0.12)",
-        blue_background:   "rgba(77,159,255,0.12)",
-        green_background:  "rgba(77,255,180,0.1)",
-        red_background:    "rgba(212,43,69,0.1)",
-        purple_background: "rgba(199,125,255,0.1)",
-        orange_background: "rgba(255,140,66,0.12)",
-        pink_background:   "rgba(255,100,150,0.1)",
-        brown_background:  "rgba(180,120,80,0.1)",
+        yellow_background: "rgba(255,220,80,0.10)",
+        blue_background:   "rgba(77,159,255,0.10)",
+        green_background:  "rgba(77,255,180,0.08)",
+        red_background:    "rgba(212,43,69,0.08)",
+        purple_background: "rgba(199,125,255,0.08)",
+        orange_background: "rgba(255,140,66,0.10)",
+        pink_background:   "rgba(255,100,150,0.08)",
+        brown_background:  "rgba(180,120,80,0.08)",
       };
-      const bg = bgMap[color] || "var(--surface)";
+      const borderMap: Record<string, string> = {
+        gray_background:   "var(--rule2)",
+        yellow_background: "rgba(200,160,20,0.6)",
+        blue_background:   "rgba(60,130,220,0.6)",
+        green_background:  "rgba(40,180,120,0.6)",
+        red_background:    "rgba(200,50,60,0.6)",
+        purple_background: "rgba(160,80,220,0.6)",
+        orange_background: "rgba(210,110,30,0.6)",
+        pink_background:   "rgba(200,60,110,0.6)",
+        brown_background:  "rgba(140,90,50,0.6)",
+      };
+      const bg     = bgMap[color]     || "var(--surface)";
+      const border = borderMap[color] || "var(--rule2)";
       const bodyHtml = markdownToHtml(body.trim());
-      return `<div class="notion-callout" style="background:${bg}"><span class="notion-callout-icon" aria-hidden="true">${icon}</span><div class="notion-callout-body">${bodyHtml}</div></div>`;
+      return `<div class="notion-callout" style="background:${bg};border-left-color:${border}">${bodyHtml}</div>`;
     }
   );
 

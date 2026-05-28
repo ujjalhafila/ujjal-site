@@ -106,28 +106,19 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
         )}
 
         {/* Body */}
-        <div style={{ display:"grid", gridTemplateColumns:"210px 1fr", maxWidth:"1140px", margin:"0 auto", alignItems:"start" }} className="think-body-grid">
-
-          {/* Desktop TOC sidebar */}
-          <aside className="think-toc-aside" aria-label="Page sections">
+        <div className="think-body-outer">
+          {/* Mobile TOC pills */}
+          <div className="think-toc-mobile">
             {html && <TableOfContents html={html} />}
-            <div style={{ marginTop:"2rem", paddingTop:"1.5rem", borderTop:"1px solid var(--rule)" }}>
-              <div style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.12em", textTransform:"uppercase", color:"var(--ink3)", marginBottom:"0.75rem" }}>Tags</div>
-              {item.tags.map(t=>(<div key={t} style={{ fontFamily:S.mono, fontSize:"11px", color:"var(--ink)", marginBottom:"0.3rem" }}>{t}</div>))}
-            </div>
-          </aside>
+          </div>
 
-          {/* Content */}
-          <div style={{ padding:"2.5rem 2rem 4rem", maxWidth:"720px", minWidth:0 }}>
-            {/* Mobile TOC */}
-            <div className="think-toc-mobile">
-              {html && <TableOfContents html={html} />}
-            </div>
+          {/* Centred reading column */}
+          <div className="think-body-inner">
             <ShareBar title={item.title} slug={item.slug} />
             {html ? (
               <ProseContent html={html} />
             ) : (
-              <p style={{ fontFamily:S.sans, fontStyle:"italic", fontSize:"1.1rem", color:"var(--ink3)" }}>
+              <p style={{ fontFamily:S.sans, fontStyle:"italic", fontSize:"15px", color:"var(--ink3)", lineHeight:1.85 }}>
                 Open this entry in Notion and write your content — it appears here automatically once published.
               </p>
             )}
@@ -137,26 +128,32 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
       </div>
 
       <style>{`
-        @media (max-width: 700px) {
-          .think-body-grid { grid-template-columns: 1fr !important; }
+        /* Outer wrapper: full-width, provides horizontal padding */
+        .think-body-outer {
+          width: 100%;
+          padding: 0 2rem;
         }
-        @media (max-width: 900px) {
-          .think-body-grid { grid-template-columns: 1fr !important; }
-          .think-toc-aside { display: none !important; }
-          .think-toc-mobile { display: block; margin-bottom: 1.5rem; }
+        /* Centred reading column — wider for comfortable reading */
+        .think-body-inner {
+          max-width: 760px;
+          margin: 2.5rem auto 5rem;
         }
-        .think-toc-aside {
-          position: sticky; top: 56px;
-          padding: 2.5rem 1rem 2rem 2rem;
-          max-height: calc(100vh - 60px); overflow-y: auto; scrollbar-width: none;
-          border-right: 1px solid var(--rule);
-        }
-        .think-toc-aside::-webkit-scrollbar { display: none; }
-        .think-toc-aside .toc-sidebar  { display: block; }
-        .think-toc-aside .toc-pills    { display: none !important; }
+        /* Mobile TOC pills — only visible on small screens */
         .think-toc-mobile { display: none; }
-        .think-toc-mobile .toc-sidebar { display: none !important; }
-        .think-toc-mobile .toc-pills   { display: block !important; }
+        @media (max-width: 900px) {
+          .think-toc-mobile {
+            display: block;
+            position: sticky; top: 52px; z-index: 50;
+            background: var(--nav-bg); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--rule);
+            margin: 0 -2rem;
+          }
+          .think-toc-mobile .toc-sidebar { display: none !important; }
+          .think-toc-mobile .toc-pills   { display: block !important; border-bottom: none; }
+        }
+        @media (max-width: 600px) {
+          .think-body-outer { padding: 0 1.25rem; }
+        }
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
       `}</style>
 

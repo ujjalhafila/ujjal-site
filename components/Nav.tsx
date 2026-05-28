@@ -10,15 +10,15 @@ function MailIcon()     { return <svg width="14" height="14" viewBox="0 0 24 24"
 
 const MONO = "'DM Mono', monospace";
 const NAV_LINKS = [
-  { label: "Work",  href: "/work",  tip: "Case studies and shipped projects" },
-  { label: "Think", href: "/think", tip: "Essays, experiments and concepts"   },
-  { label: "About", href: "/about", tip: "Background, focus areas and contact" },
+  { label: "Work",  href: "/work",  tip: "Projects" },
+  { label: "Think", href: "/think", tip: "Writing"  },
+  { label: "About", href: "/about", tip: "About me" },
 ] as const;
 const NAV_COLORS = ["#FF4D6D", "#4DFFB4", "#4D9FFF"] as const;
 const SOCIALS = [
-  { href: "https://www.linkedin.com/in/ujjalhafila/", Icon: LinkedInIcon, label: "LinkedIn",           tip: "View LinkedIn profile"  },
-  { href: "https://github.com/ujjalhafila",           Icon: GitHubIcon,   label: "GitHub",             tip: "View GitHub profile"    },
-  { href: "mailto:ujjalhafila@gmail.com",             Icon: MailIcon,     label: "Email",              tip: "Send an email"          },
+  { href: "https://www.linkedin.com/in/ujjalhafila/", Icon: LinkedInIcon, label: "LinkedIn", tip: "LinkedIn" },
+  { href: "https://github.com/ujjalhafila",           Icon: GitHubIcon,   label: "GitHub",   tip: "GitHub"   },
+  { href: "mailto:ujjalhafila@gmail.com",             Icon: MailIcon,     label: "Email",    tip: "Email"    },
 ];
 
 export default function Nav() {
@@ -79,13 +79,13 @@ export default function Nav() {
         <div style={{ marginLeft:"auto", display:"flex", alignItems:"stretch" }}>
           {/* Socials — desktop */}
           <div style={{ display:"flex", alignItems:"stretch" }} className="desktop-nav">
-            {SOCIALS.map(({ href, Icon, label, tip }) => (
+            {SOCIALS.map(({ href, Icon, label, tip }, idx) => (
               <a key={label} href={href}
                 target={href.startsWith("http") ? "_blank" : undefined}
                 rel="noopener"
                 aria-label={tip}
                 data-tip={tip}
-                className="nav-tip"
+                className={`nav-tip${idx === SOCIALS.length - 1 ? " tip-right" : ""}`}
                 style={{
                   display:"flex", alignItems:"center", padding:"0 16px",
                   color:"var(--ink3)", borderLeft:"1px solid var(--rule)",
@@ -99,15 +99,13 @@ export default function Nav() {
           </div>
 
           {/* Theme toggle */}
-          <div
-            style={{ display:"flex", alignItems:"center", borderLeft:"1px solid var(--rule)", padding:"0 16px" }}
-          >
+          <div style={{ display:"flex", alignItems:"center", borderLeft:"1px solid var(--rule)", padding:"0 16px" }}>
             <ThemeToggle />
           </div>
 
           {/* Mobile hamburger */}
           <button onClick={() => setOpen(o => !o)}
-            className="mobile-menu-btn nav-tip"
+            className="mobile-menu-btn nav-tip tip-right"
             aria-label={open ? "Close menu" : "Open navigation menu"}
             aria-expanded={open}
             data-tip={open ? "Close menu" : "Open navigation menu"}
@@ -173,105 +171,114 @@ export default function Nav() {
         @media (max-width: 768px) {
           .desktop-nav { display:none !important; }
           .mobile-menu-btn { display:flex !important; }
-          /* No tooltips on touch */
           .nav-tip::after, .nav-tip::before,
           .nav-tip-label { opacity: 0 !important; pointer-events: none !important; }
         }
 
-        /* ── Custom tooltip ─────────────────────────────────────────────
-           Two mechanisms kept completely separate:
-           1. nav-links (Work/Think/About): use a real <span class="nav-tip-label">
-              child element — avoids any conflict with ::after underline.
-           2. All other nav-tips (home, socials, theme, hamburger):
-              ::after = bubble, ::before = triangle notch.
-           No title= attributes anywhere — suppresses browser native tooltip.
-        ──────────────────────────────────────────────────────────────── */
-
-        /* ── Span-based tooltip for nav-links ── */
+        /* ── Span-based tooltip for nav-links (Work / Think / About) ─────── */
         .nav-tip-label {
           position: absolute;
-          top: calc(100% + 10px);
+          top: calc(100% + 8px);
           left: 50%;
-          transform: translateX(-50%) translateY(-4px);
+          transform: translateX(-50%) translateY(-3px);
           background: var(--ink);
           color: var(--bg);
           font-family: 'DM Mono', monospace;
           font-size: 10px;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.06em;
           white-space: nowrap;
-          padding: 5px 10px;
+          padding: 4px 8px;
           pointer-events: none;
           opacity: 0;
-          transition: opacity 0.15s ease, transform 0.15s ease;
+          transition: opacity 0.12s ease, transform 0.12s ease;
           transition-delay: 0s;
           z-index: 9999;
         }
         .nav-link:hover .nav-tip-label {
           opacity: 1;
           transform: translateX(-50%) translateY(0);
-          transition-delay: 0.6s;
+          transition-delay: 0.5s;
         }
 
-        /* ── Pseudo-element tooltip for non-link nav items ── */
+        /* ── Pseudo tooltip for icon-only nav items ────────────────────────
+           Shared base: bubble on ::after, notch on ::before.
+           Right-edge items (.tip-right): anchored to right edge.
+           Left-edge item (home): anchored to left edge.
+        ────────────────────────────────────────────────────────────────── */
         .nav-tip:not(.nav-link) { position: relative; }
 
-        /* Bubble */
         .nav-tip:not(.nav-link)::after {
           content: attr(data-tip);
           position: absolute;
-          top: calc(100% + 10px);
+          top: calc(100% + 8px);
           left: 50%;
-          transform: translateX(-50%) translateY(-4px);
+          transform: translateX(-50%) translateY(-3px);
           background: var(--ink);
           color: var(--bg);
           font-family: 'DM Mono', monospace;
           font-size: 10px;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.06em;
           white-space: nowrap;
-          padding: 5px 10px;
+          padding: 4px 8px;
           pointer-events: none;
           opacity: 0;
-          transition: opacity 0.15s ease, transform 0.15s ease;
+          transition: opacity 0.12s ease, transform 0.12s ease;
           transition-delay: 0s;
           z-index: 9999;
         }
-        /* Triangle notch */
         .nav-tip:not(.nav-link)::before {
           content: '';
           position: absolute;
-          top: calc(100% + 5px);
+          top: calc(100% + 3px);
           left: 50%;
-          transform: translateX(-50%) translateY(-4px);
+          transform: translateX(-50%) translateY(-3px);
           border: 4px solid transparent;
           border-bottom-color: var(--ink);
           pointer-events: none;
           opacity: 0;
-          transition: opacity 0.15s ease, transform 0.15s ease;
+          transition: opacity 0.12s ease, transform 0.12s ease;
           transition-delay: 0s;
           z-index: 9999;
         }
-        /* Show both after 600ms hover */
         .nav-tip:not(.nav-link):hover::after,
         .nav-tip:not(.nav-link):hover::before {
           opacity: 1;
           transform: translateX(-50%) translateY(0);
-          transition-delay: 0.6s;
+          transition-delay: 0.5s;
         }
 
-        /* Home icon: left-align so tooltip stays in viewport */
+        /* Home icon — left-anchored, tooltip opens right */
         .nav-home-link::after {
-          left: 8px;
-          transform: translateX(0) translateY(-4px);
+          left: 0;
+          transform: translateX(0) translateY(-3px);
         }
         .nav-home-link::before {
-          left: 24px;
-          transform: translateX(0) translateY(-4px);
+          left: 16px;
+          transform: translateX(0) translateY(-3px);
         }
         .nav-home-link:hover::after {
           transform: translateX(0) translateY(0);
         }
         .nav-home-link:hover::before {
           transform: translateX(0) translateY(0);
+        }
+
+        /* Right-edge items: anchor tooltip to right so it stays in viewport */
+        .tip-right::after {
+          left: auto !important;
+          right: 0 !important;
+          transform: translateX(0) translateY(-3px) !important;
+        }
+        .tip-right::before {
+          left: auto !important;
+          right: 16px !important;
+          transform: translateX(0) translateY(-3px) !important;
+        }
+        .tip-right:hover::after {
+          transform: translateX(0) translateY(0) !important;
+        }
+        .tip-right:hover::before {
+          transform: translateX(0) translateY(0) !important;
         }
       `}</style>
     </>
