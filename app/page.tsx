@@ -5,6 +5,8 @@ import Portrait from "../components/Portrait";
 import QuotesCarousel from "../components/QuotesCarousel";
 import ThinkCarousel from "../components/ThinkCarousel";
 import CtaBanner from "../components/CtaBanner";
+import ViewWorkBtn from "../components/ViewWorkBtn";
+import CountUp from "../components/CountUp";
 import { getFeaturedWork, getFeaturedThink, getActiveCta } from "../lib/notion";
 
 export const dynamic = "force-dynamic";
@@ -73,7 +75,7 @@ export default async function Home() {
   const [work, think, cta] = await Promise.all([getFeaturedWork(), getFeaturedThink(), getActiveCta()]);
 
   return (
-    <main style={{ background:"var(--bg)", color:"var(--ink)" }}>
+    <main id="main-content" style={{ background:"var(--bg)", color:"var(--ink)" }}>
       <Nav />
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
@@ -137,14 +139,7 @@ export default async function Home() {
             display:"flex", gap:"12px", flexWrap:"wrap",
             animation:"fadeUp 0.6s ease 0.35s both",
           }}>
-            <Link href="/work" className="glow-btn" style={{
-              fontFamily:MONO, fontSize:"12px", padding:"9px 22px",
-              background:"var(--ink)", color:"var(--bg)",
-              border:"1px solid var(--ink)",
-              ["--gc" as string]:"#D42B45",
-            }}>
-              View Work →
-            </Link>
+            <ViewWorkBtn />
             <Link href="/think" className="glow-btn glow-btn-outline" style={{
               fontFamily:MONO, fontSize:"12px", padding:"9px 22px",
               background:"transparent", color:"var(--ink2)",
@@ -161,12 +156,16 @@ export default async function Home() {
             borderTop:"1px solid var(--rule)", maxWidth:"260px",
             animation:"fadeIn 0.7s ease 0.45s both",
           }}>
-            {[["8+","Years designing"],["∞","Systems built"]].map(([n,l],i) => (
-              <div key={l} style={{
+            {([[8, "+", "Years designing"], ["∞", "", "Systems built"]] as const).map(([n, sfx, l], i) => (
+              <div key={String(l)} style={{
                 padding:"18px 16px",
                 borderRight:i===0?"1px solid var(--rule)":"none",
               }}>
-                <div style={{ fontFamily:SANS, fontSize:"32px", fontWeight:300, letterSpacing:"-1.5px", lineHeight:1 }}>{n}</div>
+                <div style={{ fontFamily:SANS, fontSize:"32px", fontWeight:300, letterSpacing:"-1.5px", lineHeight:1 }}>
+                  {typeof n === "number"
+                    ? <CountUp value={n} suffix={String(sfx)} duration={1400} />
+                    : n}
+                </div>
                 <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"6px" }}>{l}</div>
               </div>
             ))}
@@ -175,11 +174,11 @@ export default async function Home() {
       </section>
 
       {/* ── MARQUEE ───────────────────────────────────────────────────── */}
-      <div style={{
+      <div className="marquee-wrap" style={{
         borderBottom:"1px solid var(--rule)", overflow:"hidden",
         height:"34px", display:"flex", alignItems:"center",
       }} aria-hidden="true">
-        <div style={{ display:"flex", animation:"marquee 26s linear infinite", whiteSpace:"nowrap", alignItems:"center" }}>
+        <div className="marquee-track" style={{ display:"flex", animation:"marquee 26s linear infinite", whiteSpace:"nowrap", alignItems:"center" }}>
           {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
             <span key={`m-${i}`} style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", padding:"0 24px", flexShrink:0 }}>
               {item}
@@ -193,7 +192,7 @@ export default async function Home() {
 
       {/* ── FEATURED WORKS ────────────────────────────────────────────── */}
       {work.length > 0 && (
-        <section style={{ borderBottom:"1px solid var(--rule)" }}>
+        <section style={{ borderBottom:"1px solid var(--rule)" }} aria-label="Featured works">
           {/* section header row */}
           <div style={{
             display:"flex", justifyContent:"space-between", alignItems:"center",
@@ -278,7 +277,7 @@ export default async function Home() {
       )}
 
       {/* ── THINK SPACE ───────────────────────────────────────────────── */}
-      <section style={{ borderBottom:"1px solid var(--rule)" }}>
+      <section style={{ borderBottom:"1px solid var(--rule)" }} aria-label="Think space">
         {/* header */}
         <div style={{
           display:"flex", justifyContent:"space-between", alignItems:"center",
@@ -314,7 +313,7 @@ export default async function Home() {
       {cta && <CtaBanner cta={cta} />}
 
       {/* ── CONNECT ───────────────────────────────────────────────────── */}
-      <section style={{ borderBottom:"1px solid var(--rule)" }}>
+      <section style={{ borderBottom:"1px solid var(--rule)" }} aria-label="Contact and connect">
         <div style={{
           display:"flex", justifyContent:"space-between", alignItems:"center",
           padding:"0 28px", height:"40px", borderBottom:"1px solid var(--rule)",
@@ -330,13 +329,14 @@ export default async function Home() {
             href={link.href}
             target={link.href.startsWith("http") ? "_blank" : undefined}
             rel="noopener"
-            className="glow-row"
+            className="glow-row reveal"
             style={{
               display:"grid", gridTemplateColumns:"40px 1fr auto",
               alignItems:"center", height:"58px", paddingRight:"28px",
               borderBottom: i < CONNECT_LINKS.length - 1 ? "1px solid var(--rule)" : "none",
               ["--gc" as string]: link.gc,
               ["--gc-text" as string]: link.gcText,
+              animationDelay: `${i * 60}ms`,
             } as React.CSSProperties}
           >
             <div style={{

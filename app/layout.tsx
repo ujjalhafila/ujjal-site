@@ -47,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('uh-theme')||'auto';var d=document.documentElement;d.setAttribute('data-theme',t);if(t==='dark'){d.classList.add('dark');}else if(t==='light'){d.classList.add('light');}else{var mq=window.matchMedia('(prefers-color-scheme: dark)');if(mq.matches)d.classList.add('dark');else d.classList.add('light');}})();` }} />
       </head>
       <body>
+        <a href="#main-content" className="skip-nav">Skip to content</a>
         <ThemeProvider>
           {children}
         </ThemeProvider>

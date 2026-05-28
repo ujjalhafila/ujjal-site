@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 
 type Props = {
   src: string;
@@ -11,29 +11,52 @@ type Props = {
 const S = { mono: "'DM Mono',monospace" };
 
 export default function MediaModal({ src, type, alt, onClose }: Props) {
-  const close = useCallback((e: React.MouseEvent | KeyboardEvent) => {
-    if (e instanceof KeyboardEvent) { if (e.key === "Escape") onClose(); return; }
-    onClose();
-  }, [onClose]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef  = useRef<HTMLButtonElement>(null);
 
+  // Focus the close button on mount; restore focus on unmount
   useEffect(() => {
-    document.addEventListener("keydown", close as EventListener);
+    const prev = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
     document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("keydown", close as EventListener);
       document.body.style.overflow = "";
+      prev?.focus();
     };
-  }, [close]);
+  }, []);
+
+  // Escape key + focus trap
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") { onClose(); return; }
+      if (e.key !== "Tab") return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href],button:not([disabled]),iframe,[tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last  = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last)  { e.preventDefault(); first.focus(); }
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   function isDriveUrl(url: string) {
     return url.includes("drive.google.com") || url.includes("docs.google.com/file");
   }
-
   function getDriveFileId(url: string): string | null {
     const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
     return m ? m[1] : null;
   }
-
   function getEmbedUrl(url: string): string {
     const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
     if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1`;
@@ -51,7 +74,9 @@ export default function MediaModal({ src, type, alt, onClose }: Props) {
   }
 
   return (
+    /* Backdrop */
     <div
+      role="presentation"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{
         position: "fixed", inset: 0, zIndex: 9000,
@@ -59,18 +84,26 @@ export default function MediaModal({ src, type, alt, onClose }: Props) {
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: "1.5rem",
         backdropFilter: "blur(6px)",
+        animation: "fadeIn 0.18s ease",
       }}
     >
-      {/* Modal box */}
-      <div style={{
-        position: "relative",
-        width: "100%",
-        maxWidth: type === "image" ? "900px" : "960px",
-        background: "#0f0e0d",
-        borderRadius: "12px",
-        overflow: "hidden",
-        boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
-      }}>
+      {/* Dialog */}
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={alt || (type === "figma" ? "Figma prototype" : type === "video" ? "Video" : "Image")}
+        style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: type === "image" ? "900px" : "960px",
+          background: "#0f0e0d",
+          borderRadius: "12px",
+          overflow: "hidden",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
+          animation: "fadeUp 0.22s ease",
+        }}
+      >
         {/* Toolbar */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -87,10 +120,18 @@ export default function MediaModal({ src, type, alt, onClose }: Props) {
                 Open ↗
               </a>
             )}
-            <button onClick={onClose}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.5)", fontSize: "20px", lineHeight: 1, padding: "2px 4px", display: "flex", alignItems: "center" }}
-              aria-label="Close">
-              ✕
+            <button
+              ref={closeRef}
+              onClick={onClose}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.5)", lineHeight: 1, padding: "4px", display: "flex", alignItems: "center", borderRadius: "4px", transition: "color 0.2s" }}
+              aria-label="Close"
+              onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.9)")}
+              onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
             </button>
           </div>
         </div>
