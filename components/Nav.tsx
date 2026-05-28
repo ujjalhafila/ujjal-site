@@ -36,7 +36,6 @@ export default function Nav() {
         {/* Home */}
         <Link href="/"
           aria-label="Home"
-          title="Home"
           data-tip="Home"
           style={{
             display:"flex", alignItems:"center", justifyContent:"center",
@@ -60,7 +59,6 @@ export default function Nav() {
             return (
               <Link key={href} href={href}
                 aria-label={`${label} — ${tip}`}
-                title={tip}
                 data-tip={tip}
                 className="nav-link nav-tip"
                 style={{
@@ -86,7 +84,6 @@ export default function Nav() {
                 target={href.startsWith("http") ? "_blank" : undefined}
                 rel="noopener"
                 aria-label={tip}
-                title={tip}
                 data-tip={tip}
                 className="nav-tip"
                 style={{
@@ -113,7 +110,6 @@ export default function Nav() {
             className="mobile-menu-btn nav-tip"
             aria-label={open ? "Close menu" : "Open navigation menu"}
             aria-expanded={open}
-            title={open ? "Close menu" : "Open navigation menu"}
             data-tip={open ? "Close menu" : "Open navigation menu"}
             style={{
               display:"none", alignItems:"center", justifyContent:"center",
@@ -178,23 +174,23 @@ export default function Nav() {
         @media (max-width: 768px) {
           .desktop-nav { display:none !important; }
           .mobile-menu-btn { display:flex !important; }
-          /* Suppress nav tooltips on touch/mobile */
-          .nav-tip::after, .nav-tip::before { display:none !important; }
+          /* No tooltips on touch */
+          .nav-tip::after,
+          .nav-tip::before,
+          .nav-link.nav-tip::after,
+          .nav-link.nav-tip::before { opacity: 0 !important; pointer-events: none; }
         }
 
-        /* ── Custom tooltip ──────────────────────────────────────────────
-           Uses data-tip attribute. Appears below the element after 600ms.
-           Standard: title gives screen-reader / native tooltip;
-           ::after gives the polished visual. WCAG 1.4.13: hoverable,
-           dismissible (Escape closes nothing here since it's purely CSS),
-           persistent (stays as long as cursor is on element).
+        /* ── Custom tooltip ─────────────────────────────────────────────
+           .nav-tip uses ::after for the bubble + ::before for the notch.
+           Exception: .nav-link already uses ::after for the underline bar
+           (defined in globals.css). For nav-links we flip the assignment:
+           ::before = tooltip bubble, ::after = underline (globals wins).
         ──────────────────────────────────────────────────────────────── */
-        .nav-tip {
-          position: relative;
-        }
+        .nav-tip { position: relative; }
 
-        /* Tooltip bubble */
-        .nav-tip::after {
+        /* ── Default: tooltip bubble on ::after (home, socials, theme, hamburger) */
+        .nav-tip:not(.nav-link)::after {
           content: attr(data-tip);
           position: absolute;
           top: calc(100% + 10px);
@@ -209,14 +205,11 @@ export default function Nav() {
           padding: 5px 10px;
           pointer-events: none;
           opacity: 0;
-          transition: opacity 0.15s ease, transform 0.15s ease;
-          z-index: 200;
-          /* Delay: only appears after 600ms — not on quick passes */
-          transition-delay: 0s;
+          transition: opacity 0.15s ease 0s, transform 0.15s ease 0s;
+          z-index: 9999;
         }
-
-        /* Arrow notch pointing up to the element */
-        .nav-tip::before {
+        /* Arrow notch on ::before */
+        .nav-tip:not(.nav-link)::before {
           content: '';
           position: absolute;
           top: calc(100% + 5px);
@@ -226,24 +219,76 @@ export default function Nav() {
           border-bottom-color: var(--ink);
           pointer-events: none;
           opacity: 0;
-          transition: opacity 0.15s ease, transform 0.15s ease;
-          z-index: 200;
-          transition-delay: 0s;
+          transition: opacity 0.15s ease 0s, transform 0.15s ease 0s;
+          z-index: 9999;
         }
-
-        /* Hover: show after 600ms delay */
-        .nav-tip:hover::after,
-        .nav-tip:hover::before {
+        /* Show after 600ms */
+        .nav-tip:not(.nav-link):hover::after,
+        .nav-tip:not(.nav-link):hover::before {
           opacity: 1;
           transform: translateX(-50%) translateY(0);
           transition-delay: 0.6s;
         }
 
-        /* Keep tooltip within viewport for edge items */
-        .nav-home-link::after { left: 0; transform: translateX(0) translateY(-4px); }
-        .nav-home-link:hover::after { transform: translateX(0) translateY(0); }
-        .nav-home-link::before { left: 16px; transform: translateX(0) translateY(-4px); }
-        .nav-home-link:hover::before { transform: translateX(0) translateY(0); }
+        /* ── Nav links: ::after = underline (globals); use a pseudo-wrapper via outline trick.
+           We can't use ::after (taken) or ::before (would break layout).
+           Solution: use a <span data-tip> child rendered via React inside the link,
+           but that needs HTML changes. Simplest pure-CSS: use outline + clip-path tooltip
+           via ::before positioned BELOW the underline baseline.
+           Since ::before is available on .nav-link, use it for the bubble. */
+        .nav-link.nav-tip::before {
+          content: attr(data-tip);
+          position: absolute;
+          top: calc(100% + 10px); /* below the nav bar bottom edge */
+          left: 50%;
+          transform: translateX(-50%) translateY(-4px);
+          background: var(--ink);
+          color: var(--bg);
+          font-family: 'DM Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          white-space: nowrap;
+          padding: 5px 10px;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.15s ease 0s, transform 0.15s ease 0s;
+          z-index: 9999;
+          /* Override any nav-link::before that may exist */
+          border: none;
+          height: auto; width: auto;
+          border-radius: 0;
+          background-clip: unset;
+          -webkit-background-clip: unset;
+        }
+        /* No notch arrow for nav links (::after is taken by underline) */
+        .nav-link.nav-tip:hover::before {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+          transition-delay: 0.6s;
+        }
+        /* Ensure underline ::after still works normally */
+        .nav-link.nav-tip::after {
+          content: '';
+          /* Inherits position:absolute, bottom:0 etc from globals.css .nav-link::after */
+        }
+
+        /* Home icon: left-align tooltip so it doesn't go off-screen */
+        .nav-home-link.nav-tip::after {
+          left: 0;
+          transform: translateX(0) translateY(-4px);
+        }
+        .nav-home-link.nav-tip::before {
+          left: 16px;
+          transform: translateX(0) translateY(-4px);
+        }
+        .nav-home-link.nav-tip:hover::after {
+          transform: translateX(0) translateY(0);
+          transition-delay: 0.6s;
+        }
+        .nav-home-link.nav-tip:hover::before {
+          transform: translateX(0) translateY(0);
+          transition-delay: 0.6s;
+        }
       `}</style>
     </>
   );

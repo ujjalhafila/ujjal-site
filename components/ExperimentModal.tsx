@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const MONO = "'DM Mono',monospace";
 const SANS = "'DM Sans',sans-serif";
@@ -9,24 +9,70 @@ interface ExpItem {
   imageUrl: string | null; tags: string[]; url: string | null; date: string | null;
 }
 
+// ── URL classifiers ──────────────────────────────────────────────────────
+function ytId(url: string) {
+  return url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] ?? null;
+}
+function vimeoId(url: string) { return url.match(/vimeo\.com\/(\d+)/)?.[1] ?? null; }
+function loomId(url: string)  { return url.match(/loom\.com\/share\/([a-zA-Z0-9]+)/)?.[1] ?? null; }
+function figmaUrl(url: string) { return url.includes("figma.com"); }
+
+function isVideoFile(url: string) {
+  return /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+}
+function isImageFile(url: string) {
+  return /\.(png|jpe?g|gif|webp|svg|avif)(\?|$)/i.test(url);
+}
+
+function renderEmbed(url: string, caption: string): string {
+  const yt = ytId(url);
+  if (yt) {
+    return `<div class="em-embed-wrap"><iframe src="https://www.youtube.com/embed/${yt}" title="${caption || "YouTube video"}" allowfullscreen allow="autoplay; encrypted-media" loading="lazy"></iframe></div>`;
+  }
+  const vi = vimeoId(url);
+  if (vi) {
+    return `<div class="em-embed-wrap"><iframe src="https://player.vimeo.com/video/${vi}" title="${caption || "Vimeo video"}" allowfullscreen loading="lazy"></iframe></div>`;
+  }
+  const lo = loomId(url);
+  if (lo) {
+    return `<div class="em-embed-wrap"><iframe src="https://www.loom.com/embed/${lo}" title="${caption || "Loom video"}" allowfullscreen loading="lazy"></iframe></div>`;
+  }
+  if (figmaUrl(url)) {
+    return `<div class="em-embed-wrap"><iframe src="https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(url)}" title="${caption || "Figma prototype"}" allowfullscreen loading="lazy"></iframe></div>`;
+  }
+  if (isVideoFile(url)) {
+    return `<video class="em-video" controls preload="metadata"><source src="${url}" /><p class="em-video-fallback"><a href="${url}" target="_blank" rel="noopener">Watch video ↗</a></p></video>`;
+  }
+  // Generic embed fallback
+  return `<a class="em-link" href="${url}" target="_blank" rel="noopener">${caption || url} ↗</a>`;
+}
+
 function mdToHtml(md: string): string {
   if (!md.trim()) return "";
   let s = md;
 
   // Fenced code blocks first
   s = s.replace(/```[\w]*\n?([\s\S]*?)```/g,
-    (_, c) => `<pre class="em-pre"><code>${c.replace(/</g,"&lt;")}</code></pre>`);
+    (_, c) => `<pre class="em-pre"><code>${c.replace(/</g, "&lt;")}</code></pre>`);
 
-  // Images
-  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,
-    '<img class="em-img" src="$2" alt="$1" loading="lazy" />');
+  // [video:caption](url) — from Notion video blocks
+  s = s.replace(/\[video:([^\]]*)\]\(([^)]+)\)/g, (_, cap, url) => renderEmbed(url, cap));
 
-  // Notion buttons from our transformer: [button:Label](url)
+  // [embed:](url) — from Notion embed blocks
+  s = s.replace(/\[embed:[^\]]*\]\(([^)]+)\)/g, (_, url) => renderEmbed(url, ""));
+
+  // Images — Notion image blocks
+  s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, url) => {
+    if (isVideoFile(url)) return renderEmbed(url, alt);
+    return `<img class="em-img" src="${url}" alt="${alt}" loading="lazy" />`;
+  });
+
+  // Notion buttons: [button:Label](url)
   s = s.replace(/\[button:([^\]]+)\]\(([^)]+)\)/g,
     '<a class="em-btn" href="$2" target="_blank" rel="noopener">$1 ↗</a>');
 
   // Regular links
-  s = s.replace(/(?<!!)\[([^\]]+)\]\(([^)]+)\)/g,
+  s = s.replace(/(?<![\[!])\[([^\]]+)\]\(([^)]+)\)/g,
     '<a class="em-link" href="$2" target="_blank" rel="noopener">$1 ↗</a>');
 
   // Headings
@@ -39,13 +85,13 @@ function mdToHtml(md: string): string {
   s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/`([^`]+)`/g, '<code class="em-code">$1</code>');
 
-  // Callouts (> emoji text)
+  // Callouts (> text)
   s = s.replace(/^>\s*(.+)$/gm, '<div class="em-callout">$1</div>');
 
   // HR
   s = s.replace(/^---+$/gm, '<hr class="em-hr"/>');
 
-  // Tables: accumulate pipe rows, skip separator rows
+  // Tables
   s = s.replace(/^(\|.+\|\n?)+/gm, tb => {
     const rows = tb.trim().split("\n")
       .filter(r => !/^\|[\s|:-]+\|$/.test(r));
@@ -62,7 +108,7 @@ function mdToHtml(md: string): string {
   s = s.replace(/^[-*]\s+(.+)$/gm, "<li>$1</li>");
   s = s.replace(/^\d+\.\s+(.+)$/gm, '<li class="li-ol">$1</li>');
   s = s.replace(/(<li>[\s\S]*?<\/li>\n?)+/g, m =>
-    m.includes('li-ol') ?
+    m.includes("li-ol") ?
       `<ol class="em-ol">${m.replace(/ class="li-ol"/g,"")}</ol>` :
       `<ul class="em-ul">${m}</ul>`);
 
@@ -72,30 +118,50 @@ function mdToHtml(md: string): string {
   return s;
 }
 
-export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClose: ()=>void }) {
+export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClose: () => void }) {
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Escape key, scroll lock, focus management
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", h);
+    const prev = document.activeElement as HTMLElement | null;
+    closeBtnRef.current?.focus();
     document.body.style.overflow = "hidden";
-    return () => { document.removeEventListener("keydown", h); document.body.style.overflow = ""; };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      prev?.focus();
+    };
   }, [onClose]);
 
   return (
-    <div onClick={onClose} style={{
-      position:"fixed", inset:0, zIndex:200,
-      background:"rgba(0,0,0,0.72)", backdropFilter:"blur(6px)",
-      display:"flex", alignItems:"center", justifyContent:"center",
-      padding:"clamp(12px,3vw,40px)", overflowY:"auto",
-    }}>
-      <div onClick={e=>e.stopPropagation()} style={{
-        background:"var(--bg)", border:"1px solid var(--rule2)",
-        width:"100%", maxWidth:"760px",
-        display:"flex", flexDirection:"column",
-        maxHeight:"min(90vh, 920px)",
-        animation:"fadeUp 0.2s ease both",
-        overflow:"hidden",
-      }}>
-        {/* Fixed header */}
+    <div
+      role="presentation"
+      onClick={onClose}
+      style={{
+        position:"fixed", inset:0, zIndex:200,
+        background:"rgba(0,0,0,0.72)", backdropFilter:"blur(6px)",
+        display:"flex", alignItems:"center", justifyContent:"center",
+        padding:"clamp(12px,3vw,40px)", overflowY:"auto",
+        animation:"fadeIn 0.18s ease",
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={exp.title}
+        onClick={e => e.stopPropagation()}
+        style={{
+          background:"var(--bg)", border:"1px solid var(--rule2)",
+          width:"100%", maxWidth:"760px",
+          display:"flex", flexDirection:"column",
+          maxHeight:"min(90vh, 920px)",
+          animation:"fadeUp 0.2s ease both",
+          overflow:"hidden",
+        }}
+      >
+        {/* Header */}
         <div style={{ display:"flex", alignItems:"stretch", borderBottom:"1px solid var(--rule)", flexShrink:0 }}>
           <div style={{ padding:"20px 24px", flex:1, minWidth:0 }}>
             <div style={{ fontFamily:MONO, fontSize:"10px", letterSpacing:"1px", textTransform:"uppercase", color:"var(--ink3)", marginBottom:"8px" }}>Experiment</div>
@@ -108,27 +174,47 @@ export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClos
               </div>
             )}
           </div>
-          <button onClick={onClose} aria-label="Close" className="em-close" style={{
-            background:"none", border:"none", borderLeft:"1px solid var(--rule)",
-            cursor:"pointer", color:"var(--ink3)", fontSize:"18px",
-            padding:"0 20px", flexShrink:0, fontFamily:MONO, transition:"color 0.2s",
-          }}>✕</button>
+          <button
+            ref={closeBtnRef}
+            onClick={onClose}
+            aria-label="Close"
+            className="em-close"
+            style={{
+              background:"none", border:"none", borderLeft:"1px solid var(--rule)",
+              cursor:"pointer", color:"var(--ink3)",
+              padding:"0 20px", flexShrink:0,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              transition:"color 0.2s",
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
 
         {/* Scrollable body */}
         <div className="em-scroll-body" style={{ overflowY:"auto", flex:1 }}>
+
+          {/* Cover image */}
           {exp.imageUrl && (
             <div style={{ width:"100%", aspectRatio:"16/9", overflow:"hidden", borderBottom:"1px solid var(--rule)", background:"var(--surface)", flexShrink:0 }}>
-              <img src={exp.imageUrl} alt={exp.title} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+              <img
+                src={exp.imageUrl}
+                alt={exp.title}
+                style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+              />
             </div>
           )}
 
+          {/* Description */}
           {exp.description && (
             <div style={{ padding:"20px 24px", borderBottom:"1px solid var(--rule)" }}>
               <p style={{ fontFamily:SANS, fontSize:"14px", fontWeight:300, lineHeight:1.8, color:"var(--ink2)", margin:0 }}>{exp.description}</p>
             </div>
           )}
 
+          {/* Notion page body — images, videos, embeds, prose */}
           {exp.content && (
             <div className="em-prose" style={{ padding:"20px 24px 12px" }}
               dangerouslySetInnerHTML={{ __html: mdToHtml(exp.content) }} />
@@ -161,17 +247,15 @@ export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClos
 
       <style>{`
         .em-close:hover { color: var(--ink) !important; }
-        /* Theme-aware CTA: red in light, teal in dark */
         :root, .light, [data-theme="light"] { --modal-cta: #D42B45; }
         .dark, [data-theme="dark"] { --modal-cta: #4DFFB4; }
         .modal-link-btn:hover { background: var(--modal-cta) !important; color: var(--bg) !important; }
 
-        /* Scrollbar — fades when idle, consistent with design language */
-        .em-scroll-body { scrollbar-width: thin; scrollbar-color: transparent transparent; transition: scrollbar-color 0.3s; }
+        .em-scroll-body { scrollbar-width: thin; scrollbar-color: transparent transparent; }
         .em-scroll-body:hover { scrollbar-color: var(--rule2) transparent; }
         .em-scroll-body::-webkit-scrollbar { width: 5px; }
         .em-scroll-body::-webkit-scrollbar-track { background: transparent; }
-        .em-scroll-body::-webkit-scrollbar-thumb { background: transparent; border-radius: 0; transition: background 0.3s; }
+        .em-scroll-body::-webkit-scrollbar-thumb { background: transparent; }
         .em-scroll-body:hover::-webkit-scrollbar-thumb { background: var(--rule2); }
 
         .em-prose p    { font-family:${SANS}; font-size:14px; font-weight:300; color:var(--ink2); line-height:1.8; margin:0 0 12px; }
@@ -189,7 +273,39 @@ export default function ExperimentModal({ exp, onClose }: { exp: ExpItem; onClos
         .em-hr  { border:none; border-top:1px solid var(--rule); margin:20px 0; }
         .em-ul,.em-ol { margin:4px 0 12px 18px; padding:0; }
         .em-ul li, .em-ol li { font-family:${SANS}; font-size:13px; font-weight:300; color:var(--ink2); margin-bottom:5px; line-height:1.6; }
-        .em-img { max-width:100%; height:auto; display:block; margin:16px 0; border:1px solid var(--rule); }
+
+        /* Images from Notion page body */
+        .em-img {
+          max-width: 100%; height: auto; display: block;
+          margin: 16px 0; border: 1px solid var(--rule);
+          object-fit: cover;
+        }
+
+        /* Video file element */
+        .em-video {
+          width: 100%; display: block; margin: 16px 0;
+          border: 1px solid var(--rule); background: #000;
+          max-height: 480px;
+        }
+        .em-video-fallback { padding: 8px; font-family: ${MONO}; font-size: 12px; }
+
+        /* Embed wrapper — YouTube, Vimeo, Loom, Figma */
+        .em-embed-wrap {
+          position: relative;
+          padding-bottom: 56.25%; /* 16:9 */
+          height: 0;
+          overflow: hidden;
+          margin: 16px 0;
+          border: 1px solid var(--rule);
+          background: var(--surface);
+        }
+        .em-embed-wrap iframe {
+          position: absolute;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          border: none;
+        }
+
         .em-callout { background:var(--surface); border-left:2px solid var(--rule2); padding:10px 14px; margin:12px 0; font-family:${SANS}; font-size:13px; color:var(--ink2); font-weight:300; line-height:1.6; }
         .em-tbl-wrap { overflow-x:auto; margin:14px 0; border:1px solid var(--rule); }
         .em-tbl { width:100%; border-collapse:collapse; min-width:260px; }

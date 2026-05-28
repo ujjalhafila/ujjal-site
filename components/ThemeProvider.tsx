@@ -51,7 +51,6 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(next.value)}
-      title={`Switch to ${next.label} mode`}
       data-tip={`Switch to ${next.label} mode`}
       className="nav-tip"
       aria-label={`Switch to ${next.label} mode`}

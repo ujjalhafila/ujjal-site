@@ -219,27 +219,27 @@ export default async function Home() {
                     flexDirection:"column",
                   } as React.CSSProperties}
                 >
-                  {/* Thumbnail */}
-                  {item.thumbnailUrl && (
-                    <div style={{
-                      width:"100%", aspectRatio:"16/9", overflow:"hidden",
-                      borderBottom:"1px solid var(--rule)", background:"var(--surface)",
-                    }}>
+                  {/* Thumbnail — always renders; object-fit:cover fills the zone */}
+                  <div style={{
+                    width:"100%", aspectRatio:"16/9", overflow:"hidden",
+                    borderBottom:"1px solid var(--rule)", background:"var(--surface)",
+                    position:"relative", flexShrink:0,
+                  }}>
+                    {item.thumbnailUrl ? (
                       <img
                         src={item.thumbnailUrl} alt={item.title}
                         className="thumb-img" loading="lazy"
+                        style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
                       />
-                    </div>
-                  )}
-                  {!item.thumbnailUrl && (
-                    <div style={{
-                      width:"100%", aspectRatio:"16/9",
-                      borderBottom:"1px solid var(--rule)", background:"var(--surface)",
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                    }}>
-                      <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)" }}>{item.title}</span>
-                    </div>
-                  )}
+                    ) : (
+                      <div style={{
+                        position:"absolute", inset:0,
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                      }}>
+                        <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)" }}>{item.title}</span>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Body */}
                   <div style={{ padding:"20px 20px 24px", display:"flex", flexDirection:"column", gap:"10px", flex:1 }}>

@@ -32,11 +32,13 @@ n2m.setCustomTransformer("video", async (block: any) => {
   const v = block?.video;
   const url = v?.file?.url ?? v?.external?.url ?? "";
   const cap = (v?.caption ?? []).map((t: any) => t.plain_text).join("") || "";
-  return url ? `![${cap}](${url})` : "";
+  // Use distinct marker so mdToHtml can render a <video> element or iframe
+  return url ? `[video:${cap}](${url})` : "";
 });
 n2m.setCustomTransformer("embed", async (block: any) => {
   const url = block?.embed?.url ?? "";
-  return url ? `[View embed ↗](${url})` : "";
+  // Use distinct marker so mdToHtml can render inline embed
+  return url ? `[embed:](${url})` : "";
 });
 n2m.setCustomTransformer("bookmark", async (block: any) => {
   const url = block?.bookmark?.url ?? "";
