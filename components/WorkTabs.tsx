@@ -36,42 +36,101 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
       if (!container) return;
 
       function attachTracker(el: Element) {
-        const h = el as HTMLElement;
-        if (h.dataset.glowAttached) return;
-        h.dataset.glowAttached = "1";
+        const card = el as HTMLElement;
+        if (card.dataset.blobAttached) return;
+        card.dataset.blobAttached = "1";
 
-        let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
-        let prevX = 0, prevY = 0, velX = 0, velY = 0;
-        let raf: number | null = null;
-        const lerp  = (a: number, b: number, t: number) => a + (b - a) * t;
-        const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+        const cvs = document.createElement("canvas");
+        cvs.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0;transition:opacity 0.35s ease;";
+        card.insertBefore(cvs, card.firstChild);
+        Array.from(card.children).forEach(ch => {
+          if (ch !== cvs) { (ch as HTMLElement).style.position = "relative"; (ch as HTMLElement).style.zIndex = "1"; }
+        });
 
-        function animate() {
-          currentX = lerp(currentX, targetX, 0.12);
-          currentY = lerp(currentY, targetY, 0.12);
-          const dx = currentX - prevX;
-          const dy = currentY - prevY;
-          velX = lerp(velX, clamp(dx * 0.05, -1, 1), 0.18);
-          velY = lerp(velY, clamp(dy * 0.05, -1, 1), 0.18);
-          prevX = currentX; prevY = currentY;
-          h.style.setProperty("--mx", currentX.toFixed(1) + "px");
-          h.style.setProperty("--my", currentY.toFixed(1) + "px");
-          h.style.setProperty("--vx", velX.toFixed(3));
-          h.style.setProperty("--vy", velY.toFixed(3));
-          const moving = Math.abs(targetX - currentX) > 0.4 || Math.abs(targetY - currentY) > 0.4
-                      || Math.abs(velX) > 0.002 || Math.abs(velY) > 0.002;
-          if (moving) { raf = requestAnimationFrame(animate); } else { raf = null; }
+        const N = 8;
+        const BASE_R = 140;
+        const phases  = Array.from({length: N}, (_: unknown, i: number) => i * (Math.PI * 2 / N) + Math.random() * 0.5);
+        const freqs   = Array.from({length: N}, () => 0.6 + Math.random() * 0.8);
+        const amps    = Array.from({length: N}, () => 18 + Math.random() * 22);
+
+        let cx = 0, cy = 0, tx = 0, ty = 0;
+        let velX = 0, velY = 0, prevX = 0, prevY = 0;
+        let opacity = 0, hovering = false, raf: number | null = null, t = 0;
+
+        function lerp(a: number, b: number, k: number) { return a + (b - a) * k; }
+        function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)); }
+
+        function getColor() {
+          return getComputedStyle(card).getPropertyValue("--gc").trim() || "rgba(240,237,230,0.18)";
         }
-        h.addEventListener("mousemove", (e: MouseEvent) => {
-          const r = h.getBoundingClientRect();
-          targetX = e.clientX - r.left;
-          targetY = e.clientY - r.top;
-          if (!raf) raf = requestAnimationFrame(animate);
+
+        function frame() {
+          t += 0.016;
+          cx = lerp(cx, tx, 0.1); cy = lerp(cy, ty, 0.1);
+          const dx = cx - prevX, dy = cy - prevY;
+          velX = lerp(velX, clamp(dx * 0.06, -1, 1), 0.18);
+          velY = lerp(velY, clamp(dy * 0.06, -1, 1), 0.18);
+          prevX = cx; prevY = cy;
+          opacity = lerp(opacity, hovering ? 1 : 0, 0.08);
+          cvs.style.opacity = opacity.toFixed(3);
+
+          const w = cvs.offsetWidth, h = cvs.offsetHeight;
+          if (w > 0 && h > 0) {
+            const dpr = window.devicePixelRatio || 1;
+            if (cvs.width !== Math.round(w * dpr) || cvs.height !== Math.round(h * dpr)) {
+              cvs.width = Math.round(w * dpr); cvs.height = Math.round(h * dpr);
+            }
+            const ctx = cvs.getContext("2d");
+            if (ctx) {
+              ctx.clearRect(0, 0, cvs.width, cvs.height);
+              ctx.save(); ctx.scale(dpr, dpr);
+              const speed = Math.sqrt(velX * velX + velY * velY);
+              const velAngle = Math.atan2(velY, velX);
+              const deform = clamp(speed * 60, 0, 55);
+              const pts: [number, number][] = [];
+              for (let i = 0; i < N; i++) {
+                const angle = (i / N) * Math.PI * 2;
+                const osc = Math.sin(t * freqs[i] + phases[i]) * amps[i];
+                const r = BASE_R + osc + Math.cos(angle - velAngle) * deform;
+                pts.push([cx + Math.cos(angle) * r, cy + Math.sin(angle) * r]);
+              }
+              ctx.beginPath();
+              for (let i = 0; i < N; i++) {
+                const p0 = pts[(i - 1 + N) % N], p1 = pts[i];
+                const p2 = pts[(i + 1) % N], p3 = pts[(i + 2) % N];
+                const cp1x = p1[0] + (p2[0] - p0[0]) / 6, cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+                const cp2x = p2[0] - (p3[0] - p1[0]) / 6, cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+                if (i === 0) ctx.moveTo(p1[0], p1[1]);
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1]);
+              }
+              ctx.closePath();
+              const gc = getColor();
+              const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, BASE_R + 60);
+              grad.addColorStop(0, gc.startsWith("rgba") || gc.startsWith("rgb") || gc.startsWith("#")
+                ? gc.replace(/[\d.]+\)$/, "0.22)") : "rgba(240,237,230,0.22)");
+              grad.addColorStop(1, "rgba(0,0,0,0)");
+              ctx.fillStyle = grad; ctx.fill(); ctx.restore();
+            }
+          }
+
+          const still = Math.abs(tx - cx) < 0.4 && Math.abs(ty - cy) < 0.4
+                     && Math.abs(velX) < 0.002 && Math.abs(velY) < 0.002
+                     && Math.abs(opacity - (hovering ? 1 : 0)) < 0.004 && !hovering;
+          if (!still) { raf = requestAnimationFrame(frame); } else { raf = null; }
+        }
+
+        function startRaf() { if (!raf) raf = requestAnimationFrame(frame); }
+        card.addEventListener("mouseenter", (e: MouseEvent) => {
+          hovering = true;
+          const r = card.getBoundingClientRect();
+          tx = e.clientX - r.left; ty = e.clientY - r.top;
+          cx = tx; cy = ty; startRaf();
         });
-        h.addEventListener("mouseleave", () => {
-          velX = 0; velY = 0;
-          if (raf) { cancelAnimationFrame(raf); raf = null; }
+        card.addEventListener("mousemove", (e: MouseEvent) => {
+          const r = card.getBoundingClientRect();
+          tx = e.clientX - r.left; ty = e.clientY - r.top; startRaf();
         });
+        card.addEventListener("mouseleave", () => { hovering = false; velX = 0; velY = 0; startRaf(); });
       }
 
       container.querySelectorAll(".glow-card").forEach(attachTracker);
@@ -157,7 +216,7 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
                           <span key={t} style={{ fontFamily:MONO, fontSize:"10px", padding:"3px 9px", border:"1px solid var(--rule)", color:"var(--ink3)", borderRadius:"1px" }}>{t}</span>
                         ))}
                       </div>
-                      <span className="view-cs-link" style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"4px" }}>
+                      <span className="view-cs-link" style={{ fontFamily:MONO, fontSize:"11px", marginTop:"4px" }}>
                         View case study
                       </span>
                     </div>

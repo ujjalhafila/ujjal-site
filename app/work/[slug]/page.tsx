@@ -80,9 +80,6 @@ export default async function WorkDetail({ params }: { params: { slug: string } 
         {/* Gallery */}
         {(item.thumbnailUrl || item.videoDemo) && (
           <div style={{ maxWidth:"900px", margin:"0 auto", padding:"2.5rem 2rem 0" }}>
-            <div style={{ fontFamily:S.mono, fontSize:"10px", letterSpacing:"0.12em", textTransform:"uppercase", color:"var(--ink3)", marginBottom:"0.75rem" }}>
-              Preview — click to expand
-            </div>
             <WorkGallery thumbnailUrl={item.thumbnailUrl} videoDemo={item.videoDemo} title={item.title} />
           </div>
         )}

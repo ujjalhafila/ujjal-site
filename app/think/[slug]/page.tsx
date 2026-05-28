@@ -40,8 +40,15 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
       <Nav />
       <div style={{ paddingTop:"52px", animation:"fadeUp 0.5s ease" }}>
 
+        {/* Sticky reading title — appears as header scrolls away */}
+        <div className="think-sticky-title" aria-hidden="true">
+          <span style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.08em", color:"var(--ink3)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", maxWidth:"60vw" }}>
+            {item.title}
+          </span>
+        </div>
+
         {/* Header */}
-        <div style={{ borderBottom:"1px solid var(--border)",padding:"3rem 2rem 2.5rem" }}>
+        <div className="think-main-header" style={{ borderBottom:"1px solid var(--border)",padding:"3rem 2rem 2.5rem" }}>
           <div style={{ maxWidth:"760px",margin:"0 auto" }}>
             <Link href="/think" style={{ fontFamily:S.mono,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:"0.4rem",marginBottom:"2rem" }} className="sec-link-hover">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
@@ -138,12 +145,39 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
           max-width: 760px;
           margin: 2.5rem auto 5rem;
         }
+
+        /* Sticky title strip — fixed below nav, hidden until header scrolls away */
+        .think-sticky-title {
+          position: fixed;
+          top: 52px; left: 0; right: 0;
+          z-index: 80;
+          height: 36px;
+          background: var(--nav-bg);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-bottom: 1px solid var(--rule);
+          display: flex;
+          align-items: center;
+          padding: 0 2rem;
+          opacity: 0;
+          transform: translateY(-4px);
+          transition: opacity 0.2s ease, transform 0.2s ease;
+          pointer-events: none;
+        }
+        .think-sticky-title.visible {
+          opacity: 1;
+          transform: translateY(0);
+          pointer-events: auto;
+        }
+        /* Push content down to account for sticky strip when visible */
+        .think-body-outer { padding-top: 0; }
+
         /* Mobile TOC pills — only visible on small screens */
         .think-toc-mobile { display: none; }
         @media (max-width: 900px) {
           .think-toc-mobile {
             display: block;
-            position: sticky; top: 52px; z-index: 50;
+            position: sticky; top: 88px; z-index: 50;
             background: var(--nav-bg); backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--rule);
             margin: 0 -2rem;
@@ -156,6 +190,21 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
         }
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
       `}</style>
+
+      {/* JS: show sticky title once the main header scrolls out of view */}
+      <script dangerouslySetInnerHTML={{ __html: `
+        (function(){
+          var header = document.querySelector('.think-main-header');
+          var sticky = document.querySelector('.think-sticky-title');
+          if (!header || !sticky) return;
+          var obs = new IntersectionObserver(function(entries){
+            entries.forEach(function(e){
+              sticky.classList.toggle('visible', !e.isIntersecting);
+            });
+          }, { threshold: 0, rootMargin: '-52px 0px 0px 0px' });
+          obs.observe(header);
+        })();
+      `}} />
 
       <Footer />
     </main>

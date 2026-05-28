@@ -107,38 +107,13 @@ blockquote { font-weight: 400; }
 .nav-link:hover::after { transform: scaleX(1); }
 
 /* ─── GLOW CARD ────────────────────────────────────────────────────────────
-   Organic ellipse glow — shape stretches along cursor velocity direction.
-   JS writes --mx / --my (lerped position) and --vx / --vy (velocity -1…1).
-   CSS uses them to deform the ellipse radii and offset the centre.
+   Blob glow is drawn by GlowProvider on a canvas injected as firstChild.
+   ::after = thin colour top-line that sweeps in on hover.
 ─────────────────────────────────────────────────────────────────────────── */
 .glow-card {
   position: relative; overflow: hidden; cursor: pointer;
   transition: background 0.35s; text-decoration: none; color: var(--ink); display: block;
 }
-.glow-card::before {
-  content: ''; position: absolute; pointer-events: none;
-  /*
-    Ellipse: base size 340px × 260px.
-    --vx stretches width (+80px at full speed), --vy stretches height.
-    calc() cannot do multiplication of two vars directly, so we use
-    a fixed step: each unit of velocity adds ~80px in the leading axis.
-    The centre is also nudged 20px in the velocity direction for organic feel.
-  */
-  width:  calc(340px + clamp(-80px, calc(var(--vx, 0) * 80px), 80px));
-  height: calc(260px + clamp(-60px, calc(var(--vy, 0) * 60px), 60px));
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse at center,
-    var(--gc, rgba(240,237,230,0.0)) 0%,
-    transparent 70%
-  );
-  left: calc(var(--mx, 50%) + clamp(-20px, calc(var(--vx, 0) * 20px), 20px));
-  top:  calc(var(--my, 50%) + clamp(-20px, calc(var(--vy, 0) * 20px), 20px));
-  transform: translate(-50%, -50%);
-  opacity: 0; transition: opacity 0.35s ease; z-index: 0;
-  will-change: width, height, left, top;
-}
-.glow-card:hover::before { opacity: 1; }
 .glow-card::after {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
   background: var(--gc-line, transparent);
@@ -146,7 +121,6 @@ blockquote { font-weight: 400; }
   transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); z-index: 1;
 }
 .glow-card:hover::after { transform: scaleX(1); }
-.glow-card > * { position: relative; z-index: 2; }
 .glow-card:hover .gc-title { color: var(--gc-text, var(--ink)); }
 .glow-card:hover .gc-arr   { color: var(--gc-text, var(--ink)); transform: translate(3px,-3px); }
 .glow-card:active { transform: scale(0.99); transition-duration: 0.07s; }
