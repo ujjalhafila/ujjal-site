@@ -135,9 +135,9 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
                     } as React.CSSProperties}
                   >
                     {item.thumbnailUrl && (
-                      <div style={{ width:"100%", aspectRatio:"16/9", overflow:"hidden", borderBottom:"1px solid var(--rule)", background:"var(--surface)", position:"relative", flexShrink:0 }}>
+                      <div style={{ width:"100%", aspectRatio:"16/9", overflow:"hidden", borderBottom:"1px solid var(--rule)", background:"var(--surface)", position:"relative", flexShrink:0, padding:"8px" }}>
                         <img src={item.thumbnailUrl} alt={item.title} className="thumb-img" loading="lazy"
-                          style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} />
+                          style={{ position:"absolute", inset:"8px", width:"calc(100% - 16px)", height:"calc(100% - 16px)", objectFit:"cover" }} />
                       </div>
                     )}
                     <div style={{ padding:"24px 28px 32px", flex:1, display:"flex", flexDirection:"column", gap:"10px" }}>
@@ -201,13 +201,14 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
                         ["--gc" as string]:g.gc, ["--gc-line" as string]:g.gcLine, ["--gc-text" as string]:g.gcText,
                       } as React.CSSProperties}
                     >
-                      {/* Image */}
-                      <div style={{ width:"100%", aspectRatio:"4/3", overflow:"hidden", borderBottom:"1px solid var(--rule)", background:"var(--surface)", flexShrink:0, position:"relative" }}>
+                      {/* Image — padded frame, thumb-img class enables hover scale */}
+                      <div style={{ width:"100%", aspectRatio:"4/3", overflow:"hidden", borderBottom:"1px solid var(--rule)", background:"var(--surface)", flexShrink:0, position:"relative", padding:"8px" }}>
                         {exp.imageUrl ? (
                           <img src={exp.imageUrl} alt={exp.title} loading="lazy"
-                            style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                            className="thumb-img"
+                            style={{ position:"absolute", inset:"8px", width:"calc(100% - 16px)", height:"calc(100% - 16px)", objectFit:"cover", display:"block" }} />
                         ) : (
-                          <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                          <div style={{ position:"absolute", inset:"8px", display:"flex", alignItems:"center", justifyContent:"center" }}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--rule2)" strokeWidth="1">
                               <rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
                             </svg>

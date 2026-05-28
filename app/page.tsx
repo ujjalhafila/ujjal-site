@@ -219,21 +219,21 @@ export default async function Home() {
                     flexDirection:"column",
                   } as React.CSSProperties}
                 >
-                  {/* Thumbnail — always renders; object-fit:cover fills the zone */}
+                  {/* Thumbnail — padded frame, 8px gap around image */}
                   <div style={{
-                    width:"100%", aspectRatio:"16/9", overflow:"hidden",
+                    width:"100%", aspectRatio:"16/9",
                     borderBottom:"1px solid var(--rule)", background:"var(--surface)",
-                    position:"relative", flexShrink:0,
+                    position:"relative", flexShrink:0, padding:"8px", overflow:"hidden",
                   }}>
                     {item.thumbnailUrl ? (
                       <img
                         src={item.thumbnailUrl} alt={item.title}
                         className="thumb-img" loading="lazy"
-                        style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
+                        style={{ position:"absolute", inset:"8px", width:"calc(100% - 16px)", height:"calc(100% - 16px)", objectFit:"cover" }}
                       />
                     ) : (
                       <div style={{
-                        position:"absolute", inset:0,
+                        position:"absolute", inset:"8px",
                         display:"flex", alignItems:"center", justifyContent:"center",
                       }}>
                         <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)" }}>{item.title}</span>
@@ -311,7 +311,7 @@ export default async function Home() {
       <section style={{ borderBottom:"1px solid var(--rule)" }} aria-label="Contact and connect">
         <div style={{
           display:"flex", justifyContent:"space-between", alignItems:"center",
-          padding:"0 28px", height:"40px", borderBottom:"1px solid var(--rule)",
+          padding:"0 20px", height:"34px", borderBottom:"1px solid var(--rule)",
         }}>
           <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", letterSpacing:"1.5px" }}>
             Let's connect
@@ -326,8 +326,8 @@ export default async function Home() {
             rel="noopener"
             className="glow-row reveal"
             style={{
-              display:"grid", gridTemplateColumns:"40px 1fr auto",
-              alignItems:"center", height:"58px", paddingRight:"28px",
+              display:"grid", gridTemplateColumns:"36px 1fr auto",
+              alignItems:"center", height:"46px", paddingRight:"20px",
               borderBottom: i < CONNECT_LINKS.length - 1 ? "1px solid var(--rule)" : "none",
               ["--gc" as string]: link.gc,
               ["--gc-text" as string]: link.gcText,
@@ -341,8 +341,8 @@ export default async function Home() {
             }}>
               <link.Icon />
             </div>
-            <div style={{ padding:"0 24px" }}>
-              <div style={{ fontFamily:MONO, fontSize:"12px", color:"var(--ink2)", marginTop:"0" }} className="gc-title">
+            <div style={{ padding:"0 16px" }}>
+              <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink2)" }} className="gc-title">
                 {link.sub}
               </div>
             </div>
