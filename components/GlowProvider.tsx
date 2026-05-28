@@ -28,11 +28,11 @@ export default function GlowProvider() {
       });
 
       const N = 8; // blob control points
-      const BASE_R = 140; // base blob radius px
-      // Each point gets its own oscillation parameters
-      const phases  = Array.from({length: N}, (_, i) => i * (Math.PI * 2 / N) + Math.random() * 0.5);
-      const freqs   = Array.from({length: N}, () => 0.6 + Math.random() * 0.8);
-      const amps    = Array.from({length: N}, () => 18 + Math.random() * 22);
+      const BASE_R = 150; // slightly larger base radius
+      // Higher frequencies and amplitudes for more animated breathing
+      const phases  = Array.from({length: N}, (_, i) => i * (Math.PI * 2 / N) + Math.random() * 0.8);
+      const freqs   = Array.from({length: N}, () => 1.2 + Math.random() * 1.6);   // was 0.6–1.4
+      const amps    = Array.from({length: N}, () => 28 + Math.random() * 32);     // was 18–22
 
       let cx = 0, cy = 0;          // current lerped cursor position
       let tx = 0, ty = 0;          // target cursor position
@@ -41,7 +41,7 @@ export default function GlowProvider() {
       let opacity = 0;             // current canvas opacity (lerped)
       let hovering = false;
       let raf: number | null = null;
-      let t = 0;                   // time counter for oscillation
+      let lastTime = 0;            // real-time delta tracking
 
       function lerp(a: number, b: number, k: number) { return a + (b - a) * k; }
       function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)); }
@@ -50,7 +50,7 @@ export default function GlowProvider() {
         return getComputedStyle(card).getPropertyValue("--gc").trim() || "rgba(240,237,230,0.18)";
       }
 
-      function drawBlob() {
+      function drawBlob(t: number) {
         const w = cvs.offsetWidth;
         const h = cvs.offsetHeight;
         if (w === 0 || h === 0) return;
@@ -71,7 +71,7 @@ export default function GlowProvider() {
         // Blob radius per point — oscillating + velocity deformation
         const speed = Math.sqrt(velX * velX + velY * velY);
         const velAngle = Math.atan2(velY, velX);
-        const deform = clamp(speed * 60, 0, 55); // stretch amount
+        const deform = clamp(speed * 90, 0, 80); // stronger stretch than before
 
         const pts: [number, number][] = [];
         for (let i = 0; i < N; i++) {
@@ -91,7 +91,6 @@ export default function GlowProvider() {
           const p1 = pts[i];
           const p2 = pts[(i + 1) % N];
           const p3 = pts[(i + 2) % N];
-          // Catmull-Rom tension = 0.5
           const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
           const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
           const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
@@ -103,11 +102,12 @@ export default function GlowProvider() {
 
         // Radial gradient fill centred at cursor
         const gc = getColor();
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, BASE_R + 60);
-        // Parse gc as rgba — use a fallback if it's a CSS var
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, BASE_R + 70);
         grad.addColorStop(0, gc.startsWith("rgba") || gc.startsWith("rgb") || gc.startsWith("#")
-          ? gc.replace(/[\d.]+\)$/, "0.22)")  // force opacity to 0.22 at centre
-          : "rgba(240,237,230,0.22)");
+          ? gc.replace(/[\d.]+\)$/, "0.28)")  // richer centre opacity
+          : "rgba(240,237,230,0.28)");
+        grad.addColorStop(0.5, gc.startsWith("rgba") || gc.startsWith("rgb") || gc.startsWith("#")
+          ? gc.replace(/[\d.]+\)$/, "0.12)") : "rgba(240,237,230,0.12)");
         grad.addColorStop(1, "rgba(0,0,0,0)");
 
         ctx.fillStyle = grad;
@@ -115,36 +115,39 @@ export default function GlowProvider() {
         ctx.restore();
       }
 
-      function frame() {
-        t += 0.016; // ~60fps time step
+      function frame(now: number) {
+        const dt = lastTime === 0 ? 0.016 : Math.min((now - lastTime) / 1000, 0.05);
+        lastTime = now;
+        const t = now / 1000; // real seconds for oscillation
 
-        // Lerp cursor position
-        cx = lerp(cx, tx, 0.1);
-        cy = lerp(cy, ty, 0.1);
+        // Faster cursor lerp — 0.22 per frame (was 0.1)
+        cx = lerp(cx, tx, 0.22);
+        cy = lerp(cy, ty, 0.22);
 
-        // Velocity
-        const dx = cx - prevX, dy = cy - prevY;
-        velX = lerp(velX, clamp(dx * 0.06, -1, 1), 0.18);
-        velY = lerp(velY, clamp(dy * 0.06, -1, 1), 0.18);
+        // Velocity from delta — normalised to dt
+        const dx = (cx - prevX) / Math.max(dt, 0.008);
+        const dy = (cy - prevY) / Math.max(dt, 0.008);
+        velX = lerp(velX, clamp(dx * 0.004, -1, 1), 0.25);
+        velY = lerp(velY, clamp(dy * 0.004, -1, 1), 0.25);
         prevX = cx; prevY = cy;
 
-        // Opacity lerp
+        // Faster opacity fade (0.14 was 0.08)
         const targetOpacity = hovering ? 1 : 0;
-        opacity = lerp(opacity, targetOpacity, 0.08);
+        opacity = lerp(opacity, targetOpacity, 0.14);
         cvs.style.opacity = opacity.toFixed(3);
 
-        drawBlob();
+        drawBlob(t);
 
-        // Keep running while visible or fading
-        const moving = Math.abs(tx - cx) > 0.4 || Math.abs(ty - cy) > 0.4
-                    || Math.abs(velX) > 0.002 || Math.abs(velY) > 0.002
-                    || Math.abs(opacity - targetOpacity) > 0.004
-                    || hovering; // always animate while hovering (breathing)
+        // Keep running while visible or fading or hovering (for breathing)
+        const moving = Math.abs(tx - cx) > 0.3 || Math.abs(ty - cy) > 0.3
+                    || Math.abs(velX) > 0.001 || Math.abs(velY) > 0.001
+                    || Math.abs(opacity - targetOpacity) > 0.003
+                    || hovering;
         if (moving) { raf = requestAnimationFrame(frame); }
         else { raf = null; }
       }
 
-      function startRaf() { if (!raf) raf = requestAnimationFrame(frame); }
+      function startRaf() { if (!raf) { lastTime = 0; raf = requestAnimationFrame(frame); } }
 
       card.addEventListener("mouseenter", (e) => {
         hovering = true;

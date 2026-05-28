@@ -48,14 +48,14 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
         });
 
         const N = 8;
-        const BASE_R = 140;
-        const phases  = Array.from({length: N}, (_: unknown, i: number) => i * (Math.PI * 2 / N) + Math.random() * 0.5);
-        const freqs   = Array.from({length: N}, () => 0.6 + Math.random() * 0.8);
-        const amps    = Array.from({length: N}, () => 18 + Math.random() * 22);
+        const BASE_R = 150;
+        const phases  = Array.from({length: N}, (_: unknown, i: number) => i * (Math.PI * 2 / N) + Math.random() * 0.8);
+        const freqs   = Array.from({length: N}, () => 1.2 + Math.random() * 1.6);
+        const amps    = Array.from({length: N}, () => 28 + Math.random() * 32);
 
         let cx = 0, cy = 0, tx = 0, ty = 0;
         let velX = 0, velY = 0, prevX = 0, prevY = 0;
-        let opacity = 0, hovering = false, raf: number | null = null, t = 0;
+        let opacity = 0, hovering = false, raf: number | null = null, lastTime = 0;
 
         function lerp(a: number, b: number, k: number) { return a + (b - a) * k; }
         function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)); }
@@ -64,14 +64,16 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
           return getComputedStyle(card).getPropertyValue("--gc").trim() || "rgba(240,237,230,0.18)";
         }
 
-        function frame() {
-          t += 0.016;
-          cx = lerp(cx, tx, 0.1); cy = lerp(cy, ty, 0.1);
-          const dx = cx - prevX, dy = cy - prevY;
-          velX = lerp(velX, clamp(dx * 0.06, -1, 1), 0.18);
-          velY = lerp(velY, clamp(dy * 0.06, -1, 1), 0.18);
+        function frame(now: number) {
+          const dt = lastTime === 0 ? 0.016 : Math.min((now - lastTime) / 1000, 0.05);
+          lastTime = now;
+          const t = now / 1000;
+          cx = lerp(cx, tx, 0.22); cy = lerp(cy, ty, 0.22);
+          const dx = (cx - prevX) / Math.max(dt, 0.008), dy = (cy - prevY) / Math.max(dt, 0.008);
+          velX = lerp(velX, clamp(dx * 0.004, -1, 1), 0.25);
+          velY = lerp(velY, clamp(dy * 0.004, -1, 1), 0.25);
           prevX = cx; prevY = cy;
-          opacity = lerp(opacity, hovering ? 1 : 0, 0.08);
+          opacity = lerp(opacity, hovering ? 1 : 0, 0.14);
           cvs.style.opacity = opacity.toFixed(3);
 
           const w = cvs.offsetWidth, h = cvs.offsetHeight;
@@ -86,7 +88,7 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
               ctx.save(); ctx.scale(dpr, dpr);
               const speed = Math.sqrt(velX * velX + velY * velY);
               const velAngle = Math.atan2(velY, velX);
-              const deform = clamp(speed * 60, 0, 55);
+              const deform = clamp(speed * 90, 0, 80);
               const pts: [number, number][] = [];
               for (let i = 0; i < N; i++) {
                 const angle = (i / N) * Math.PI * 2;
@@ -105,21 +107,23 @@ export default function WorkTabs({ workItems, experiments }: { workItems:WorkIte
               }
               ctx.closePath();
               const gc = getColor();
-              const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, BASE_R + 60);
+              const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, BASE_R + 70);
               grad.addColorStop(0, gc.startsWith("rgba") || gc.startsWith("rgb") || gc.startsWith("#")
-                ? gc.replace(/[\d.]+\)$/, "0.22)") : "rgba(240,237,230,0.22)");
+                ? gc.replace(/[\d.]+\)$/, "0.28)") : "rgba(240,237,230,0.28)");
+              grad.addColorStop(0.5, gc.startsWith("rgba") || gc.startsWith("rgb") || gc.startsWith("#")
+                ? gc.replace(/[\d.]+\)$/, "0.12)") : "rgba(240,237,230,0.12)");
               grad.addColorStop(1, "rgba(0,0,0,0)");
               ctx.fillStyle = grad; ctx.fill(); ctx.restore();
             }
           }
 
-          const still = Math.abs(tx - cx) < 0.4 && Math.abs(ty - cy) < 0.4
-                     && Math.abs(velX) < 0.002 && Math.abs(velY) < 0.002
-                     && Math.abs(opacity - (hovering ? 1 : 0)) < 0.004 && !hovering;
+          const still = Math.abs(tx - cx) < 0.3 && Math.abs(ty - cy) < 0.3
+                     && Math.abs(velX) < 0.001 && Math.abs(velY) < 0.001
+                     && Math.abs(opacity - (hovering ? 1 : 0)) < 0.003 && !hovering;
           if (!still) { raf = requestAnimationFrame(frame); } else { raf = null; }
         }
 
-        function startRaf() { if (!raf) raf = requestAnimationFrame(frame); }
+        function startRaf() { if (!raf) { lastTime = 0; raf = requestAnimationFrame(frame); } }
         card.addEventListener("mouseenter", (e: MouseEvent) => {
           hovering = true;
           const r = card.getBoundingClientRect();

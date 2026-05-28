@@ -4,7 +4,7 @@ import Footer from "../../../components/Footer";
 import Comments from "../../../components/Comments";
 import ShareBar from "../../../components/ShareBar";
 import ProseContent from "../../../components/ProseContent";
-import TableOfContents from "../../../components/TableOfContents";
+import ThinkHeader from "../../../components/ThinkHeader";
 import { getThinkItem, getThinkItems } from "../../../lib/notion";
 import { markdownToHtml } from "../../../lib/markdown";
 import { notFound } from "next/navigation";
@@ -40,39 +40,16 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
       <Nav />
       <div style={{ paddingTop:"52px", animation:"fadeUp 0.5s ease" }}>
 
-        {/* Sticky reading title — appears as header scrolls away */}
-        <div className="think-sticky-title" aria-hidden="true">
-          <span style={{ fontFamily:S.mono, fontSize:"11px", letterSpacing:"0.08em", color:"var(--ink3)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", maxWidth:"60vw" }}>
-            {item.title}
-          </span>
-        </div>
-
-        {/* Header */}
-        <div className="think-main-header" style={{ borderBottom:"1px solid var(--border)",padding:"3rem 2rem 2.5rem" }}>
-          <div style={{ maxWidth:"760px",margin:"0 auto" }}>
-            <Link href="/think" style={{ fontFamily:S.mono,fontSize:"11px",letterSpacing:"0.1em",textTransform:"uppercase",textDecoration:"none",display:"inline-flex",alignItems:"center",gap:"0.4rem",marginBottom:"2rem" }} className="sec-link-hover">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-              Think Space
-            </Link>
-            <div style={{ display:"flex",alignItems:"center",gap:"0.75rem",marginBottom:"1.5rem",flexWrap:"wrap" }}>
-              <span style={{ fontFamily:S.mono,fontSize:"10px",letterSpacing:"0.12em",textTransform:"uppercase",color,border:`1px solid ${color}`,padding:"0.2rem 0.75rem" }}>{item.type}</span>
-              {item.tags.map(t=>(<span key={t} style={{ fontFamily:S.mono,fontSize:"10px",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--muted)",border:"1px solid var(--border)",padding:"0.2rem 0.6rem" }}>{t}</span>))}
-              <span style={{ fontFamily:S.mono,fontSize:"11px",color:"var(--muted)" }}>
-                {item.readTime}{item.publishedOn && ` · ${new Date(item.publishedOn).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}`}
-              </span>
-            </div>
-            <h1 style={{ fontFamily:S.sans,fontSize:"clamp(2rem,5vw,3.5rem)",fontWeight:400,lineHeight:1.05,letterSpacing:"-0.03em",marginBottom:"1.5rem" }}>
-              {item.title}
-            </h1>
-            {item.whyQuestion && (
-              <div style={{ borderLeft:`3px solid ${color}`,paddingLeft:"1.5rem" }}>
-                <p style={{ fontFamily:S.sans,fontStyle:"italic",fontSize:"1.2rem",lineHeight:1.65,color:"var(--ink)" }}>
-                  "{item.whyQuestion}"
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Header — client component owns ref + sticky-title logic */}
+        <ThinkHeader
+          title={item.title}
+          type={item.type}
+          typeColor={color}
+          tags={item.tags}
+          readTime={item.readTime}
+          publishedOn={item.publishedOn}
+          whyQuestion={item.whyQuestion}
+        />
 
         {/* Cover image */}
         {item.coverUrl && (
@@ -92,7 +69,6 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
               <a href={item.experimentUrl} target="_blank" rel="noopener" style={{ fontFamily:S.mono,fontSize:"11px",color:"var(--muted)",textDecoration:"none" }}>Open standalone ↗</a>
             </div>
             <iframe src={item.experimentUrl} style={{ width:"100%",height:"600px",border:"none",display:"block" }} title={item.title} />
-            <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
           </div>
         )}
 
@@ -112,14 +88,8 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
           </div>
         )}
 
-        {/* Body */}
+        {/* Body — centred reading column, no TOC */}
         <div className="think-body-outer">
-          {/* Mobile TOC pills */}
-          <div className="think-toc-mobile">
-            {html && <TableOfContents html={html} />}
-          </div>
-
-          {/* Centred reading column */}
           <div className="think-body-inner">
             <ShareBar title={item.title} slug={item.slug} />
             {html ? (
@@ -135,76 +105,11 @@ export default async function ThinkDetail({ params }: { params: { slug: string }
       </div>
 
       <style>{`
-        /* Outer wrapper: full-width, provides horizontal padding */
-        .think-body-outer {
-          width: 100%;
-          padding: 0 2rem;
-        }
-        /* Centred reading column — wider for comfortable reading */
-        .think-body-inner {
-          max-width: 760px;
-          margin: 2.5rem auto 5rem;
-        }
-
-        /* Sticky title strip — fixed below nav, hidden until header scrolls away */
-        .think-sticky-title {
-          position: fixed;
-          top: 52px; left: 0; right: 0;
-          z-index: 80;
-          height: 36px;
-          background: var(--nav-bg);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border-bottom: 1px solid var(--rule);
-          display: flex;
-          align-items: center;
-          padding: 0 2rem;
-          opacity: 0;
-          transform: translateY(-4px);
-          transition: opacity 0.2s ease, transform 0.2s ease;
-          pointer-events: none;
-        }
-        .think-sticky-title.visible {
-          opacity: 1;
-          transform: translateY(0);
-          pointer-events: auto;
-        }
-        /* Push content down to account for sticky strip when visible */
-        .think-body-outer { padding-top: 0; }
-
-        /* Mobile TOC pills — only visible on small screens */
-        .think-toc-mobile { display: none; }
-        @media (max-width: 900px) {
-          .think-toc-mobile {
-            display: block;
-            position: sticky; top: 88px; z-index: 50;
-            background: var(--nav-bg); backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--rule);
-            margin: 0 -2rem;
-          }
-          .think-toc-mobile .toc-sidebar { display: none !important; }
-          .think-toc-mobile .toc-pills   { display: block !important; border-bottom: none; }
-        }
-        @media (max-width: 600px) {
-          .think-body-outer { padding: 0 1.25rem; }
-        }
+        .think-body-outer { width:100%; padding:0 2rem; }
+        .think-body-inner { max-width:760px; margin:2.5rem auto 5rem; }
+        @media (max-width:600px) { .think-body-outer { padding:0 1.25rem; } }
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
       `}</style>
-
-      {/* JS: show sticky title once the main header scrolls out of view */}
-      <script dangerouslySetInnerHTML={{ __html: `
-        (function(){
-          var header = document.querySelector('.think-main-header');
-          var sticky = document.querySelector('.think-sticky-title');
-          if (!header || !sticky) return;
-          var obs = new IntersectionObserver(function(entries){
-            entries.forEach(function(e){
-              sticky.classList.toggle('visible', !e.isIntersecting);
-            });
-          }, { threshold: 0, rootMargin: '-52px 0px 0px 0px' });
-          obs.observe(header);
-        })();
-      `}} />
 
       <Footer />
     </main>
