@@ -197,7 +197,7 @@ export default function Nav() {
         .nav-link:hover .nav-tip-label {
           opacity: 1;
           transform: translateX(-50%) translateY(0);
-          transition-delay: 0.5s;
+          transition-delay: 1.2s;
         }
 
         /* ── Pseudo tooltip for icon-only nav items ────────────────────────
@@ -244,7 +244,7 @@ export default function Nav() {
         .nav-tip:not(.nav-link):hover::before {
           opacity: 1;
           transform: translateX(-50%) translateY(0);
-          transition-delay: 0.5s;
+          transition-delay: 1.2s;
         }
 
         /* Home icon — left-anchored, tooltip opens right */
