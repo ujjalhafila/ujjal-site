@@ -8,167 +8,181 @@ const QUOTE_COLOURS = ["--c-teal", "--c-blue", "--c-red", "--c-purple"];
 
 interface Quote { text: string; attr: string; }
 
-function resolveColour(varName: string, el: HTMLElement): [number,number,number] {
-  const raw = getComputedStyle(el).getPropertyValue(varName).trim() || "#4DFFB4";
+// ── Colour helpers ─────────────────────────────────────────────────────────
+function resolveRgb(varName: string, el: HTMLElement): [number,number,number] {
+  const raw = getComputedStyle(el).getPropertyValue(varName).trim();
   if (raw.startsWith("rgb")) {
     const m = raw.match(/[\d.]+/g);
-    if (m) return [+m[0], +m[1], +m[2]];
+    if (m && m.length >= 3) return [+m[0], +m[1], +m[2]];
   }
   if (raw.startsWith("#")) {
-    const c = raw.replace("#", "");
-    const h = c.length === 3 ? c.split("").map(x => x+x).join("") : c;
+    const c = raw.replace("#","");
+    const h = c.length===3 ? c.split("").map(x=>x+x).join("") : c;
     return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
   }
-  return [77, 255, 180];
+  return [77,255,180];
 }
 
-// ── Gradient mesh blob ────────────────────────────────────────────────────
-// Each blob drifts on its own path using independent sine waves.
-// They overlap and blend — where two blobs meet you see mixed colours.
-interface Blob {
-  // Normalised centre position (0-1 of section dimensions)
-  cx: number; cy: number;
-  // Current rendered position (lerped)
-  rx: number; ry: number;
-  // Drift path parameters
-  ax: number; ay: number;   // amplitude (fraction of width/height)
-  fx: number; fy: number;   // frequency (cycles per second)
-  px: number; py: number;   // phase offset
-  bx: number; by: number;   // base position (centre of drift)
-  // Radius as fraction of min(w,h)
-  radiusFrac: number;
-  // Colour RGB
-  r: number; g: number; b: number;
-  // Target RGB (for transition)
-  tr: number; tg: number; tb: number;
-  // Opacity
-  alpha: number; targetAlpha: number;
+function lerpN(a:number,b:number,t:number){return a+(b-a)*t;}
+function lerpC(a:[number,number,number], b:[number,number,number], t:number):[number,number,number] {
+  return [lerpN(a[0],b[0],t), lerpN(a[1],b[1],t), lerpN(a[2],b[2],t)];
 }
 
-class MeshRenderer {
+// ── Stripe-like ribbon surface renderer ───────────────────────────────────
+// A 3D mesh of vertices deformed by layered sine waves, projected to 2D.
+// Each triangle is filled with a colour derived from its height + U position,
+// blending between the current and next quote colour.
+// The surface slowly morphs — it never stops, never snaps.
+
+class RibbonRenderer {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
-  blobs: Blob[] = [];
-  t = 0;                    // time in seconds
+  t = 0;
   lastTime = 0;
-  raf: number | null = null;
-  // Cursor influence
-  cursorX = 0.5; cursorY = 0.5; // normalised
-  cursorInfluence = 0;           // 0 idle → 1 hovering
-  colourVar = "--c-teal";
+  raf: number|null = null;
+
+  // Grid: cols × rows vertices
+  readonly COLS = 48;
+  readonly ROWS = 10;
+
+  // Current + target colours (two at a time for cross-fade)
+  colourA: [number,number,number] = [77,255,180];
+  colourB: [number,number,number] = [77,159,255];
+  colourC: [number,number,number] = [180,77,255]; // secondary tint
+  targetA: [number,number,number] = [77,255,180];
+  targetB: [number,number,number] = [77,159,255];
+  targetC: [number,number,number] = [180,77,255];
+
+  // Cursor — gentle surface warp toward cursor
+  cursorNX = 0.5; cursorNY = 0.5;
+  cursorSmX = 0.5; cursorSmY = 0.5; // smoothed
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
   }
 
-  get w() { return this.canvas.offsetWidth; }
-  get h() { return this.canvas.offsetHeight; }
-
   resize() {
-    const dpr = window.devicePixelRatio || 1;
-    const w = this.w, h = this.h;
-    this.canvas.width  = w * dpr;
-    this.canvas.height = h * dpr;
-    this.canvas.style.width  = w + "px";
-    this.canvas.style.height = h + "px";
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const dpr = window.devicePixelRatio||1;
+    const w = this.canvas.offsetWidth, h = this.canvas.offsetHeight;
+    this.canvas.width  = w*dpr;
+    this.canvas.height = h*dpr;
+    this.canvas.style.width  = w+"px";
+    this.canvas.style.height = h+"px";
+    this.ctx.setTransform(dpr,0,0,dpr,0,0);
   }
 
-  init() {
-    // 4 blobs — positioned at different quadrants, drift slowly
-    const specs = [
-      { bx:0.25, by:0.40, ax:0.22, ay:0.18, fx:0.18, fy:0.13, px:0.0,  py:1.0,  r:0.50 },
-      { bx:0.70, by:0.55, ax:0.18, ay:0.22, fx:0.14, fy:0.20, px:2.1,  py:0.5,  r:0.45 },
-      { bx:0.45, by:0.25, ax:0.25, ay:0.15, fx:0.22, fy:0.16, px:1.2,  py:2.0,  r:0.42 },
-      { bx:0.60, by:0.70, ax:0.15, ay:0.20, fx:0.16, fy:0.19, px:3.1,  py:0.8,  r:0.38 },
-    ];
-    this.blobs = specs.map((s, i) => {
-      // Pick a colour for each blob — neighbouring colours on the ring
-      const ci = (i) % QUOTE_COLOURS.length;
-      const [r,g,b] = resolveColour(QUOTE_COLOURS[ci], this.canvas);
-      return {
-        cx: s.bx, cy: s.by,
-        rx: s.bx, ry: s.by,
-        ax: s.ax, ay: s.ay,
-        fx: s.fx, fy: s.fy,
-        px: s.px, py: s.py,
-        bx: s.bx, by: s.by,
-        radiusFrac: s.r,
-        r, g, b,
-        tr: r, tg: g, tb: b,
-        alpha: 0, targetAlpha: i < 2 ? 0.75 : 0.55,
-      };
-    });
-    // Init positions
-    this.blobs.forEach(blob => { blob.rx = blob.bx; blob.ry = blob.by; });
+  initColours() {
+    const el = this.canvas;
+    this.colourA = this.targetA = resolveRgb(QUOTE_COLOURS[0], el);
+    this.colourB = this.targetB = resolveRgb(QUOTE_COLOURS[1], el);
+    this.colourC = this.targetC = resolveRgb(QUOTE_COLOURS[3], el);
   }
 
-  // Called when quote changes — transition blob colours
-  setColours(colVar: string) {
-    this.colourVar = colVar;
-    const ci = QUOTE_COLOURS.indexOf(colVar);
-    this.blobs.forEach((blob, i) => {
-      const varIdx = (ci + i) % QUOTE_COLOURS.length;
-      const [r,g,b] = resolveColour(QUOTE_COLOURS[varIdx], this.canvas);
-      blob.tr = r; blob.tg = g; blob.tb = b;
-    });
+  setColours(idx: number) {
+    const el = this.canvas;
+    this.targetA = resolveRgb(QUOTE_COLOURS[idx % QUOTE_COLOURS.length], el);
+    this.targetB = resolveRgb(QUOTE_COLOURS[(idx+1) % QUOTE_COLOURS.length], el);
+    this.targetC = resolveRgb(QUOTE_COLOURS[(idx+2) % QUOTE_COLOURS.length], el);
   }
 
-  lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
+  // The height function — overlapping sine waves create the surface
+  // u: 0–1 horizontal, v: 0–1 vertical, t: time
+  height(u: number, v: number, t: number): number {
+    const cursorPullX = (this.cursorSmX - 0.5) * 0.18;
+    const cursorPullY = (this.cursorSmY - 0.5) * 0.12;
+
+    return (
+      Math.sin(u * Math.PI * 2.2 + t * 0.55 + cursorPullX * 3) * 0.38
+    + Math.sin(u * Math.PI * 3.8 - t * 0.38 + 0.8) * 0.22
+    + Math.sin(v * Math.PI * 2.5 + t * 0.42 + 1.2 + cursorPullY * 4) * 0.28
+    + Math.sin((u + v) * Math.PI * 1.8 + t * 0.28 + 2.1) * 0.18
+    + Math.sin(u * Math.PI * 5.5 + t * 0.72) * 0.10
+    );
+  }
 
   frame(now: number) {
-    const dt = this.lastTime === 0 ? 0.016 : Math.min((now - this.lastTime) / 1000, 0.05);
+    const dt = this.lastTime===0 ? 0.016 : Math.min((now-this.lastTime)/1000, 0.05);
     this.lastTime = now;
-    this.t += dt;
+    this.t += dt * 0.55; // overall speed
 
-    const { ctx, w, h } = this;
-    ctx.clearRect(0, 0, w, h);
+    // Lerp colours — slow, dreamy cross-fade
+    const lk = 0.018;
+    this.colourA = lerpC(this.colourA, this.targetA, lk);
+    this.colourB = lerpC(this.colourB, this.targetB, lk);
+    this.colourC = lerpC(this.colourC, this.targetC, lk);
 
-    // Lerp cursor influence
-    this.cursorInfluence = this.lerp(this.cursorInfluence,
-      (this as any)._hovering ? 1 : 0, 0.04);
+    // Smooth cursor
+    this.cursorSmX = lerpN(this.cursorSmX, this.cursorNX, 0.05);
+    this.cursorSmY = lerpN(this.cursorSmY, this.cursorNY, 0.05);
 
-    for (const blob of this.blobs) {
-      // Lerp colour toward target
-      blob.r = this.lerp(blob.r, blob.tr, 0.025);
-      blob.g = this.lerp(blob.g, blob.tg, 0.025);
-      blob.b = this.lerp(blob.b, blob.tb, 0.025);
+    const { ctx } = this;
+    const W = this.canvas.offsetWidth;
+    const H = this.canvas.offsetHeight;
+    ctx.clearRect(0, 0, W, H);
 
-      // Lerp alpha in
-      blob.alpha = this.lerp(blob.alpha, blob.targetAlpha, 0.02);
+    const COLS = this.COLS, ROWS = this.ROWS;
 
-      // Compute drift target (sine wave path)
-      const tx = blob.bx + Math.sin(this.t * blob.fx * Math.PI * 2 + blob.px) * blob.ax;
-      const ty = blob.by + Math.sin(this.t * blob.fy * Math.PI * 2 + blob.py) * blob.ay;
+    // Build vertex grid — positions and heights
+    // Surface occupies full width, vertically centred in the section
+    const surfW = W;
+    const surfH = H * 1.4; // taller than container so it overflows the edges a bit
+    const offY  = (H - surfH) / 2;
 
-      // Cursor pull — blob closest to cursor gets gently attracted
-      const dist = Math.sqrt((blob.bx - this.cursorX)**2 + (blob.by - this.cursorY)**2);
-      const pull = Math.max(0, 1 - dist * 2.5) * this.cursorInfluence * 0.15;
-      const finalTx = tx + (this.cursorX - tx) * pull;
-      const finalTy = ty + (this.cursorY - ty) * pull;
-
-      // Smooth position update
-      blob.rx = this.lerp(blob.rx, finalTx, 0.018);
-      blob.ry = this.lerp(blob.ry, finalTy, 0.018);
-
-      // Draw blob as radial gradient
-      const px = blob.rx * w;
-      const py = blob.ry * h;
-      const radius = blob.radiusFrac * Math.min(w, h * 2.5);
-
-      const grad = ctx.createRadialGradient(px, py, 0, px, py, radius);
-      grad.addColorStop(0,    `rgba(${Math.round(blob.r)},${Math.round(blob.g)},${Math.round(blob.b)},${(blob.alpha * 0.28).toFixed(3)})`);
-      grad.addColorStop(0.35, `rgba(${Math.round(blob.r)},${Math.round(blob.g)},${Math.round(blob.b)},${(blob.alpha * 0.12).toFixed(3)})`);
-      grad.addColorStop(0.7,  `rgba(${Math.round(blob.r)},${Math.round(blob.g)},${Math.round(blob.b)},${(blob.alpha * 0.04).toFixed(3)})`);
-      grad.addColorStop(1,    `rgba(${Math.round(blob.r)},${Math.round(blob.g)},${Math.round(blob.b)},0)`);
-
-      ctx.globalCompositeOperation = "screen";
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
+    // Precompute heights for (COLS+1) × (ROWS+1) vertices
+    const verts: { x:number; y:number; z:number }[][] = [];
+    for (let row = 0; row <= ROWS; row++) {
+      verts[row] = [];
+      const v = row / ROWS;
+      for (let col = 0; col <= COLS; col++) {
+        const u = col / COLS;
+        const z = this.height(u, v, this.t); // -1 to +1 approx
+        const x = u * surfW;
+        const y = offY + v * surfH;
+        verts[row][col] = { x, y, z };
+      }
     }
 
-    ctx.globalCompositeOperation = "source-over";
+    // Draw quads as two triangles, colour based on height + u position
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        const tl = verts[row][col];
+        const tr = verts[row][col+1];
+        const bl = verts[row+1][col];
+        const br = verts[row+1][col+1];
+
+        // Draw two triangles per quad
+        for (const [a, b, c] of [[tl,tr,bl],[tr,br,bl]] as const) {
+          const avgZ = (a.z + b.z + c.z) / 3;
+          const avgU = ((a.x+b.x+c.x)/3) / surfW;
+
+          // Height maps to colour blend between A and B
+          const tHeight = (avgZ + 1) * 0.5; // 0–1
+
+          // U position shifts the blend toward colour C on right side
+          const tU = avgU;
+
+          // Tri-blend: A (bottom-left) → B (top) → C (right)
+          const ab = lerpC(this.colourA, this.colourB, Math.pow(tHeight, 1.2));
+          const final_ = lerpC(ab, this.colourC, tU * 0.55);
+
+          // Opacity: depends on height — peaks are brighter, troughs darker
+          // Also fade at top and bottom edge
+          const edgeV = (row / ROWS);
+          const edgeFade = Math.sin(edgeV * Math.PI); // 0 at edges, 1 at middle
+          const alpha = (0.06 + tHeight * 0.12) * edgeFade;
+
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.lineTo(c.x, c.y);
+          ctx.closePath();
+          ctx.fillStyle = `rgba(${Math.round(final_[0])},${Math.round(final_[1])},${Math.round(final_[2])},${alpha.toFixed(3)})`;
+          ctx.fill();
+        }
+      }
+    }
+
     this.raf = requestAnimationFrame(t => this.frame(t));
   }
 
@@ -186,55 +200,46 @@ class MeshRenderer {
 export default function QuotesCarousel({ quotes }: { quotes: Quote[] }) {
   const [cur, setCur]             = useState(0);
   const [animating, setAnimating] = useState(false);
-  const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef    = useRef<ReturnType<typeof setInterval>|null>(null);
   const canvasRef   = useRef<HTMLCanvasElement>(null);
-  const rendererRef = useRef<MeshRenderer | null>(null);
+  const rendererRef = useRef<RibbonRenderer|null>(null);
   const sectionRef  = useRef<HTMLElement>(null);
 
   // Init renderer
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const renderer = new MeshRenderer(canvas);
-    renderer.resize();
-    renderer.init();
-    renderer.start();
-    rendererRef.current = renderer;
-
-    const obs = new ResizeObserver(() => renderer.resize());
+    const r = new RibbonRenderer(canvas);
+    r.resize();
+    r.initColours();
+    r.start();
+    rendererRef.current = r;
+    const obs = new ResizeObserver(() => r.resize());
     if (canvas.parentElement) obs.observe(canvas.parentElement);
-    return () => { renderer.destroy(); obs.disconnect(); };
+    return () => { r.destroy(); obs.disconnect(); };
   }, []);
 
   // Cursor tracking
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
-    function onMove(e: MouseEvent) {
-      const r = section!.getBoundingClientRect();
+    const onMove = (e: MouseEvent) => {
+      const rect = section.getBoundingClientRect();
       if (rendererRef.current) {
-        rendererRef.current.cursorX = (e.clientX - r.left) / r.width;
-        rendererRef.current.cursorY = (e.clientY - r.top)  / r.height;
+        rendererRef.current.cursorNX = (e.clientX - rect.left) / rect.width;
+        rendererRef.current.cursorNY = (e.clientY - rect.top)  / rect.height;
       }
-    }
-    function onEnter() { if (rendererRef.current) (rendererRef.current as any)._hovering = true; }
-    function onLeave() { if (rendererRef.current) (rendererRef.current as any)._hovering = false; }
-    section.addEventListener("mousemove", onMove);
-    section.addEventListener("mouseenter", onEnter);
-    section.addEventListener("mouseleave", onLeave);
-    return () => {
-      section.removeEventListener("mousemove", onMove);
-      section.removeEventListener("mouseenter", onEnter);
-      section.removeEventListener("mouseleave", onLeave);
     };
+    section.addEventListener("mousemove", onMove);
+    return () => section.removeEventListener("mousemove", onMove);
   }, []);
 
   const go = useCallback((n: number) => {
     if (animating) return;
     const nextIdx = ((n % quotes.length) + quotes.length) % quotes.length;
-    rendererRef.current?.setColours(QUOTE_COLOURS[nextIdx]);
+    rendererRef.current?.setColours(nextIdx);
     setAnimating(true);
-    setTimeout(() => { setCur(nextIdx); setAnimating(false); }, 200);
+    setTimeout(() => { setCur(nextIdx); setAnimating(false); }, 220);
   }, [animating, quotes.length]);
 
   useEffect(() => {
@@ -259,11 +264,7 @@ export default function QuotesCarousel({ quotes }: { quotes: Quote[] }) {
       />
 
       {/* Label row */}
-      <div style={{
-        display:"flex", alignItems:"center", justifyContent:"space-between",
-        padding:"0 28px", height:"40px", borderBottom:"1px solid var(--rule)",
-        position:"relative", zIndex:1,
-      }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 28px", height:"40px", borderBottom:"1px solid var(--rule)", position:"relative", zIndex:1 }}>
         <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", letterSpacing:"1.5px" }}>
           Design Principles
         </span>
@@ -282,19 +283,11 @@ export default function QuotesCarousel({ quotes }: { quotes: Quote[] }) {
       </div>
 
       {/* Quote body */}
-      <div style={{
-        padding:"32px 28px 24px",
-        opacity: animating ? 0 : 1,
-        transform: animating ? "translateY(5px)" : "translateY(0)",
-        transition:"opacity 0.2s ease, transform 0.2s ease",
-        minHeight:"110px", position:"relative", zIndex:1,
-      }}>
-        <p style={{ fontSize:"15px", fontWeight:400, lineHeight:1.8, fontFamily:SANS, maxWidth:"640px", color, transition:"color 0.5s ease" }}>
+      <div style={{ padding:"32px 28px 24px", opacity:animating?0:1, transform:animating?"translateY(5px)":"translateY(0)", transition:"opacity 0.22s ease, transform 0.22s ease", minHeight:"110px", position:"relative", zIndex:1 }}>
+        <p style={{ fontSize:"15px", fontWeight:400, lineHeight:1.8, fontFamily:SANS, maxWidth:"640px", color, transition:"color 0.6s ease" }}>
           &ldquo;{q.text}&rdquo;
         </p>
-        <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"12px" }}>
-          {q.attr}
-        </div>
+        <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", marginTop:"12px" }}>{q.attr}</div>
       </div>
 
       {/* Dots */}
@@ -303,20 +296,15 @@ export default function QuotesCarousel({ quotes }: { quotes: Quote[] }) {
           <button key={i}
             onClick={() => { if (timerRef.current) clearInterval(timerRef.current); go(i); }}
             aria-label={`Quote ${i+1}`}
-            style={{
-              background: i === cur ? color : "var(--rule2)",
-              border:"none", cursor:"pointer", padding:0,
-              width: i === cur ? "20px" : "6px", height:"6px", borderRadius:"3px",
-              transition:"width 0.3s ease, background 0.5s ease",
-            }} />
+            style={{ background:i===cur?color:"var(--rule2)", border:"none", cursor:"pointer", padding:0, width:i===cur?"20px":"6px", height:"6px", borderRadius:"3px", transition:"width 0.3s ease, background 0.6s ease" }} />
         ))}
       </div>
 
       <style>{`
-        .carousel-btn { transition: color 0.2s ease, border-color 0.2s ease, transform 0.15s ease; }
-        .carousel-btn:hover { color: var(--ink) !important; border-color: var(--rule2) !important; transform: scale(1.1); }
-        .carousel-btn:active { transform: scale(0.92) !important; transition-duration: 0.07s; }
-        .carousel-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+        .carousel-btn{transition:color 0.2s ease,border-color 0.2s ease,transform 0.15s ease;}
+        .carousel-btn:hover{color:var(--ink)!important;border-color:var(--rule2)!important;transform:scale(1.1);}
+        .carousel-btn:active{transform:scale(0.92)!important;transition-duration:0.07s;}
+        .carousel-btn:focus-visible{outline:2px solid var(--ink);outline-offset:3px;}
       `}</style>
     </section>
   );
