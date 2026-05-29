@@ -1,14 +1,15 @@
 "use client";
 /**
- * SheetAccent — static variant of the QuotesCarousel sheet.
- * Same 44×3 mesh, same z() / project() / glow+surface+rim passes.
- * No time dimension — t is fixed at 0. Surface only changes via cursor.
- * Cursor moves the Gaussian warp → different crests lit → colour shifts.
+ * SheetAccent — animated waving sheet accent for hero and about columns.
+ * Based on the exact same mesh as QuotesCarousel (8568da9).
  *
- * hero  — sheet enters bottom-right, bleeds off right+bottom edges.
- *         Perspective: right wider. Left/top portion visible in column.
- * about — sheet enters top-right, bleeds off right+top edges.
- *         Mirrored diagonal vs hero — different section of the shape.
+ * Changes vs carousel:
+ *   • Very slow movement (light breeze) — t advances at 0.15× real speed
+ *   • More curvy — higher wave frequencies + tertiary wave
+ *   • Cursor: glow highlight follows cursor (proximity boost on glow pass)
+ *   • Depth of field: near quads (high Z) sharp, far quads blurred
+ *   • Occupies ~20% of the column area (bottom-right for hero, top-right for about)
+ *   • ResizeObserver on wrapRef (not cvs.parentElement) — fixes about sizing bug
  */
 import { useEffect, useRef } from "react";
 
@@ -23,6 +24,7 @@ function clamp(v:number,lo:number,hi:number){return Math.max(lo,Math.min(hi,v));
 function lerpRgb(a:[number,number,number],b:[number,number,number],t:number):[number,number,number]{
   return[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
 }
+function easeOutCubic(t:number){return 1-Math.pow(1-t,3);}
 
 export type SheetVariant = "hero"|"about";
 
@@ -35,241 +37,300 @@ const COL_VARS: Record<SheetVariant,[string,string]> = {
   about: ["--c-purple", "--c-blue"  ],
 };
 
-// ── Z displacement — no time, only cursor warp ────────────────────────────
-// Frozen wave at t=0, warped by cursor Gaussian bulge.
-// The frozen wave gives the sheet its 3D shape; cursor shifts the bulge
-// position → different crests become lit → colour reads change.
-function zStatic(u:number, v:number, smX:number, smY:number): number {
-  // Frozen primary wave (same formula as QuotesCarousel but t=0)
-  const diag = u * 0.65 + v * 0.35;
-  const w1 = Math.sin(diag * Math.PI * 3.2) * 0.55;
-  const w2 = Math.sin((u * 0.4 - v * 0.8) * Math.PI * 2.1 + 1.4) * 0.22;
+class AccentSheetRenderer {
+  cvs: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  t=0; lastT=0; raf:number|null=null;
+  introT=0;
+  colA:[number,number,number]=[77,255,180];
+  colB:[number,number,number]=[77,159,255];
+  tColA:[number,number,number]=[77,255,180];
+  tColB:[number,number,number]=[77,159,255];
+  // Cursor — normalised, smoothed
+  mX=0.5; mY=0.5;
+  smX=0.5; smY=0.5;
+  variant: SheetVariant;
 
-  // Cursor Gaussian — wider influence, stronger than carousel
-  const cWarp = Math.exp(-((u-smX)*(u-smX)*3 + (v-smY)*(v-smY)*6)) * 0.38;
-
-  return w1 + w2 + cWarp;
-}
-
-// ── Projection — two configurations ─────────────────────────────────────
-// hero:  sheet runs from top-left area → off bottom-right
-//        Left+top end visible inside column; right+bottom bleed off canvas.
-// about: sheet runs from bottom-left area → off top-right
-//        Bottom+left end visible; top+right bleed off canvas.
-function projectHero(u:number, v:number, z:number, W:number, H:number): [number,number] {
-  // Perspective: right side is closer → wider spread
-  const ps = lerp(0.28, 1.0, u);
-
-  // Centre line: top-left corner → off bottom-right
-  const baseX = lerp(W * 0.05, W * 1.18, u);
-  const baseY = lerp(H * 0.12, H * 1.15, u);
-
-  // Ribbon spread: narrow at far end (top-left), wide at near end (bottom-right)
-  const spread = lerp(H * 0.10, H * 0.55, u);
-  const rowY   = baseY + (v - 0.5) * spread;
-
-  const zScale    = H * 0.12 * ps;
-  const zParallax = z * W * 0.020 * ps;
-  return [baseX + zParallax, rowY + z * zScale];
-}
-
-function projectAbout(u:number, v:number, z:number, W:number, H:number): [number,number] {
-  // Perspective: left side is closer → wider spread (mirror of hero)
-  const ps = lerp(1.0, 0.28, u);
-
-  // Centre line: off top-right → bottom-left corner
-  const baseX = lerp(W * 1.15, W * -0.10, u);
-  const baseY = lerp(H * -0.10, H * 1.12, u);
-
-  // Ribbon spread: wide at near end (top-right, u=0), narrow at far end (bottom-left, u=1)
-  const spread = lerp(H * 0.52, H * 0.08, u);
-  const rowY   = baseY + (v - 0.5) * spread;
-
-  const zScale    = H * 0.12 * ps;
-  const zParallax = z * W * 0.020 * ps;
-  return [baseX + zParallax, rowY + z * zScale];
-}
-
-// ── Draw the sheet once ───────────────────────────────────────────────────
-function drawSheet(
-  cvs: HTMLCanvasElement,
-  smX: number, smY: number,
-  variant: SheetVariant,
-) {
-  const ctx = cvs.getContext("2d"); if(!ctx) return;
-  const dpr = window.devicePixelRatio||1;
-  const W = cvs.offsetWidth, H = cvs.offsetHeight;
-  if(W===0||H===0) return;
-  if(cvs.width!==Math.round(W*dpr)||cvs.height!==Math.round(H*dpr)){
-    cvs.width=Math.round(W*dpr); cvs.height=Math.round(H*dpr);
-    cvs.style.width=W+"px"; cvs.style.height=H+"px";
-    ctx.setTransform(dpr,0,0,dpr,0,0);
+  constructor(cvs:HTMLCanvasElement, variant:SheetVariant){
+    this.cvs=cvs;
+    this.ctx=cvs.getContext("2d")!;
+    this.variant=variant;
   }
-  ctx.clearRect(0,0,W,H);
 
-  const [varA, varB] = COL_VARS[variant];
-  const colA = resolveRgb(varA, cvs);
-  const colB = resolveRgb(varB, cvs);
-  const proj = variant==="hero" ? projectHero : projectAbout;
+  get W(){return this.cvs.offsetWidth;}
+  get H(){return this.cvs.offsetHeight;}
 
-  // Build vertex grid
-  const verts:{x:number,y:number,z:number}[][]=[];
-  for(let row=0;row<=ROWS;row++){
-    verts[row]=[];
-    const v=row/ROWS;
-    for(let col=0;col<=COLS;col++){
-      const u=col/COLS;
-      const zv=zStatic(u,v,smX,smY);
-      const[x,y]=proj(u,v,zv,W,H);
-      verts[row][col]={x,y,z:zv};
+  resize(){
+    const dpr=window.devicePixelRatio||1, w=this.W, h=this.H;
+    if(w===0||h===0)return;
+    this.cvs.width=w*dpr; this.cvs.height=h*dpr;
+    this.cvs.style.width=w+"px"; this.cvs.style.height=h+"px";
+    this.ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  initColours(el:HTMLElement){
+    const[a,b]=COL_VARS[this.variant];
+    this.colA=this.tColA=resolveRgb(a,el);
+    this.colB=this.tColB=resolveRgb(b,el);
+  }
+
+  // Z function — same base as 8568da9 but:
+  //   • higher frequency (more curvy: 3.2→4.8, 2.1→3.4)
+  //   • tertiary wave added
+  //   • cursor Gaussian kept, slightly stronger
+  z(u:number, v:number, t:number):number{
+    const diag=u*0.65+v*0.35;
+    // Primary: higher frequency for more curviness, slower speed
+    const w1=Math.sin(diag*Math.PI*4.8-t*0.08)*0.48;
+    // Secondary: orthogonal, more curvy
+    const w2=Math.sin((u*0.5-v*0.9)*Math.PI*3.4+t*0.05+1.4)*0.22;
+    // Tertiary: gentle cross-wave for organic feel
+    const w3=Math.sin((u*0.3+v*0.6)*Math.PI*2.2-t*0.04+2.7)*0.12;
+    // Cursor Gaussian bulge
+    const cWarp=Math.exp(-((u-this.smX)*(u-this.smX)*3.5+(v-this.smY)*(v-this.smY)*7))*0.22;
+    return w1+w2+w3+cWarp;
+  }
+
+  // Projection — two configurations, each placing the sheet in ~20% of the area
+  // hero:  bottom-right corner, sheet enters from bottom-right, bleeds off
+  // about: top-right corner, sheet enters from top-right, bleeds off
+  project(u:number, v:number, zv:number, W:number, H:number, intro:number):[number,number]{
+    if(this.variant==="hero"){
+      // Perspective: right side closer (ps lerp 0.35→1.0)
+      const ps=lerp(0.35,1.0,u);
+      // Centre line: (5%x, 88%y) → (115%x, 12%y)
+      // but pulled toward bottom-right — sheet occupies bottom-right 20%
+      const baseX=lerp(W*0.03,W*1.15,u);
+      const baseY=lerp(H*0.88,H*0.12,u);
+      // Narrow spread — only ~20% of height at most
+      const spread=lerp(H*0.08,H*0.28,u);
+      const rowY=baseY+(v-0.5)*spread;
+      const zScale=H*0.10*ps*intro;
+      const zPx=zv*W*0.018*ps*intro;
+      return[baseX+zPx,rowY+zv*zScale];
+    } else {
+      // About: opposite diagonal — top-right → bottom-left
+      // ps: left side closer (mirror)
+      const ps=lerp(1.0,0.35,u);
+      // Centre line: off top-right → bottom-left
+      const baseX=lerp(W*1.12,-W*0.08,u);
+      const baseY=lerp(-H*0.08,H*1.10,u);
+      // Narrow spread ~20% of height
+      const spread=lerp(H*0.26,H*0.07,u);
+      const rowY=baseY+(v-0.5)*spread;
+      const zScale=H*0.10*ps*intro;
+      const zPx=zv*W*0.018*ps*intro;
+      return[baseX+zPx,rowY+zv*zScale];
     }
   }
 
-  // Edge fade — only the far end fades (near end is cropped by overflow:hidden)
-  // hero: far end is u=0 (top-left visible corner)
-  // about: far end is u=1 (bottom-left visible corner)
-  const edgeFade = variant==="hero"
-    ? (u:number) => clamp(u/0.14, 0, 1)         // fade at left (far) end
-    : (u:number) => clamp((1-u)/0.14, 0, 1);    // fade at right (far) end
+  frame(now:number){
+    const dt=this.lastT===0?0.016:Math.min((now-this.lastT)/1000,0.05);
+    this.lastT=now;
+    // Very slow time advance — "light breeze"
+    this.t+=dt*0.15;
 
-  // ── Pass 1: glow (shadowBlur per quad)
-  ctx.save();
-  for(let row=0;row<ROWS;row++){
-    for(let col=0;col<COLS;col++){
-      const u=(col+0.5)/COLS;
-      const fade=edgeFade(u);
-      if(fade<0.03)continue;
-      const TL=verts[row][col],TR=verts[row][col+1];
-      const BL=verts[row+1][col],BR=verts[row+1][col+1];
-      const avgZ=(TL.z+TR.z+BL.z+BR.z)/4;
-      const zT=clamp((avgZ+1)*0.5,0,1);
-      const[r,g,b]=lerpRgb(colB,colA,zT);
-      const glowA=fade*lerp(0.04,0.11,zT);
-      ctx.shadowColor=`rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${glowA.toFixed(3)})`;
-      ctx.shadowBlur=lerp(8,22,zT);
-      ctx.fillStyle=`rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${(glowA*0.6).toFixed(3)})`;
+    this.introT=Math.min(1,this.introT+dt/2.2);
+    const intro=easeOutCubic(this.introT);
+
+    // Slow cursor smooth — no jitter
+    this.smX=lerp(this.smX,this.mX,0.035);
+    this.smY=lerp(this.smY,this.mY,0.035);
+
+    this.colA=lerpRgb(this.colA,this.tColA,0.012);
+    this.colB=lerpRgb(this.colB,this.tColB,0.012);
+
+    const{ctx}=this;
+    const W=this.W,H=this.H;
+    if(W===0||H===0){this.raf=requestAnimationFrame(t=>this.frame(t));return;}
+    ctx.clearRect(0,0,W,H);
+
+    // Build vertex grid
+    const verts:{x:number,y:number,z:number}[][]=[];
+    for(let row=0;row<=ROWS;row++){
+      verts[row]=[];
+      const v=row/ROWS;
+      for(let col=0;col<=COLS;col++){
+        const u=col/COLS;
+        const zv=this.z(u,v,this.t);
+        const[x,y]=this.project(u,v,zv,W,H,intro);
+        verts[row][col]={x,y,z:zv};
+      }
+    }
+
+    // Edge fade — dissolves at both ends
+    const edgeFade=(u:number)=>Math.min(
+      clamp(u/0.10,0,1),
+      clamp((1-u)/0.10,0,1)
+    );
+
+    // Cursor proximity boost — how close this quad is to cursor
+    // Used to brighten glow near cursor
+    const cursorBoost=(u:number,v:number)=>{
+      const dx=u-this.smX, dy=v-this.smY;
+      return Math.exp(-(dx*dx*4+dy*dy*8))*0.55;
+    };
+
+    // ── Depth-of-field: split quads into 3 Z-bands ───────────────────
+    // Near (high Z, foreground): sharp, brightest
+    // Mid: slight blur (1.5px)
+    // Far (low Z, background): more blur (3px), dimmer
+    // We draw in 3 save/restore blocks, each with its own ctx.filter
+
+    type Quad={row:number,col:number,avgZ:number,u:number,v:number};
+    const near:Quad[]=[], mid:Quad[]=[], far:Quad[]=[];
+    for(let row=0;row<ROWS;row++){
+      for(let col=0;col<COLS;col++){
+        const u=(col+0.5)/COLS;
+        const fade=edgeFade(u)*intro;
+        if(fade<0.03)continue;
+        const TL=verts[row][col],TR=verts[row][col+1];
+        const BL=verts[row+1][col],BR=verts[row+1][col+1];
+        const avgZ=(TL.z+TR.z+BL.z+BR.z)/4;
+        const v=(row+0.5)/ROWS;
+        // Z ranges roughly -1 to +1; split:
+        if(avgZ>0.18) near.push({row,col,avgZ,u,v});
+        else if(avgZ>-0.10) mid.push({row,col,avgZ,u,v});
+        else far.push({row,col,avgZ,u,v});
+      }
+    }
+
+    const drawBand=(quads:Quad[], blurPx:number)=>{
+      if(quads.length===0)return;
+      ctx.save();
+      if(blurPx>0) ctx.filter=`blur(${blurPx}px)`;
+
+      // Glow pass
+      for(const{row,col,avgZ,u,v} of quads){
+        const fade=edgeFade(u)*intro;
+        const zT=clamp((avgZ+1)*0.5,0,1);
+        const[r,g,b]=lerpRgb(this.colB,this.colA,zT);
+        const boost=cursorBoost(u,v);
+        const glowA=fade*lerp(0.04,0.13,zT)*(1+boost*0.8);
+        const TL=verts[row][col],TR=verts[row][col+1];
+        const BL=verts[row+1][col],BR=verts[row+1][col+1];
+        ctx.shadowColor=`rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${glowA.toFixed(3)})`;
+        ctx.shadowBlur=lerp(6,24,zT)*(1+boost*0.5);
+        ctx.fillStyle=`rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${(glowA*0.6).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.moveTo(TL.x,TL.y);ctx.lineTo(TR.x,TR.y);
+        ctx.lineTo(BR.x,BR.y);ctx.lineTo(BL.x,BL.y);
+        ctx.closePath();ctx.fill();
+      }
+
+      // Surface pass
+      ctx.shadowBlur=0;
+      for(const{row,col,avgZ,u,v} of quads){
+        const fade=edgeFade(u)*intro;
+        const zT=clamp((avgZ+1)*0.5,0,1);
+        const[r,g,b]=lerpRgb(this.colB,this.colA,zT);
+        const boost=cursorBoost(u,v);
+        const brightness=Math.pow(zT,1.6);
+        const alpha=fade*lerp(0.01,0.30,brightness)*(1+boost*0.6);
+        if(alpha<0.006)continue;
+        const TL=verts[row][col],TR=verts[row][col+1];
+        const BL=verts[row+1][col],BR=verts[row+1][col+1];
+        ctx.fillStyle=`rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.moveTo(TL.x,TL.y);ctx.lineTo(TR.x,TR.y);
+        ctx.lineTo(BR.x,BR.y);ctx.lineTo(BL.x,BL.y);
+        ctx.closePath();ctx.fill();
+      }
+
+      ctx.filter="none";
+      ctx.restore();
+    };
+
+    // Draw far first (most blurred, behind), then mid, then near (sharp, in front)
+    drawBand(far,  2.5);
+    drawBand(mid,  1.0);
+    drawBand(near, 0);
+
+    // ── Rim lines — same as 8568da9, with cursor glow boost ───────────
+    const[ra,ga,ba]=this.colA;
+    for(let pass=0;pass<2;pass++){
+      const edgeRow=pass===0?0:ROWS;
+      ctx.save();
+      ctx.shadowColor=`rgba(${Math.round(ra)},${Math.round(ga)},${Math.round(ba)},0.35)`;
+      ctx.shadowBlur=pass===0?12:8;
+      ctx.strokeStyle=`rgba(${Math.round(ra)},${Math.round(ga)},${Math.round(ba)},${pass===0?0.55:0.35})`;
+      ctx.lineWidth=pass===0?1.2:0.7;
+      ctx.lineCap="round";
       ctx.beginPath();
-      ctx.moveTo(TL.x,TL.y);ctx.lineTo(TR.x,TR.y);
-      ctx.lineTo(BR.x,BR.y);ctx.lineTo(BL.x,BL.y);
-      ctx.closePath();ctx.fill();
+      let started=false;
+      for(let col=0;col<=COLS;col++){
+        const u=col/COLS;
+        const fade=edgeFade(u)*intro;
+        if(fade<0.03){started=false;continue;}
+        const pt=verts[edgeRow][col];
+        if(!started){ctx.moveTo(pt.x,pt.y);started=true;}
+        else ctx.lineTo(pt.x,pt.y);
+      }
+      ctx.globalAlpha=clamp(intro,0,1);
+      ctx.stroke();
+      ctx.globalAlpha=1;
+      ctx.restore();
     }
-  }
-  ctx.restore();
 
-  // ── Pass 2: bright surface (Z-based lighting)
-  ctx.save();
-  for(let row=0;row<ROWS;row++){
-    for(let col=0;col<COLS;col++){
-      const u=(col+0.5)/COLS;
-      const fade=edgeFade(u);
-      if(fade<0.03)continue;
-      const TL=verts[row][col],TR=verts[row][col+1];
-      const BL=verts[row+1][col],BR=verts[row+1][col+1];
-      const avgZ=(TL.z+TR.z+BL.z+BR.z)/4;
-      const zT=clamp((avgZ+1)*0.5,0,1);
-      const[r,g,b]=lerpRgb(colB,colA,zT);
-      const brightness=Math.pow(zT,1.6);
-      const alpha=fade*lerp(0.02,0.32,brightness);
-      if(alpha<0.008)continue;
-      ctx.fillStyle=`rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha.toFixed(3)})`;
-      ctx.beginPath();
-      ctx.moveTo(TL.x,TL.y);ctx.lineTo(TR.x,TR.y);
-      ctx.lineTo(BR.x,BR.y);ctx.lineTo(BL.x,BL.y);
-      ctx.closePath();ctx.fill();
-    }
+    this.raf=requestAnimationFrame(t=>this.frame(t));
   }
-  ctx.restore();
 
-  // ── Pass 3: rim lines (top + bottom edge of ribbon)
-  const[ra,ga,ba]=colA;
-  for(let pass=0;pass<2;pass++){
-    const edgeRow=pass===0?0:ROWS;
-    ctx.save();
-    ctx.shadowColor=`rgba(${Math.round(ra)},${Math.round(ga)},${Math.round(ba)},0.35)`;
-    ctx.shadowBlur=pass===0?12:8;
-    ctx.strokeStyle=`rgba(${Math.round(ra)},${Math.round(ga)},${Math.round(ba)},${pass===0?0.55:0.35})`;
-    ctx.lineWidth=pass===0?1.2:0.7;
-    ctx.lineCap="round";
-    ctx.beginPath();
-    let started=false;
-    for(let col=0;col<=COLS;col++){
-      const u=col/COLS;
-      const fade=edgeFade(u);
-      if(fade<0.03){started=false;continue;}
-      const pt=verts[edgeRow][col];
-      if(!started){ctx.moveTo(pt.x,pt.y);started=true;}
-      else ctx.lineTo(pt.x,pt.y);
-    }
-    ctx.globalAlpha=1;
-    ctx.stroke();
-    ctx.restore();
-  }
+  start(){if(!this.raf)this.raf=requestAnimationFrame(t=>this.frame(t));}
+  stop(){if(this.raf){cancelAnimationFrame(this.raf);this.raf=null;}}
+  destroy(){this.stop();}
 }
 
 // ── Component ─────────────────────────────────────────────────────────────
 export default function SheetAccent({ variant }:{ variant:SheetVariant }){
   const cvsRef  = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const rafRef  = useRef<number|null>(null);
-  // Smoothed cursor position
-  const smRef   = useRef({ x:0.5, y:0.5, tx:0.5, ty:0.5 });
-
-  function redraw(){
-    const cvs=cvsRef.current; if(!cvs)return;
-    drawSheet(cvs, smRef.current.x, smRef.current.y, variant);
-  }
+  const rendRef = useRef<AccentSheetRenderer|null>(null);
 
   useEffect(()=>{
-    const t=setTimeout(redraw,80);
-    const obs=new ResizeObserver(redraw);
-    const el = cvsRef.current?.parentElement;
-    if(el) obs.observe(el);
-    return()=>{ clearTimeout(t); obs.disconnect(); };
+    const cvs=cvsRef.current; if(!cvs) return;
+    const r=new AccentSheetRenderer(cvs, variant);
+    // Initial resize — use wrapRef dimensions
+    r.resize();
+    r.initColours(cvs);
+    r.start();
+    rendRef.current=r;
+
+    // Observe the wrapper div (not cvs.parentElement) — fixes about sizing bug
+    const wrap=wrapRef.current;
+    const obs=new ResizeObserver(()=>{
+      r.resize();
+    });
+    if(wrap) obs.observe(wrap);
+
+    // Fallback redraw after hydration settles
+    const t1=setTimeout(()=>r.resize(), 120);
+    const t2=setTimeout(()=>r.resize(), 400);
+
+    return()=>{ r.destroy(); obs.disconnect(); clearTimeout(t1); clearTimeout(t2); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[variant]);
 
   useEffect(()=>{
     const wrap=wrapRef.current; if(!wrap) return;
-    const cvs=cvsRef.current;  if(!cvs)  return;
-    const cvsEl: HTMLCanvasElement = cvs;
-
-    let animRaf:number|null=null;
-
-    function smooth(){
-      const s=smRef.current;
-      const dx=s.tx-s.x, dy=s.ty-s.y;
-      if(Math.abs(dx)>0.001||Math.abs(dy)>0.001){
-        s.x=lerp(s.x,s.tx,0.06);
-        s.y=lerp(s.y,s.ty,0.06);
-        drawSheet(cvsEl, s.x, s.y, variant);
-        animRaf=requestAnimationFrame(smooth);
-      } else {
-        animRaf=null;
-      }
-    }
-
     const onMove=(e:MouseEvent)=>{
+      if(!rendRef.current) return;
       const rect=wrap.getBoundingClientRect();
-      smRef.current.tx=(e.clientX-rect.left)/rect.width;
-      smRef.current.ty=(e.clientY-rect.top)/rect.height;
-      if(!animRaf) animRaf=requestAnimationFrame(smooth);
+      rendRef.current.mX=(e.clientX-rect.left)/rect.width;
+      rendRef.current.mY=(e.clientY-rect.top)/rect.height;
     };
-
-    wrap.addEventListener("mousemove",onMove);
-    return()=>{
-      wrap.removeEventListener("mousemove",onMove);
-      if(animRaf) cancelAnimationFrame(animRaf);
-      if(rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[variant]);
+    // Give the cursor listener to the parent column — wider hover target
+    const col=wrap.parentElement;
+    const target=col||wrap;
+    target.addEventListener("mousemove",onMove);
+    return()=>target.removeEventListener("mousemove",onMove);
+  },[]);
 
   return(
     <div ref={wrapRef} style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
       <canvas ref={cvsRef} aria-hidden="true"
         style={{
-          position:"absolute", inset:0,
-          width:"100%", height:"100%",
+          position:"absolute",inset:0,
+          width:"100%",height:"100%",
           pointerEvents:"none",
           mixBlendMode:"screen",
         }}/>
