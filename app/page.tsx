@@ -5,6 +5,7 @@ import Portrait from "../components/Portrait";
 import QuotesCarousel from "../components/QuotesCarousel";
 import ThinkCarousel from "../components/ThinkCarousel";
 import CtaBanner from "../components/CtaBanner";
+import SheetAccent from "../components/SheetAccent";
 import ViewWorkBtn from "../components/ViewWorkBtn";
 import ThinkSpaceBtn from "../components/ThinkSpaceBtn";
 import CountUp from "../components/CountUp";
@@ -102,7 +103,10 @@ export default async function Home() {
           display:"flex", flexDirection:"column", justifyContent:"flex-end",
           padding:"clamp(2rem,5vw,5rem) clamp(1.5rem,3vw,3rem)",
           gap:"28px",
+          position:"relative", overflow:"hidden",
         }}>
+          {/* Waving sheet accent — bottom-right corner, bleeds off right+bottom */}
+          <SheetAccent opts={{ overflowRight:0.30, overflowBottom:0.20, amplitude:0.10, colourPeriod:20, opacity:0.9 }} />
           {/* eyebrow */}
           <div style={{
             fontFamily:MONO, fontSize:"11px", letterSpacing:"1.5px",

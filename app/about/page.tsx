@@ -1,6 +1,7 @@
 import Nav from "../../components/Nav";
 import AboutPortrait from "../../components/AboutPortrait";
 import Footer from "../../components/Footer";
+import SheetAccent from "../../components/SheetAccent";
 import { getAchievements, getAboutMarkdown } from "../../lib/notion";
 import { markdownToHtml } from "../../lib/markdown";
 import type { Metadata } from "next";
@@ -34,7 +35,9 @@ export default async function AboutPage() {
         {/* ── HERO: photo left, name right ── */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", borderBottom:"1px solid var(--rule)" }} className="about-hero-grid">
           <AboutPortrait />
-          <div style={{ padding:"48px 28px 36px", display:"flex", flexDirection:"column", justifyContent:"flex-end", gap:"20px" }}>
+          <div style={{ padding:"48px 28px 36px", display:"flex", flexDirection:"column", justifyContent:"flex-end", gap:"20px", position:"relative", overflow:"hidden" }}>
+            {/* Waving sheet — bottom-right crop, subtle colour cycle */}
+            <SheetAccent opts={{ overflowRight:0.32, overflowBottom:0.22, amplitude:0.09, colourPeriod:22, opacity:0.8 }} />
             <div style={{ fontFamily:MONO, fontSize:"11px", letterSpacing:"1.5px", textTransform:"uppercase", color:"var(--ink3)", display:"flex", alignItems:"center", gap:"10px" }}>
               <span style={{ display:"block", width:"20px", height:"1px", background:"var(--ink3)" }} />
               About
