@@ -105,8 +105,8 @@ export default async function Home() {
           gap:"28px",
           position:"relative", overflow:"hidden",
         }}>
-          {/* Waving sheet accent — bottom-right corner, bleeds off right+bottom */}
-          <SheetAccent opts={{ overflowRight:0.30, overflowBottom:0.20, amplitude:0.10, colourPeriod:20, opacity:0.9 }} />
+          {/* Sheet accent — static, responds to cursor, mix-blend on text */}
+          <SheetAccent variant="hero" />
           {/* eyebrow */}
           <div style={{
             fontFamily:MONO, fontSize:"11px", letterSpacing:"1.5px",

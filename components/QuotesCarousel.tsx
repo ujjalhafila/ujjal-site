@@ -97,30 +97,32 @@ class SheetRenderer {
 
     // Cursor warps the sheet slightly — gentle bulge toward cursor
     const cx = this.smX, cy = this.smY;
-    const cWarp = Math.exp(-((u-cx)*(u-cx)*2.5 + (v-cy)*(v-cy)*5)) * 0.24;
+    const cWarp = Math.exp(-((u-cx)*(u-cx)*4 + (v-cy)*(v-cy)*8)) * 0.18;
 
     return w1 + w2 + cWarp;
   }
 
-  // Perspective projection: right = close/wide, left = far/narrow.
-  // perspScale(u) linearly grows from 0.35 (left) to 1.0 (right).
+  // Project a 3D point onto canvas 2D with simple perspective
+  // The sheet occupies the bottom-left ↔ top-right diagonal of the canvas
+  // u,v = grid coords (0–1), z = displacement (-1 to +1 approx)
   project(u:number, v:number, z:number, W:number, H:number, intro:number):[number,number]{
-    const ps = lerp(0.35, 1.0, u);  // perspective scale
+    // Sheet runs from bottom-left to top-right:
+    //   u=0,v=0  → near bottom-left (about 5%x, 90%y)
+    //   u=1,v=1  → near top-right  (about 95%x, 10%y)
+    // We parameterise along the diagonal
 
-    // Centre line: left at (3%x, 88%y) → right at (115%x, 12%y)
-    // Right end is off-canvas — mesh is cropped by overflow:hidden
-    const baseX = lerp(W * 0.03, W * 1.15, u);
-    const baseY = lerp(H * 0.88, H * 0.12, u);
+    // Base X: u drives us across; slight V contribution for width
+    const baseX = (u * 0.85 + v * 0.12) * W + W * 0.05;
+    // Base Y: diagonal arrangement — high u+v = high up on canvas
+    const baseY = H * (0.88 - (u * 0.55 + v * 0.32));
 
-    // Ribbon spread: 0.52H on right (wide/close), 0.18H on left (narrow/far)
-    const spread = lerp(H * 0.18, H * 0.52, u);
-    const rowY   = baseY + (v - 0.5) * spread;
+    // Z displacement: shifts vertically — positive Z = toward viewer = downward
+    // Amount scales with perspective (nearer rows = more displacement)
+    const zScale = H * 0.10 * intro;
+    const px = baseX - z * W * 0.018 * intro;   // slight horizontal parallax
+    const py = baseY + z * zScale;
 
-    // Z displacement scales with perspective — near side waves more
-    const zScale    = H * 0.11 * ps * intro;
-    const zParallax = z * W * 0.022 * ps * intro;
-
-    return [baseX + zParallax, rowY + z * zScale];
+    return [px, py];
   }
 
   frame(now:number){
@@ -162,8 +164,11 @@ class SheetRenderer {
     // Glow pass: wide, blurred strokes along each row
     // Bright pass: thin crisp quads with Z-derived fill
 
-    // Edge fade: only dissolve at the left end (right is cropped by overflow:hidden)
-    const edgeFade = (u:number) => clamp(u / 0.12, 0, 1);
+    // Edge fade function: dissolves at u<0.08 and u>0.92
+    const edgeFade = (u:number) => Math.min(
+      clamp(u/0.08,  0, 1),
+      clamp((1-u)/0.08, 0, 1)
+    );
 
     // ── Pass 1: glow — draw filled strips with shadow ──────────────────
     ctx.save();
