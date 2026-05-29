@@ -1,278 +1,238 @@
 "use client";
 /**
- * SheetAccent — cursor-reactive line accent.
- * No animation. Redraws only on cursor move + resize.
+ * SheetAccent — static cursor-reactive line accent.
+ * No animation loop. Redraws only on cursor move + resize.
  *
- * "hero":  3 vertical S-curves on the right half, entering/exiting
- *          top and bottom edges, crossing each other (like image 2).
- * "about": 1 gentle S-curve entering bottom-left, exiting top-right
- *          (like image 1).
+ * hero  — 2 near-vertical S-curves + 1 short arc, right half of column.
+ *         Enter/exit top and bottom. Cross once. Stripe-minimal aesthetic.
+ * about — 1 single flowing S-curve from bottom-left to top-right.
  *
- * Colour is derived from cursor X position — slides through the accent palette.
- * mix-blend-mode: screen so text beneath takes on the glow colour.
+ * Colour: cursor X+Y position blends through the accent palette.
+ * Glow: soft shadow behind each line illuminates nearby text via mix-blend-mode.
  */
 import { useEffect, useRef } from "react";
 
-function resolveRgb(v: string, el: HTMLElement): [number,number,number] {
-  const raw = getComputedStyle(el).getPropertyValue(v).trim();
-  if (raw.startsWith("rgb")) { const m = raw.match(/[\d.]+/g); if (m && m.length >= 3) return [+m[0],+m[1],+m[2]]; }
-  if (raw.startsWith("#")) { const c=raw.replace("#",""), h=c.length===3?c.split("").map(x=>x+x).join(""):c; return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
-  return [77,255,180];
+function resolveRgb(v:string, el:HTMLElement):[number,number,number]{
+  const raw=getComputedStyle(el).getPropertyValue(v).trim();
+  if(raw.startsWith("rgb")){const m=raw.match(/[\d.]+/g);if(m&&m.length>=3)return[+m[0],+m[1],+m[2]];}
+  if(raw.startsWith("#")){const c=raw.replace("#",""),h=c.length===3?c.split("").map(x=>x+x).join(""):c;return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+  return[77,255,180];
 }
 function lerp(a:number,b:number,t:number){return a+(b-a)*t;}
 function lerpRgb(a:[number,number,number],b:[number,number,number],t:number):[number,number,number]{
-  return [lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
+  return[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
 }
 function clamp(v:number,lo:number,hi:number){return Math.max(lo,Math.min(hi,v));}
 
 const PALETTE = ["--c-teal","--c-blue","--c-purple","--c-red"];
 export type SheetVariant = "hero" | "about";
 
-// ── Colour from cursor position ───────────────────────────────────────────
-// cx 0→1 maps through the palette. Returns an RGB smoothly lerped between
-// adjacent palette entries.
-function colourFromCursor(cx: number, el: HTMLElement): [number,number,number] {
-  const t  = clamp(cx, 0, 1) * (PALETTE.length - 1);
-  const lo = Math.floor(t);
-  const hi = Math.min(lo + 1, PALETTE.length - 1);
-  const f  = t - lo;
-  const cA = resolveRgb(PALETTE[lo], el);
-  const cB = resolveRgb(PALETTE[hi], el);
-  return lerpRgb(cA, cB, f);
+// Cursor X+Y → palette colour
+// cx drives the palette index, cy modulates saturation/brightness slightly
+function colourFromCursor(cx:number, cy:number, el:HTMLElement):[number,number,number]{
+  // cx 0→1 sweeps palette; cy subtly mixes toward the next colour
+  const raw  = clamp(cx, 0, 1) * (PALETTE.length - 1);
+  const lo   = Math.floor(raw);
+  const hi   = Math.min(lo+1, PALETTE.length-1);
+  const cA   = resolveRgb(PALETTE[lo], el);
+  const cB   = resolveRgb(PALETTE[hi], el);
+  // cy modulates slightly toward the adjacent colour for 2D colour response
+  const t    = (raw - lo) + (cy - 0.5) * 0.25;
+  return lerpRgb(cA, cB, clamp(t, 0, 1));
 }
 
-// ── Draw a single Bézier curve with glow ──────────────────────────────────
-function drawCurve(
+// Draw one Bézier — thin core line + soft glow only (no fill, Stripe-style)
+function drawLine(
   ctx: CanvasRenderingContext2D,
   p0x:number, p0y:number,
   cp1x:number, cp1y:number,
   cp2x:number, cp2y:number,
-  p1x:number, p1y:number,
+  p1x:number,  p1y:number,
   r:number, g:number, b:number,
-  lineWidth: number,
-  glowRadius: number,
-  alpha: number,
-) {
-  // Glow pass
+  opts: { width?: number; alpha?: number; glow?: number }
+){
+  const { width=1.0, alpha=0.7, glow=10 } = opts;
+
+  // Wide soft glow — spreads colour into the background
   ctx.save();
-  ctx.shadowColor = `rgba(${r},${g},${b},${(alpha*0.4).toFixed(3)})`;
-  ctx.shadowBlur  = glowRadius;
-  ctx.strokeStyle = `rgba(${r},${g},${b},${(alpha*0.25).toFixed(3)})`;
-  ctx.lineWidth   = lineWidth * 3;
+  ctx.shadowColor = `rgba(${r},${g},${b},${(alpha*0.35).toFixed(3)})`;
+  ctx.shadowBlur  = glow * 2.5;
+  ctx.strokeStyle = `rgba(${r},${g},${b},${(alpha*0.15).toFixed(3)})`;
+  ctx.lineWidth   = width * 4;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(p0x, p0y);
-  ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p1x, p1y);
+  ctx.moveTo(p0x,p0y);
+  ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p1x,p1y);
   ctx.stroke();
   ctx.restore();
 
-  // Core line
+  // Core: sharp 1px (or slightly wider) line
   ctx.save();
-  ctx.shadowColor = `rgba(${r},${g},${b},${(alpha*0.5).toFixed(3)})`;
-  ctx.shadowBlur  = glowRadius * 0.4;
+  ctx.shadowColor = `rgba(${r},${g},${b},${(alpha*0.55).toFixed(3)})`;
+  ctx.shadowBlur  = glow * 0.6;
   ctx.strokeStyle = `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
-  ctx.lineWidth   = lineWidth;
+  ctx.lineWidth   = width;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(p0x, p0y);
-  ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p1x, p1y);
+  ctx.moveTo(p0x,p0y);
+  ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p1x,p1y);
   ctx.stroke();
   ctx.restore();
 }
 
-// ── Hero: 2 full S-curves + 1 short arc on the right half ────────────────
-// Matches reference image 2:
-// - Left curve: enters ~65%x top, exits ~68%x bottom — broad S
-// - Middle curve: enters ~72%x top, exits ~75%x bottom — tighter S, crosses left
-// - Right arc: enters ~82%x top, curves down and exits right edge ~50%y — short
-// Cursor X shifts cluster; cursor Y controls S-bend amplitude
+// ── HERO — right-half S-curves ────────────────────────────────────────────
+// 2 full-height S-curves that cross once + 1 shorter arc exiting right edge.
+// Cursor X shifts the cluster; cursor Y bends the S amplitude.
+// Positions match reference image 2.
 function drawHero(
   ctx: CanvasRenderingContext2D,
-  W: number, H: number,
-  cx: number, cy: number,
-  col: [number,number,number],
-) {
-  const [r,g,b] = col;
-  const shift = (cx - 0.5) * W * 0.10;   // lateral shift with cursor X
-  const bend  = (cy - 0.5) * H * 0.22;   // S amplitude with cursor Y
+  W:number, H:number,
+  cx:number, cy:number,
+  col:[number,number,number],
+){
+  const[r,g,b] = col;
 
-  // Faint sheet body fill between curve 1 and curve 2 — shows the sheet surface
+  // How far the cluster shifts with cursor X
+  const shiftX = (cx - 0.5) * W * 0.08;
+  // S amplitude from cursor Y
+  const bend   = (cy - 0.5) * H * 0.20;
+
+  // ── Curve A — leftmost full S ─────────────────────────────────────
+  // Enters top at ~65%, exits bottom at ~66% (nearly vertical, slight S)
   {
-    const bx1 = W * 0.64 + shift;
-    const bx2 = W * 0.73 + shift;
-    ctx.save();
-    ctx.beginPath();
-    // Top edge: curve 1 forward
-    ctx.moveTo(bx1 + W*0.01, 0);
-    ctx.bezierCurveTo(bx1+W*0.07, H*0.28+bend,  bx1-W*0.06, H*0.72-bend,  bx1-W*0.01, H);
-    // Bottom edge: curve 2 backward
-    ctx.bezierCurveTo(bx2-W*0.06+W*0.02, H*0.70-bend*0.85,  bx2-W*0.06, H*0.30+bend*0.85,  bx2-W*0.03, 0);
-    ctx.closePath();
-    ctx.fillStyle = `rgba(${r},${g},${b},0.04)`;
-    ctx.fill();
-    ctx.restore();
+    const x = W * 0.65 + shiftX;
+    drawLine(ctx,
+      x + W*0.01, 0,                       // top entry
+      x + W*0.07, H*0.30 + bend,           // CP1: bows right
+      x - W*0.05, H*0.70 - bend,           // CP2: bows left
+      x - W*0.01, H,                       // bottom exit
+      r,g,b, { width:0.9, alpha:0.65, glow:12 });
   }
 
-  // Full S-curve 1 (leftmost of the pair)
+  // ── Curve B — crosses A in the middle ────────────────────────────
+  // Enters top at ~73%, exits bottom at ~71% (reversed S)
   {
-    const bx = W * 0.64 + shift;
-    drawCurve(ctx,
-      bx + W*0.01,  0,                            // enters top
-      bx + W*0.07,  H*0.28 + bend,                // CP1 — bows right
-      bx - W*0.06,  H*0.72 - bend,                // CP2 — bows left
-      bx - W*0.01,  H,                            // exits bottom
-      r,g,b, 0.9, 14, 0.60);
+    const x = W * 0.73 + shiftX;
+    drawLine(ctx,
+      x - W*0.02, 0,                       // top entry (left of x)
+      x - W*0.07, H*0.32 + bend*0.9,       // CP1: bows left — crosses A
+      x + W*0.05, H*0.68 - bend*0.9,       // CP2: bows right
+      x + W*0.02, H,                       // bottom exit (right of x)
+      r,g,b, { width:0.75, alpha:0.52, glow:10 });
   }
 
-  // Full S-curve 2 (middle, crosses curve 1)
+  // ── Arc C — short, enters top-right, exits right edge ────────────
+  // Not full height — enters ~83%x top, exits right edge ~55%y
   {
-    const bx = W * 0.73 + shift;
-    drawCurve(ctx,
-      bx - W*0.03,  0,                            // enters top, slightly left
-      bx - W*0.06,  H*0.30 + bend*0.85,           // CP1 — bows left (crosses #1)
-      bx + W*0.05,  H*0.70 - bend*0.85,           // CP2 — bows right
-      bx + W*0.02,  H,                            // exits bottom
-      r,g,b, 0.7, 12, 0.50);
-  }
-
-  // Short arc (rightmost) — enters top-right, exits right edge mid-way
-  {
-    const bx = W * 0.84 + shift * 0.6;
-    drawCurve(ctx,
-      bx,          0,                             // enters top
-      bx + W*0.08, H*0.18 + bend*0.5,             // CP1 — bows right
-      W * 1.04,    H*0.38 - bend*0.3,             // CP2 — off right edge
-      W * 1.02,    H*0.50,                        // exits right edge ~50%y
-      r,g,b, 0.55, 10, 0.38);
+    const x = W * 0.83 + shiftX * 0.5;
+    drawLine(ctx,
+      x, 0,                                // top entry
+      x + W*0.09, H*0.20 + bend*0.4,      // CP1: bows right
+      W * 1.05,   H*0.42 - bend*0.2,      // CP2: off-canvas right
+      W * 1.02,   H * 0.55,               // exits right ~55%y
+      r,g,b, { width:0.6, alpha:0.38, glow:8 });
   }
 }
 
-// ── About: 1 flowing S-curve, bottom-left → top-right ──────────────────
-// Matches reference image 1:
-// Enters ~30%x off the bottom edge, shallow S, exits right edge ~10%y.
-// Cursor X controls the lateral belly of the S.
-// Cursor Y shifts the vertical midpoint of the curve.
+// ── ABOUT — single flowing S-curve ───────────────────────────────────────
+// One graceful line from bottom-left to top-right.
+// Reference image 1: enters ~30%x from bottom, exits right edge near top.
+// Cursor X shifts the S-belly amplitude; cursor Y shifts the midpoint.
 function drawAbout(
   ctx: CanvasRenderingContext2D,
-  W: number, H: number,
-  cx: number, cy: number,
-  col: [number,number,number],
-) {
-  const [r,g,b] = col;
+  W:number, H:number,
+  cx:number, cy:number,
+  col:[number,number,number],
+){
+  const[r,g,b] = col;
 
-  // Amplitude of the S belly — driven by cursor X
-  const belly = lerp(-W * 0.10, W * 0.14, cx);
-  // Vertical midpoint driven by cursor Y
-  const midY  = lerp(H * 0.35, H * 0.60, cy);
+  // Belly controlled by cursor X — lerp from left-bow to right-bow
+  const belly = lerp(-W * 0.08, W * 0.12, cx);
+  // Vertical midpoint of the S, shifted by cursor Y
+  const midY  = lerp(H * 0.38, H * 0.58, cy);
 
-  // Entry: bottom, about 30% from left — just below bottom edge
+  // Entry: just below bottom edge, ~30% from left
   const p0x = W * 0.30;
-  const p0y = H * 1.04;
+  const p0y = H * 1.03;
 
-  // Exit: right edge, near the top
-  const p1x = W * 1.03;
+  // Exit: right edge, near top
+  const p1x = W * 1.02;
   const p1y = H * 0.10;
 
-  // CP1: lower belly — bows toward left
-  const cp1x = W * 0.18 + belly;
+  // Control points form the gentle S
+  const cp1x = W * 0.16 + belly;   // lower belly
   const cp1y = midY + H * 0.22;
+  const cp2x = W * 0.70 - belly;   // upper belly
+  const cp2y = midY - H * 0.20;
 
-  // CP2: upper belly — bows toward right
-  const cp2x = W * 0.68 - belly;
-  const cp2y = midY - H * 0.18;
-
-  drawCurve(ctx, p0x,p0y, cp1x,cp1y, cp2x,cp2y, p1x,p1y,
-    r,g,b, 1.0, 16, 0.65);
+  drawLine(ctx, p0x,p0y, cp1x,cp1y, cp2x,cp2y, p1x,p1y,
+    r,g,b, { width:1.0, alpha:0.70, glow:14 });
 }
 
-// ── Main draw ─────────────────────────────────────────────────────────────
-function draw(
-  cvs: HTMLCanvasElement,
-  cx: number,
-  cy: number,
-  variant: SheetVariant,
-) {
-  const ctx = cvs.getContext("2d");
-  if (!ctx) return;
-  const dpr = window.devicePixelRatio || 1;
-  const W = cvs.offsetWidth, H = cvs.offsetHeight;
-  if (W === 0 || H === 0) return;
-
-  if (cvs.width !== Math.round(W*dpr) || cvs.height !== Math.round(H*dpr)) {
-    cvs.width  = Math.round(W*dpr);
-    cvs.height = Math.round(H*dpr);
-    cvs.style.width  = W + "px";
-    cvs.style.height = H + "px";
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+// ── Main ─────────────────────────────────────────────────────────────────
+function draw(cvs:HTMLCanvasElement, cx:number, cy:number, variant:SheetVariant){
+  const ctx=cvs.getContext("2d"); if(!ctx)return;
+  const dpr=window.devicePixelRatio||1, W=cvs.offsetWidth, H=cvs.offsetHeight;
+  if(W===0||H===0)return;
+  if(cvs.width!==Math.round(W*dpr)||cvs.height!==Math.round(H*dpr)){
+    cvs.width=Math.round(W*dpr); cvs.height=Math.round(H*dpr);
+    cvs.style.width=W+"px"; cvs.style.height=H+"px";
+    ctx.setTransform(dpr,0,0,dpr,0,0);
   }
-
-  ctx.clearRect(0, 0, W, H);
-
-  const col = colourFromCursor(cx, cvs);
-  if (variant === "hero") {
-    drawHero(ctx, W, H, cx, cy, col);
-  } else {
-    drawAbout(ctx, W, H, cx, cy, col);
-  }
+  ctx.clearRect(0,0,W,H);
+  const col=colourFromCursor(cx,cy,cvs);
+  if(variant==="hero") drawHero(ctx,W,H,cx,cy,col);
+  else                 drawAbout(ctx,W,H,cx,cy,col);
 }
 
-// ── Component ─────────────────────────────────────────────────────────────
-export default function SheetAccent({ variant }: { variant: SheetVariant }) {
+// ── React component ───────────────────────────────────────────────────────
+export default function SheetAccent({ variant }:{ variant:SheetVariant }){
   const cvsRef  = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const rafRef  = useRef<number|null>(null);
-  const posRef  = useRef({ cx: 0.5, cy: 0.5 });
+  const posRef  = useRef({ cx:0.5, cy:0.5 });
 
-  // Initial draw + resize
-  useEffect(() => {
-    const cvs = cvsRef.current; if (!cvs) return;
-    const doDraw = () => draw(cvs, posRef.current.cx, posRef.current.cy, variant);
-    const t = setTimeout(doDraw, 80);
-    const obs = new ResizeObserver(doDraw);
-    if (cvs.parentElement) obs.observe(cvs.parentElement);
-    return () => { clearTimeout(t); obs.disconnect(); };
-  }, [variant]);
+  useEffect(()=>{
+    const cvs=cvsRef.current; if(!cvs)return;
+    const doDraw=()=>draw(cvs,posRef.current.cx,posRef.current.cy,variant);
+    const t=setTimeout(doDraw,80);
+    const obs=new ResizeObserver(doDraw);
+    if(cvs.parentElement) obs.observe(cvs.parentElement);
+    return()=>{ clearTimeout(t); obs.disconnect(); };
+  },[variant]);
 
-  // Cursor tracking
-  useEffect(() => {
-    const wrap = wrapRef.current; if (!wrap) return;
-    const cvs  = cvsRef.current; if (!cvs) return;
-
-    const onMove = (e: MouseEvent) => {
-      const rect = wrap.getBoundingClientRect();
-      posRef.current = {
-        cx: (e.clientX - rect.left) / rect.width,
-        cy: (e.clientY - rect.top)  / rect.height,
+  useEffect(()=>{
+    const wrap=wrapRef.current; if(!wrap)return;
+    const cvs=cvsRef.current;  if(!cvs)return;
+    const onMove=(e:MouseEvent)=>{
+      const rect=wrap.getBoundingClientRect();
+      posRef.current={
+        cx:(e.clientX-rect.left)/rect.width,
+        cy:(e.clientY-rect.top)/rect.height,
       };
-      if (rafRef.current) return;
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-        draw(cvs, posRef.current.cx, posRef.current.cy, variant);
+      if(rafRef.current)return;
+      rafRef.current=requestAnimationFrame(()=>{
+        rafRef.current=null;
+        draw(cvs,posRef.current.cx,posRef.current.cy,variant);
       });
     };
-
-    wrap.addEventListener("mousemove", onMove);
-    return () => {
-      wrap.removeEventListener("mousemove", onMove);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    wrap.addEventListener("mousemove",onMove);
+    return()=>{
+      wrap.removeEventListener("mousemove",onMove);
+      if(rafRef.current)cancelAnimationFrame(rafRef.current);
     };
-  }, [variant]);
+  },[variant]);
 
-  return (
-    <div
-      ref={wrapRef}
-      style={{ position:"absolute", inset:0, overflow:"hidden", pointerEvents:"none", zIndex:0 }}
-    >
-      <canvas
-        ref={cvsRef}
-        aria-hidden="true"
+  return(
+    <div ref={wrapRef} style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
+      <canvas ref={cvsRef} aria-hidden="true"
         style={{
           position:"absolute", inset:0,
           width:"100%", height:"100%",
           pointerEvents:"none",
+          // screen blend: where glow overlaps text, text takes on the accent colour
           mixBlendMode:"screen",
-        }}
-      />
+        }}/>
     </div>
   );
 }
