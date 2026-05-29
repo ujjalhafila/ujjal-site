@@ -80,9 +80,12 @@ function drawCurve(
   ctx.restore();
 }
 
-// ── Hero: 3 near-vertical curves on the right half ───────────────────────
-// They are spaced ~4–6% apart horizontally, enter top edge, exit bottom edge.
-// Cursor X shifts all curves left/right slightly; cursor Y bends amplitude.
+// ── Hero: 2 full S-curves + 1 short arc on the right half ────────────────
+// Matches reference image 2:
+// - Left curve: enters ~65%x top, exits ~68%x bottom — broad S
+// - Middle curve: enters ~72%x top, exits ~75%x bottom — tighter S, crosses left
+// - Right arc: enters ~82%x top, curves down and exits right edge ~50%y — short
+// Cursor X shifts cluster; cursor Y controls S-bend amplitude
 function drawHero(
   ctx: CanvasRenderingContext2D,
   W: number, H: number,
@@ -90,47 +93,65 @@ function drawHero(
   col: [number,number,number],
 ) {
   const [r,g,b] = col;
+  const shift = (cx - 0.5) * W * 0.10;   // lateral shift with cursor X
+  const bend  = (cy - 0.5) * H * 0.22;   // S amplitude with cursor Y
 
-  // Base X positions of the 3 curves — right-side cluster
-  // Cursor X shifts the whole cluster; cursor Y bends the S amplitude
-  const shift   = (cx - 0.5) * W * 0.12;   // horizontal shift with cursor
-  const bend    = (cy - 0.5) * H * 0.28;   // S-curve amplitude with cursor Y
+  // Faint sheet body fill between curve 1 and curve 2 — shows the sheet surface
+  {
+    const bx1 = W * 0.64 + shift;
+    const bx2 = W * 0.73 + shift;
+    ctx.save();
+    ctx.beginPath();
+    // Top edge: curve 1 forward
+    ctx.moveTo(bx1 + W*0.01, 0);
+    ctx.bezierCurveTo(bx1+W*0.07, H*0.28+bend,  bx1-W*0.06, H*0.72-bend,  bx1-W*0.01, H);
+    // Bottom edge: curve 2 backward
+    ctx.bezierCurveTo(bx2-W*0.06+W*0.02, H*0.70-bend*0.85,  bx2-W*0.06, H*0.30+bend*0.85,  bx2-W*0.03, 0);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(${r},${g},${b},0.04)`;
+    ctx.fill();
+    ctx.restore();
+  }
 
-  // Curve specs: [baseXFrac, entryOffset, midXOffset, exitOffset, phaseSign]
-  // phaseSign alternates so they cross each other
-  const specs = [
-    { xBase: 0.64, ex: 0,       mx:  0.06, bend: bend,        phase: 1,  w: 1.0, a: 0.65 },
-    { xBase: 0.72, ex: 0.03*W,  mx: -0.04, bend: bend*0.8,    phase:-1,  w: 0.75,a: 0.55 },
-    { xBase: 0.80, ex:-0.02*W,  mx:  0.05, bend: bend*1.1,    phase: 1,  w: 0.55,a: 0.40 },
-  ];
+  // Full S-curve 1 (leftmost of the pair)
+  {
+    const bx = W * 0.64 + shift;
+    drawCurve(ctx,
+      bx + W*0.01,  0,                            // enters top
+      bx + W*0.07,  H*0.28 + bend,                // CP1 — bows right
+      bx - W*0.06,  H*0.72 - bend,                // CP2 — bows left
+      bx - W*0.01,  H,                            // exits bottom
+      r,g,b, 0.9, 14, 0.60);
+  }
 
-  for (const s of specs) {
-    const bx = s.xBase * W + shift;
+  // Full S-curve 2 (middle, crosses curve 1)
+  {
+    const bx = W * 0.73 + shift;
+    drawCurve(ctx,
+      bx - W*0.03,  0,                            // enters top, slightly left
+      bx - W*0.06,  H*0.30 + bend*0.85,           // CP1 — bows left (crosses #1)
+      bx + W*0.05,  H*0.70 - bend*0.85,           // CP2 — bows right
+      bx + W*0.02,  H,                            // exits bottom
+      r,g,b, 0.7, 12, 0.50);
+  }
 
-    // Entry: top edge, slight x offset
-    const p0x = bx + s.ex;
-    const p0y = 0;
-
-    // Exit: bottom edge, slight x offset (opposite side for the cross)
-    const p1x = bx - s.ex * 1.4;
-    const p1y = H;
-
-    // Control points create the S shape
-    // CP1: upper portion — bent one way
-    const cp1x = bx + s.mx * W * s.phase;
-    const cp1y = H * 0.28 + s.bend * 0.7;
-
-    // CP2: lower portion — bent opposite
-    const cp2x = bx - s.mx * W * s.phase;
-    const cp2y = H * 0.72 - s.bend * 0.7;
-
-    drawCurve(ctx, p0x,p0y, cp1x,cp1y, cp2x,cp2y, p1x,p1y,
-      r,g,b, s.w, 16, s.a);
+  // Short arc (rightmost) — enters top-right, exits right edge mid-way
+  {
+    const bx = W * 0.84 + shift * 0.6;
+    drawCurve(ctx,
+      bx,          0,                             // enters top
+      bx + W*0.08, H*0.18 + bend*0.5,             // CP1 — bows right
+      W * 1.04,    H*0.38 - bend*0.3,             // CP2 — off right edge
+      W * 1.02,    H*0.50,                        // exits right edge ~50%y
+      r,g,b, 0.55, 10, 0.38);
   }
 }
 
-// ── About: 1 flowing S-curve, bottom-left → top-right ───────────────────
-// Cursor X shifts amplitude of the S; cursor Y shifts vertical midpoint.
+// ── About: 1 flowing S-curve, bottom-left → top-right ──────────────────
+// Matches reference image 1:
+// Enters ~30%x off the bottom edge, shallow S, exits right edge ~10%y.
+// Cursor X controls the lateral belly of the S.
+// Cursor Y shifts the vertical midpoint of the curve.
 function drawAbout(
   ctx: CanvasRenderingContext2D,
   W: number, H: number,
@@ -139,29 +160,29 @@ function drawAbout(
 ) {
   const [r,g,b] = col;
 
-  // Amplitude driven by cursor X
-  const amp   = lerp(W * 0.06, W * 0.20, cx);
-  // Vertical mid driven by cursor Y
-  const midY  = lerp(H * 0.38, H * 0.62, cy);
+  // Amplitude of the S belly — driven by cursor X
+  const belly = lerp(-W * 0.10, W * 0.14, cx);
+  // Vertical midpoint driven by cursor Y
+  const midY  = lerp(H * 0.35, H * 0.60, cy);
 
-  // Entry: bottom-left area
-  const p0x = W * 0.18;
-  const p0y = H * 1.02;   // just off bottom edge
+  // Entry: bottom, about 30% from left — just below bottom edge
+  const p0x = W * 0.30;
+  const p0y = H * 1.04;
 
-  // Exit: top-right area
-  const p1x = W * 1.02;   // just off right edge
-  const p1y = H * 0.12;
+  // Exit: right edge, near the top
+  const p1x = W * 1.03;
+  const p1y = H * 0.10;
 
-  // CP1: curves left then right — the lower belly of the S
-  const cp1x = W * 0.20 - amp;
-  const cp1y = midY + H * 0.20;
+  // CP1: lower belly — bows toward left
+  const cp1x = W * 0.18 + belly;
+  const cp1y = midY + H * 0.22;
 
-  // CP2: mirror for the upper belly
-  const cp2x = W * 0.72 + amp;
-  const cp2y = midY - H * 0.20;
+  // CP2: upper belly — bows toward right
+  const cp2x = W * 0.68 - belly;
+  const cp2y = midY - H * 0.18;
 
   drawCurve(ctx, p0x,p0y, cp1x,cp1y, cp2x,cp2y, p1x,p1y,
-    r,g,b, 1.1, 18, 0.65);
+    r,g,b, 1.0, 16, 0.65);
 }
 
 // ── Main draw ─────────────────────────────────────────────────────────────
