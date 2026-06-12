@@ -9,6 +9,7 @@ import ViewWorkBtn from "../components/ViewWorkBtn";
 import ThinkSpaceBtn from "../components/ThinkSpaceBtn";
 import CountUp from "../components/CountUp";
 import { getFeaturedWork, getFeaturedThink, getActiveCta } from "../lib/notion";
+import { PROCESS_PHASES } from "../data/process";
 
 export const dynamic = "force-dynamic";
 
@@ -271,6 +272,54 @@ export default async function Home() {
           </div>
         </section>
       )}
+
+      {/* ── HOW I THINK ───────────────────────────────────────────────── */}
+      <section style={{ borderBottom:"1px solid var(--rule)" }} aria-label="How I think">
+        <div style={{
+          display:"flex", justifyContent:"space-between", alignItems:"center",
+          padding:"0 28px", height:"40px", borderBottom:"1px solid var(--rule)",
+        }}>
+          <span style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", letterSpacing:"1.5px" }}>
+            How I Think
+          </span>
+          <Link href="/process" className="sec-link-hover"
+            style={{ fontFamily:MONO, fontSize:"11px", textDecoration:"none" }}>
+            Full process →
+          </Link>
+        </div>
+
+        <div className="grid-3" style={{ borderBottom:"none" }}>
+          {PROCESS_PHASES.map((ph, i) => (
+            <Link
+              key={ph.key}
+              href={`/process#${ph.key}`}
+              className="glow-card reveal"
+              style={{
+                borderRight: (i + 1) % 3 !== 0 ? "1px solid var(--rule)" : "none",
+                borderBottom: i < PROCESS_PHASES.length - 3 ? "1px solid var(--rule)" : "none",
+                ["--gc" as string]: "rgba(240,237,230,0.06)",
+                ["--gc-line" as string]: ph.accent,
+                ["--gc-text" as string]: ph.accent,
+                flexDirection:"column",
+                padding:"26px 24px 30px", gap:"14px", display:"flex",
+              } as React.CSSProperties}
+            >
+              <div style={{ fontFamily:MONO, fontSize:"11px", color:"var(--ink3)", display:"flex", justifyContent:"space-between" }}>
+                <span style={{ color: ph.accent }}>{String(i + 1).padStart(2, "0")}</span>
+                <span className="gc-arr">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+                </span>
+              </div>
+              <div className="gc-title" style={{ fontSize:"16px", fontWeight:400, letterSpacing:"-0.3px", lineHeight:1.25 }}>
+                {ph.title}
+              </div>
+              <p style={{ fontSize:"12px", fontWeight:300, color:"var(--ink2)", lineHeight:1.65 }}>
+                {ph.oneLiner}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* ── THINK SPACE ───────────────────────────────────────────────── */}
       <section style={{ borderBottom:"1px solid var(--rule)" }} aria-label="Think space">

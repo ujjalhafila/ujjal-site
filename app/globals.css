@@ -743,3 +743,10 @@ input:focus, textarea:focus { border-color: var(--rule2); outline: none; }
   flex-shrink: 0;
 }
 .sec-link-hover:hover svg { transform: translateX(-3px); }
+
+/* ── Process page chips ──────────────────────────────────────────────────── */
+.proc-chip { transition: border-color 0.18s ease, color 0.18s ease; }
+.proc-chip:hover { border-color: var(--rule2); color: var(--ink); }
+.proc-chip:hover .proc-chip-arr { color: var(--ink); transform: translate(2px,-2px); }
+.proc-chip-arr { transition: color 0.18s ease, transform 0.18s ease; }
+.proc-chip:active { opacity: 0.65; }
