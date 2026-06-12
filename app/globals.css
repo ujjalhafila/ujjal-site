@@ -750,3 +750,31 @@ input:focus, textarea:focus { border-color: var(--rule2); outline: none; }
 .proc-chip:hover .proc-chip-arr { color: var(--ink); transform: translate(2px,-2px); }
 .proc-chip-arr { transition: color 0.18s ease, transform 0.18s ease; }
 .proc-chip:active { opacity: 0.65; }
+
+/* ── Process visuals (pv) ────────────────────────────────────────────────── */
+.pv svg { display:block; width:100%; height:auto; }
+@keyframes pvMove   { to { offset-distance:100%; } }
+@keyframes pvTravel { 0% { offset-distance:0%; opacity:0; } 10% { opacity:1; }
+                      88% { opacity:1; } 100% { offset-distance:100%; opacity:0; } }
+@keyframes pvPulse  { 0%,100% { opacity:0.2; } 50% { opacity:0.85; } }
+@keyframes pvRipple { 0% { transform:scale(0.25); opacity:0.7; } 70% { opacity:0.18; }
+                      100% { transform:scale(2.2); opacity:0; } }
+@keyframes pvVanish { 0%,16% { opacity:0.45; } 46%,72% { opacity:0.05; } 100% { opacity:0.45; } }
+@keyframes pvAssemble { from { transform:translate(var(--fx),var(--fy)); opacity:0.3; }
+                        to   { transform:translate(0,0); opacity:1; } }
+.pv .pv-dot   { offset-rotate: 0deg; }
+.pv .pv-rip   { transform-box: fill-box; transform-origin: center;
+                animation: pvRipple 2.8s ease-out infinite; }
+.pv .pv-grain { transform-box: fill-box;
+                animation: pvAssemble 4.5s ease-in-out infinite alternate; }
+.pv .pv-pulse { animation: pvPulse 3s ease-in-out infinite; }
+.pv .pv-van   { animation: pvVanish 5.5s ease-in-out infinite; }
+.pv:hover .pv-dot { filter: drop-shadow(0 0 7px currentColor); }
+.pv:hover .pv-acc { opacity: 1 !important; }
+.pv-oneliner { font-size: 13px; }
+@media (max-width: 700px) { .pv-oneliner { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .pv .pv-dot, .pv .pv-rip { display: none; }
+  .pv .pv-grain { animation: none !important; transform: none; opacity: 1; }
+  .pv .pv-pulse, .pv .pv-van { animation: none !important; }
+}

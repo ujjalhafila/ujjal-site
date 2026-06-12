@@ -369,3 +369,73 @@ export async function getAboutMarkdown(): Promise<string> {
     return n2m.toMarkdownString(blocks).parent;
   } catch { return ""; }
 }
+
+// ── How I Think — process phases ──────────────────────────────────────────
+const PROCESS_DS = process.env.NOTION_PROCESS_DB_ID ?? "053f31d6-3659-4c36-9b94-9165439fe796";
+
+const PROCESS_PLACEHOLDER = "Anything you add here — text, images, embeds — appears under this phase on the site.";
+
+export type ProcessVisualKind = "funnel" | "field" | "grains" | "reduce" | "loop" | "fanout";
+
+export type ProcessPhase = {
+  id: string;
+  key: string;
+  title: string;
+  oneLiner: string;
+  visual: ProcessVisualKind;
+  accent: string;          // CSS colour value
+  inPractice: string[];
+  work: { label: string; href: string }[];
+  markdown: string;        // optional Notion page body (images, extra notes)
+};
+
+const ACCENT_VARS: Record<string, string> = {
+  purple: "var(--c-purple)", teal: "var(--c-teal)", blue: "var(--c-blue)",
+  gold: "var(--c-gold)", orange: "var(--c-orange)", red: "var(--c-red)",
+};
+
+function parseLines(s: string): string[] {
+  return s.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+}
+function parseWorkLinks(s: string): { label: string; href: string }[] {
+  return parseLines(s).map(line => {
+    const [label, href] = line.split("|").map(p => p.trim());
+    return label && href ? { label, href } : null;
+  }).filter(Boolean) as { label: string; href: string }[];
+}
+
+export async function getProcessPhases(): Promise<ProcessPhase[] | null> {
+  try {
+    const results = await queryDS(PROCESS_DS,
+      { property: "Status", select: { equals: "Published" } },
+      [{ property: "Order", direction: "ascending" }]
+    );
+    if (!results.length) return null;
+
+    const phases: ProcessPhase[] = [];
+    for (const p of results) {
+      let markdown = "";
+      try {
+        const blocks = await n2m.pageToMarkdown(p.id);
+        markdown = n2m.toMarkdownString(blocks).parent ?? "";
+        if (markdown.trim() === PROCESS_PLACEHOLDER) markdown = "";
+      } catch { /* body optional */ }
+      const visual = (sel(p, "Visual") || "funnel") as ProcessVisualKind;
+      phases.push({
+        id: p.id,
+        key: richText(p, "Key") || slugify(pageTitle(p)),
+        title: pageTitle(p),
+        oneLiner: richText(p, "One-liner"),
+        visual,
+        accent: ACCENT_VARS[sel(p, "Accent")] ?? "var(--c-teal)",
+        inPractice: parseLines(richText(p, "In Practice")),
+        work: parseWorkLinks(richText(p, "Linked Work")),
+        markdown,
+      });
+    }
+    return phases;
+  } catch (e) {
+    console.error("Process phases query error:", e);
+    return null;
+  }
+}
