@@ -107,8 +107,19 @@ export default async function ProcessPage() {
                 )}
               </div>
 
+              {/* Readable description — for design leads, PMs, peers */}
+              {ph.description && (
+                <p style={{
+                  fontFamily: SANS, fontSize: "14.5px", fontWeight: 300,
+                  lineHeight: 1.85, color: "var(--ink2)",
+                  maxWidth: "680px", padding: "24px 28px 4px",
+                }}>
+                  {ph.description}
+                </p>
+              )}
+
               {/* Visual */}
-              <div className="pv" style={{ padding: "20px clamp(12px,4vw,48px)", maxWidth: "880px", margin: "0 auto" }}>
+              <div className="pv" style={{ padding: "12px clamp(8px,3vw,40px) 4px", maxWidth: "1040px", margin: "0 auto" }}>
                 <ProcessVisual kind={ph.visual} accent={ph.accent} />
               </div>
 

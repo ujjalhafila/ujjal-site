@@ -384,6 +384,7 @@ export type ProcessPhase = {
   oneLiner: string;
   visual: ProcessVisualKind;
   accent: string;          // CSS colour value
+  description: string;     // readable paragraph for design leads / PMs / peers
   inPractice: string[];
   work: { label: string; href: string }[];
   markdown: string;        // optional Notion page body (images, extra notes)
@@ -426,6 +427,7 @@ export async function getProcessPhases(): Promise<ProcessPhase[] | null> {
         key: richText(p, "Key") || slugify(pageTitle(p)),
         title: pageTitle(p),
         oneLiner: richText(p, "One-liner"),
+        description: richText(p, "Description"),
         visual,
         accent: ACCENT_VARS[sel(p, "Accent")] ?? "var(--c-teal)",
         inPractice: parseLines(richText(p, "In Practice")),
