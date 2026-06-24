@@ -441,3 +441,45 @@ export async function getProcessPhases(): Promise<ProcessPhase[] | null> {
     return null;
   }
 }
+
+// ── Behind the Curtain — section content ─────────────────────────────────
+const BEHIND_DS = process.env.NOTION_BEHIND_DB_ID ?? "2e5f1aa8-d0da-4449-b0ea-18cfa5cfe033";
+
+export type BehindSection = {
+  id: string;
+  section: string;
+  name: string;
+  subtitle: string;
+  body: string;
+  markdown: string;
+};
+
+export async function getBehindSections(): Promise<BehindSection[] | null> {
+  try {
+    const results = await queryDS(BEHIND_DS,
+      { property: "Status", select: { equals: "Published" } },
+      [{ property: "Order", direction: "ascending" }]
+    );
+    if (!results.length) return null;
+    const out: BehindSection[] = [];
+    for (const p of results) {
+      let markdown = "";
+      try {
+        const blocks = await n2m.pageToMarkdown(p.id);
+        markdown = n2m.toMarkdownString(blocks).parent ?? "";
+      } catch { /* optional */ }
+      out.push({
+        id: p.id,
+        section: sel(p, "Section"),
+        name: pageTitle(p),
+        subtitle: richText(p, "Subtitle"),
+        body: richText(p, "Body"),
+        markdown,
+      });
+    }
+    return out;
+  } catch (e) {
+    console.error("Behind sections error:", e);
+    return null;
+  }
+}
