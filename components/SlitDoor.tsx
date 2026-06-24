@@ -64,7 +64,7 @@ export default function SlitDoor() {
           transition: "opacity 0.2s ease",
         }}>
           <span style={{ display: "block", width: 18, height: "1px", background: "var(--ink3)" }} />
-          How I Think
+          How I process things
         </div>
       </div>
 
@@ -90,7 +90,7 @@ export default function SlitDoor() {
           color: "var(--ink3)", opacity: opening ? 0 : hover ? 0.7 : 0,
           transition: "opacity 0.3s ease",
         }}>
-          ↓ enter ↓
+          enter
         </div>
       </div>
 

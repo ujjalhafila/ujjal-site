@@ -67,17 +67,6 @@ const EXPERIMENTS = [
   {title:"Strum",tag:"Tool · Music · WebAudio",color:"#3A1FFF",desc:"A personal guitar backing app. 12 groove styles, real strum cascade physics, wavetable synthesis via WebAudioFont. Built so I can sing along without a band."},
 ];
 
-const FACTS = [
-  { stat: "9+ years", detail: "Designing enterprise products — desktop DAPs, AI interfaces, overlay systems, internal tools. Close to a decade of shipping software people use at work." },
-  { stat: "200+", detail: "Enterprise flows redesigned across 5 products at Whatfix — Journeys, Hybrid Flows, Element Agnostic Flows, AI Pop-ups, and the self-help widget on SAP." },
-  { stat: "Ulrich & Eppinger", detail: "I apply a formal product development framework to every major project. Personas, requirements, concept evaluation matrix, written rationale. The rigor is the point." },
-  { stat: "Prototypes, not decks", detail: "Working code with real backends. HTML, React, Next.js, WebAudio. Every concept I pitch has a live URL behind it — Seed, Loom, Strum, this site." },
-  { stat: "On top of software I don't control", detail: "My core skill: designing overlay experiences deployed on apps like SAP where I have zero access to the underlying UI. Confidence scoring, element targeting, fallback strategies." },
-  { stat: "Linear, Notion, Stripe", detail: "My benchmarks. I hold my own work to the craft standard set by these three — not as aspiration, but as a working filter for what ships." },
-  { stat: "I name things", detail: "Seed Engine, Smart Canvas, Loom Grains, Element Agnostic Flows. Naming a concept is how you make it real enough for a team to build on and a stakeholder to fund." },
-  { stat: "Bengaluru-based", detail: "Available immediately. Open to remote, hybrid, or relocation. Looking for the right AI-native or enterprise product design role." },
-];
-
 /* ─── SVG VISUALS ─── */
 function SketchPath(props: React.SVGProps<SVGPathElement>) {
   return <path {...props} strokeLinecap="round" strokeLinejoin="round" />;
@@ -207,7 +196,7 @@ function SlitEdge({ position, onClose }: { position: "top" | "bottom"; onClose: 
         backgroundSize: "200% 100%", animation: "slitShimmer 4s linear infinite",
         opacity: closing ? 0 : 1, transition: "opacity 0.3s",
       }} />
-      <span style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: "#FFE03A", zIndex: 4, opacity: closing ? 0 : hover ? 0.85 : 0.45, transition: "opacity 0.3s", letterSpacing: "0.5px" }}>
+      <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 500, letterSpacing: "1px", color: "#1a0a2e", background: "#FFE03A", padding: "6px 18px", borderRadius: 20, zIndex: 4, opacity: closing ? 0 : hover ? 1 : 0.7, transition: "opacity 0.3s" }}>
         back to portfolio
       </span>
     </div>
@@ -401,42 +390,6 @@ export default function BehindTheCurtain() {
         </p>
       </section>
 
-      {/* ── THINGS YOU SHOULD KNOW ── */}
-      <section style={{ background:"#1a0a2e", padding:"80px clamp(16px,4vw,60px)", position:"relative", overflow:"hidden" }}>
-        <svg style={{ position:"absolute",inset:0,width:"100%",height:"100%",opacity:0.08,pointerEvents:"none" }} aria-hidden="true">
-          <defs><pattern id="fht" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="14" cy="14" r="4" fill="#B07FFF" /></pattern></defs>
-          <rect width="100%" height="100%" fill="url(#fht)" />
-        </svg>
-        <div style={{ position:"relative", zIndex:2 }}>
-          <SectionTag text="Things you should know" bg="#B07FFF" color="#1a0a2e" tilt="0.8deg" />
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(min(280px,100%),1fr))", gap:20, marginTop:8 }}>
-            {FACTS.map(f => (
-              <div key={f.stat} style={{
-                border:"2px solid rgba(255,255,255,0.12)", borderRadius:10, padding:"24px 22px",
-                display:"flex", flexDirection:"column", gap:10, background:"rgba(255,255,255,0.03)",
-              }}>
-                <span style={{ fontFamily:SANS, fontWeight:800, fontSize:"clamp(1.1rem,2vw,1.5rem)", color:"#FFE03A", lineHeight:1.15 }}>{f.stat}</span>
-                <p style={{ fontFamily:SANS, fontSize:13.5, fontWeight:300, lineHeight:1.75, color:"#ffffffcc", margin:0 }}>{f.detail}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CLOSING — just CTA, no "Available" stamp ── */}
-      <section style={{ background:"#FFE03A", padding:"60px clamp(16px,4vw,60px)", display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center", gap:20 }}>
-        <p style={{ fontFamily:SANS, fontSize:15, fontWeight:400, color:"#1a0a2e", maxWidth:360, lineHeight:1.8, opacity:0.75 }}>
-          You scrolled through the whole thing. That says something.
-        </p>
-        <a href="mailto:ujjalhafila@gmail.com" style={{
-          fontFamily:MONO, fontSize:13, letterSpacing:"1.5px", color:"#fff", background:"#1a0a2e",
-          padding:"14px 36px", borderRadius:6, textDecoration:"none", border:"3px solid #1a0a2e", boxShadow:"5px 5px 0 #FF5F6B",
-        }}>ujjalhafila@gmail.com</a>
-        <div style={{ display:"flex", gap:24, marginTop:8 }}>
-          <Link href="/work" style={{ fontFamily:MONO, fontSize:11, color:"#1a0a2e", opacity:0.5, letterSpacing:"1px" }}>view all work</Link>
-          <Link href="/think" style={{ fontFamily:MONO, fontSize:11, color:"#1a0a2e", opacity:0.5, letterSpacing:"1px" }}>think space</Link>
-        </div>
-      </section>
 
       {/* ── BOTTOM SLIT ── */}
       <SlitEdge position="bottom" onClose={goHome} />
