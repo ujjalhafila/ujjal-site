@@ -67,154 +67,228 @@ const EXPERIMENTS = [
   {title:"Strum",tag:"Tool · Music · WebAudio",color:"#3A1FFF",desc:"A personal guitar backing app. 12 groove styles, real strum cascade physics, wavetable synthesis via WebAudioFont. Built so I can sing along without a band."},
 ];
 
-/* ─── SVG VISUALS ─── */
-function SketchPath(props: React.SVGProps<SVGPathElement>) {
-  return <path {...props} strokeLinecap="round" strokeLinejoin="round" />;
+/* ─── SVG VISUALS — hand-drawn sketch style ─── */
+
+/* Wobbly hand-drawn line helper. All diagrams use the same pen:
+   ~2px stroke, round caps, organic curves via Q-beziers with
+   slight offsets so nothing looks machine-perfect. */
+
+const SW = 2;  // sketch pen width
+const SO = 0.55; // default stroke opacity
+
+/* A wobbly rect: four slightly curved edges */
+function Sbox({ x, y, w, h, ink, op = SO }: { x: number; y: number; w: number; h: number; ink: string; op?: number }) {
+  return (
+    <path
+      d={`M${x + 2},${y} Q${x + w / 2},${y - 1.5} ${x + w - 2},${y} Q${x + w + 1},${y + h / 2} ${x + w},${y + h - 1} Q${x + w / 2},${y + h + 1.5} ${x + 2},${y + h} Q${x - 1},${y + h / 2} ${x + 2},${y}`}
+      fill="none" stroke={ink} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round" opacity={op}
+    />
+  );
 }
 
-function VisualFunnel({ink}:{ink:string}) {
+/* A wobbly line between two points */
+function Sline({ x1, y1, x2, y2, ink, op = 0.4, dash = false }: { x1: number; y1: number; x2: number; y2: number; ink: string; op?: number; dash?: boolean }) {
+  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
   return (
-    <svg viewBox="0 0 260 100" width="100%" style={{maxWidth:260}}>
-      {[0,1,2,3].map((r,i)=>(<SketchPath key={i} d={`M12,${18+i*13} Q${30+i*3},${14+i*13} ${60-i*5},${18+i*13} Q${75},${22+i*13} ${78-i*2},${18+i*13}`} fill="none" stroke={ink} strokeWidth="1.6" opacity={0.3+i*0.06} />))}
-      <text x="40" y="76" textAnchor="middle" fontFamily={MONO} fontSize="9" fill={ink} opacity={0.45}>brief?</text>
-      <SketchPath d="M88,50 L108,50" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.4} />
-      <SketchPath d="M103,45 L110,50 L103,55" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.4} />
-      <SketchPath d="M118,20 L218,20 L218,68 L118,68 Z" fill="none" stroke={ink} strokeWidth="1.6" opacity={0.5} />
-      {[0,1,2].map(r=><line key={r} x1="118" y1={33+r*14} x2="218" y2={33+r*14} stroke={ink} strokeWidth="0.8" opacity={0.18} />)}
-      {[0,1,2].map(c=><line key={c} x1={150+c*22} y1="20" x2={150+c*22} y2="68" stroke={ink} strokeWidth="0.8" opacity={0.18} />)}
-      <rect x="194" y="47" width="20" height="12" rx="3" fill={ink} opacity={0.65} />
-      <SketchPath d="M230,30 L254,30 L254,72 L230,72 Z" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.45} />
-      {[38,48,58].map(y=><line key={y} x1="234" y1={y} x2="250" y2={y} stroke={ink} strokeWidth="0.9" opacity={0.25} />)}
+    <path
+      d={`M${x1},${y1} Q${mx},${my - 1.5} ${x2},${y2}`}
+      fill="none" stroke={ink} strokeWidth={SW * 0.7} strokeLinecap="round"
+      opacity={op} strokeDasharray={dash ? "5 4" : undefined}
+    />
+  );
+}
+
+/* A wobbly arrow */
+function Sarrow({ x1, y1, x2, y2, ink, op = 0.4 }: { x1: number; y1: number; x2: number; y2: number; ink: string; op?: number }) {
+  return (
+    <g>
+      <Sline x1={x1} y1={y1} x2={x2} y2={y2} ink={ink} op={op} />
+      <path d={`M${x2 - 7},${y2 - 4} L${x2},${y2} L${x2 - 7},${y2 + 4}`}
+        fill="none" stroke={ink} strokeWidth={SW * 0.7} strokeLinecap="round" opacity={op} />
+    </g>
+  );
+}
+
+/* A wobbly circle */
+function Scircle({ cx, cy, r, ink, op = SO, fill: f }: { cx: number; cy: number; r: number; ink: string; op?: number; fill?: string }) {
+  return (
+    <path
+      d={`M${cx - r},${cy} Q${cx - r},${cy - r - 1} ${cx},${cy - r} Q${cx + r + 1},${cy - r} ${cx + r},${cy} Q${cx + r},${cy + r + 1} ${cx},${cy + r} Q${cx - r - 1},${cy + r} ${cx - r},${cy}`}
+      fill={f || "none"} stroke={ink} strokeWidth={SW} strokeLinecap="round" opacity={op}
+    />
+  );
+}
+
+/* Scribble-fill: short diagonal hatching inside a region */
+function Shatch({ x, y, w, h, ink, op = 0.12, gap = 6 }: { x: number; y: number; w: number; h: number; ink: string; op?: number; gap?: number }) {
+  const lines = [];
+  for (let i = 0; i < w + h; i += gap) {
+    const x1 = x + Math.min(i, w), y1 = y + Math.max(0, i - w);
+    const x2 = x + Math.max(0, i - h), y2 = y + Math.min(i, h);
+    lines.push(<line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={ink} strokeWidth="0.8" opacity={op} />);
+  }
+  return <g>{lines}</g>;
+}
+
+function Label({ x, y, children, ink, op = 0.5 }: { x: number; y: number; children: string; ink: string; op?: number }) {
+  return <text x={x} y={y} textAnchor="middle" fontFamily="'DM Mono',monospace" fontSize="9" fill={ink} opacity={op}>{children}</text>;
+}
+
+/* ── 01 FRAME: scribble → clear box ── */
+function VisualFunnel({ ink }: { ink: string }) {
+  return (
+    <svg viewBox="0 0 220 80" width="100%" style={{ maxWidth: 220 }}>
+      {/* messy scribble */}
+      <path d="M12,20 Q22,12 38,22 Q50,30 30,35 Q15,40 35,46 Q52,50 28,55" fill="none" stroke={ink} strokeWidth={SW} strokeLinecap="round" opacity={0.4} />
+      <path d="M22,18 Q40,15 48,28 Q54,38 38,42 Q20,48 42,56" fill="none" stroke={ink} strokeWidth={SW * 0.8} strokeLinecap="round" opacity={0.3} />
+      <Label x={32} y={74} ink={ink}>messy brief</Label>
+
+      <Sarrow x1={68} y1={38} x2={92} y2={38} ink={ink} />
+
+      {/* clean decided box with check */}
+      <Sbox x={100} y={14} w={100} h={50} ink={ink} />
+      <path d="M110,28 L170,28" fill="none" stroke={ink} strokeWidth={SW * 0.8} strokeLinecap="round" opacity={0.45} />
+      <path d="M110,40 L158,40" fill="none" stroke={ink} strokeWidth={SW * 0.6} strokeLinecap="round" opacity={0.25} />
+      <path d="M110,50 L148,50" fill="none" stroke={ink} strokeWidth={SW * 0.6} strokeLinecap="round" opacity={0.2} />
+      {/* checkmark */}
+      <path d="M176,32 L182,40 L194,24" fill="none" stroke={ink} strokeWidth={SW * 1.2} strokeLinecap="round" strokeLinejoin="round" opacity={0.7} />
+      <Label x={150} y={74} ink={ink}>decided concept</Label>
     </svg>
   );
 }
-function VisualPins({ink}:{ink:string}) {
+
+/* ── 02 GET REAL: screen with pins ── */
+function VisualPins({ ink }: { ink: string }) {
   return (
-    <svg viewBox="0 0 260 100" width="100%" style={{maxWidth:260}}>
-      <SketchPath d="M8,12 L178,12 L178,88 L8,88 Z" fill="none" stroke={ink} strokeWidth="1.6" opacity={0.5} />
-      <line x1="8" y1="28" x2="178" y2="28" stroke={ink} strokeWidth="1" opacity={0.3} />
-      {[0,1,2,3].map(r=><line key={r} x1="18" y1={38+r*14} x2="166" y2={38+r*14} stroke={ink} strokeWidth="1" opacity={0.15} />)}
-      {([[146,44,1],[106,58,2],[158,74,3]] as [number,number,number][]).map(([x,y,n])=>(<g key={n}><circle cx={x} cy={y} r="8" fill={ink} opacity={0.85} /><text x={x} y={y+3.5} textAnchor="middle" fontSize="9" fill={ink==="#fff"?"#FF5F6B":"#fff"} fontFamily={MONO} fontWeight="600">{n}</text></g>))}
-      <SketchPath d="M190,28 L252,28 L252,80 L190,80 Z" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.45} />
-      {[1,2,3].map(n=>(<g key={n}><circle cx="198" cy={34+n*14} r="4.5" fill={ink} opacity={0.7} /><line x1="208" y1={34+n*14} x2="244" y2={34+n*14} stroke={ink} strokeWidth="1" opacity={0.25} /></g>))}
+    <svg viewBox="0 0 220 80" width="100%" style={{ maxWidth: 220 }}>
+      {/* screen */}
+      <Sbox x={30} y={4} w={160} h={60} ink={ink} />
+      <Sline x1={30} y1={18} x2={190} y2={18} ink={ink} op={0.25} />
+      {/* content lines */}
+      {[28, 38, 48].map(y => <Sline key={y} x1={42} y1={y} x2={178} y2={y} ink={ink} op={0.12} />)}
+      {/* hand-drawn pins */}
+      {([[80, 30], [140, 42], [110, 54]] as [number, number][]).map(([x, y], i) => (
+        <g key={i}>
+          <Scircle cx={x} cy={y} r={8} ink={ink} op={0.7} fill={ink} />
+          <text x={x} y={y + 3.5} textAnchor="middle" fontSize="9" fontWeight="600"
+            fill={ink === "#fff" ? "#FF5F6B" : "#fff"} fontFamily="'DM Mono',monospace">{i + 1}</text>
+        </g>
+      ))}
+      <Label x={110} y={76} ink={ink}>edge cases found on the real thing</Label>
     </svg>
   );
 }
-function VisualBlocks({ink}:{ink:string}) {
+
+/* ── 03 BUILD THE SYSTEM: loose parts → assembled grid ── */
+function VisualBlocks({ ink }: { ink: string }) {
   return (
-    <svg viewBox="0 0 260 100" width="100%" style={{maxWidth:260}}>
-      {([["a",10,12],["b",10,42],["c",10,72]] as [string,number,number][]).map(([l,x,y])=>(<g key={l}><rect x={x} y={y} width="60" height="20" rx="4" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.5} /><text x={x+30} y={y+13} textAnchor="middle" fontFamily={MONO} fontSize="9" fill={ink} opacity={0.7}>{l}</text></g>))}
-      {[22,52,82].map((y,i)=><SketchPath key={i} d={`M74,${y} Q90,${y-3} 106,${y}`} fill="none" stroke={ink} strokeWidth="1.2" opacity={0.3} />)}
-      <rect x="110" y="18" width="66" height="66" rx="6" fill="none" stroke={ink} strokeWidth="1.6" opacity={0.55} />
-      <rect x="118" y="26" width="20" height="10" rx="3" fill={ink} fillOpacity={0.15} stroke={ink} strokeWidth="0.8" opacity={0.4} />
-      <rect x="118" y="42" width="20" height="10" rx="3" fill={ink} fillOpacity={0.15} stroke={ink} strokeWidth="0.8" opacity={0.4} />
-      <SketchPath d="M184,52 L204,52" fill="none" stroke={ink} strokeWidth="1.3" opacity={0.35} />
-      <rect x="210" y="10" width="42" height="82" rx="5" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.45} />
-      <line x1="210" y1="28" x2="252" y2="28" stroke={ink} strokeWidth="0.8" opacity={0.2} />
+    <svg viewBox="0 0 220 80" width="100%" style={{ maxWidth: 220 }}>
+      {/* scattered parts */}
+      <Sbox x={8} y={6} w={28} h={18} ink={ink} op={0.4} />
+      <Sbox x={44} y={16} w={28} h={18} ink={ink} op={0.35} />
+      <Sbox x={18} y={42} w={28} h={18} ink={ink} op={0.4} />
+      <Sbox x={50} y={48} w={28} h={18} ink={ink} op={0.35} />
+
+      <Sarrow x1={86} y1={38} x2={110} y2={38} ink={ink} />
+
+      {/* assembled — tidy 2×2 grid */}
+      <Sbox x={118} y={10} w={80} h={56} ink={ink} op={0.55} />
+      <Sbox x={124} y={16} w={32} h={20} ink={ink} op={0.35} />
+      <Sbox x={160} y={16} w={32} h={20} ink={ink} op={0.35} />
+      <Sbox x={124} y={40} w={32} h={20} ink={ink} op={0.35} />
+      <Sbox x={160} y={40} w={32} h={20} ink={ink} op={0.35} />
+      <Shatch x={124} y={16} w={32} h={20} ink={ink} />
+      <Shatch x={160} y={40} w={32} h={20} ink={ink} />
+
+      <Label x={40} y={76} ink={ink}>loose parts</Label>
+      <Label x={158} y={76} ink={ink}>one system</Label>
     </svg>
   );
 }
-function VisualReduce({ink}:{ink:string}) {
+
+/* ── 04 CUT EVERYTHING: cluttered → crossed out → clean ── */
+function VisualReduce({ ink }: { ink: string }) {
   return (
-    <svg viewBox="0 0 260 100" width="100%" style={{maxWidth:260}}>
-      <rect x="10" y="8" width="96" height="84" rx="5" fill="none" stroke={ink} strokeWidth="1.6" opacity={0.5} />
-      {[20,32,44,56,68].map((y,i)=><line key={i} x1="20" y1={y} x2={86-i*4} y2={y} stroke={ink} strokeWidth="1.3" opacity={0.3} />)}
-      {[32,56].map(y=><line key={y} x1="18" y1={y+2} x2={76} y2={y-2} stroke={ink} strokeWidth="1.8" opacity={0.55} />)}
-      <text x="118" y="54" fontFamily={SANS} fontSize="18" fill={ink} opacity={0.4}>→</text>
-      <rect x="140" y="8" width="96" height="84" rx="5" fill="none" stroke={ink} strokeWidth="1.6" opacity={0.5} />
-      <line x1="152" y1="24" x2="218" y2="24" stroke={ink} strokeWidth="2" opacity={0.65} />
-      {[42,56].map(y=><line key={y} x1="152" y1={y} x2={212-y/5} y2={y} stroke={ink} strokeWidth="1" opacity={0.25} />)}
-      <rect x="152" y="72" width="48" height="14" rx="5" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.4} />
+    <svg viewBox="0 0 220 80" width="100%" style={{ maxWidth: 220 }}>
+      {/* busy side */}
+      {[12, 22, 32, 42, 52].map((y, i) => (
+        <path key={y} d={`M14,${y} Q${40 + i * 2},${y - 1} ${70 - i * 4},${y}`}
+          fill="none" stroke={ink} strokeWidth={SW * 0.7} strokeLinecap="round" opacity={0.3} />
+      ))}
+      {/* cross-outs */}
+      <path d="M12,22 L66,24" fill="none" stroke={ink} strokeWidth={SW} strokeLinecap="round" opacity={0.55} />
+      <path d="M12,42 L58,44" fill="none" stroke={ink} strokeWidth={SW} strokeLinecap="round" opacity={0.55} />
+      <path d="M12,52 L54,54" fill="none" stroke={ink} strokeWidth={SW} strokeLinecap="round" opacity={0.55} />
+
+      <Sarrow x1={82} y1={34} x2={108} y2={34} ink={ink} />
+
+      {/* clean: just two lines and a button */}
+      <path d="M118,16 Q146,14 174,16" fill="none" stroke={ink} strokeWidth={SW} strokeLinecap="round" opacity={0.55} />
+      <path d="M118,30 Q140,28 160,30" fill="none" stroke={ink} strokeWidth={SW * 0.7} strokeLinecap="round" opacity={0.25} />
+      <Sbox x={118} y={44} w={42} h={16} ink={ink} op={0.4} />
+
+      <Label x={42} y={72} ink={ink}>everything</Label>
+      <Label x={150} y={72} ink={ink}>only what matters</Label>
     </svg>
   );
 }
-function VisualLoop({ink}:{ink:string}) {
+
+/* ── 05 SHIP & LOOP: build → ship → learn, looping back ── */
+function VisualLoop({ ink }: { ink: string }) {
   return (
-    <svg viewBox="0 0 280 110" width="100%" style={{maxWidth:280}}>
-      {/* v1 — rough build: code editor */}
-      <rect x="6" y="8" width="62" height="48" rx="4" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.4} />
-      <line x1="6" y1="20" x2="68" y2="20" stroke={ink} strokeWidth="0.8" opacity={0.25} />
-      <rect x="12" y="10" width="8" height="6" rx="1.5" fill={ink} opacity={0.25} />
-      <rect x="24" y="10" width="8" height="6" rx="1.5" fill={ink} opacity={0.2} />
-      {[26,34,42].map(y=><line key={y} x1="14" y1={y} x2={46+y%3*4} y2={y} stroke={ink} strokeWidth="1" opacity={0.2} />)}
-      <text x="37" y="70" textAnchor="middle" fontFamily={MONO} fontSize="8" fill={ink} opacity={0.5}>v1 · build</text>
+    <svg viewBox="0 0 220 80" width="100%" style={{ maxWidth: 220 }}>
+      <Scircle cx={36} cy={32} r={18} ink={ink} op={0.45} />
+      <Label x={36} y={35} ink={ink} op={0.75}>build</Label>
 
-      {/* arrow */}
-      <SketchPath d="M74,32 L92,32" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.3} />
-      <SketchPath d="M88,28 L94,32 L88,36" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.3} />
+      <Sarrow x1={56} y1={32} x2={78} y2={32} ink={ink} />
 
-      {/* v2 — live: browser with green dot */}
-      <rect x="100" y="8" width="72" height="48" rx="4" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.5} />
-      <line x1="100" y1="22" x2="172" y2="22" stroke={ink} strokeWidth="0.8" opacity={0.25} />
-      <rect x="108" y="12" width="40" height="6" rx="3" fill={ink} opacity={0.15} />
-      <circle cx="162" cy="15" r="3" fill={ink} opacity={0.7} />
-      <text x="164" y="16" textAnchor="middle" fontFamily={MONO} fontSize="4.5" fill={ink==="//fff"?"#0C0C0C":"#fff"} opacity={0.9}>●</text>
-      {/* user avatars viewing */}
-      {[118,132,146].map((x,i)=><circle key={i} cx={x} cy="38" r="6" fill="none" stroke={ink} strokeWidth="1" opacity={0.3+i*0.08} />)}
-      {/* feedback bubble */}
-      <rect x="114" y="42" width="38" height="10" rx="5" fill={ink} fillOpacity={0.1} stroke={ink} strokeWidth="0.8" opacity={0.35} />
-      <text x="136" y="70" textAnchor="middle" fontFamily={MONO} fontSize="8" fill={ink} opacity={0.5}>v2 · live</text>
+      <Scircle cx={110} cy={32} r={18} ink={ink} op={0.45} />
+      <Label x={110} y={35} ink={ink} op={0.75}>ship</Label>
 
-      {/* arrow */}
-      <SketchPath d="M178,32 L196,32" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.3} />
-      <SketchPath d="M192,28 L198,32 L192,36" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.3} />
+      <Sarrow x1={130} y1={32} x2={152} y2={32} ink={ink} />
 
-      {/* v3 — refined: clean card */}
-      <rect x="204" y="8" width="62" height="48" rx="4" fill="none" stroke={ink} strokeWidth="1.8" opacity={0.65} />
-      <line x1="204" y1="22" x2="266" y2="22" stroke={ink} strokeWidth="0.8" opacity={0.25} />
-      <rect x="212" y="28" width="38" height="5" rx="1.5" fill={ink} opacity={0.5} />
-      <rect x="212" y="38" width="46" height="4" rx="1" fill={ink} opacity={0.2} />
-      <rect x="212" y="46" width="30" height="4" rx="1" fill={ink} opacity={0.15} />
-      <text x="235" y="70" textAnchor="middle" fontFamily={MONO} fontSize="8" fill={ink} opacity={0.5}>v3 · refined</text>
+      <Scircle cx={184} cy={32} r={18} ink={ink} op={0.45} />
+      <Label x={184} y={35} ink={ink} op={0.75}>learn</Label>
 
-      {/* loop-back */}
-      <SketchPath d="M235,76 C235,100 37,100 37,76" fill="none" stroke={ink} strokeWidth="1.2" strokeDasharray="5 3" opacity={0.25} />
-      <SketchPath d="M41,80 L37,76 L43,72" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.25} />
-      <text x="136" y="98" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.35}>repeat</text>
+      {/* loop back — big wobbly curve */}
+      <path d="M184,52 Q184,74 110,74 Q36,74 36,52"
+        fill="none" stroke={ink} strokeWidth={SW * 0.7} strokeLinecap="round"
+        strokeDasharray="5 4" opacity={0.3} />
+      <path d="M40,56 L36,50 L32,56" fill="none" stroke={ink} strokeWidth={SW * 0.7} strokeLinecap="round" opacity={0.3} />
     </svg>
   );
 }
-function VisualFanout({ink}:{ink:string}) {
+
+/* ── 06 TELL THE STORY: one doc → three audiences ── */
+function VisualFanout({ ink }: { ink: string }) {
   return (
-    <svg viewBox="0 0 280 110" width="100%" style={{maxWidth:280}}>
-      {/* source doc — rationale */}
-      <rect x="6" y="20" width="52" height="68" rx="4" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.55} />
-      <rect x="14" y="28" width="28" height="5" rx="1.5" fill={ink} opacity={0.5} />
-      {[40,48,56,64,72].map(y=><line key={y} x1="14" y1={y} x2={42-y%3*2} y2={y} stroke={ink} strokeWidth="0.9" opacity={0.2} />)}
-      <text x="32" y="100" textAnchor="middle" fontFamily={MONO} fontSize="8" fill={ink} opacity={0.45}>one rationale</text>
+    <svg viewBox="0 0 220 80" width="100%" style={{ maxWidth: 220 }}>
+      {/* source */}
+      <Sbox x={8} y={16} w={38} h={48} ink={ink} op={0.5} />
+      <Shatch x={8} y={16} w={38} h={48} ink={ink} op={0.08} />
+      <path d="M16,28 L38,28" fill="none" stroke={ink} strokeWidth={SW * 0.7} strokeLinecap="round" opacity={0.4} />
+      <path d="M16,38 L34,38" fill="none" stroke={ink} strokeWidth={SW * 0.6} strokeLinecap="round" opacity={0.2} />
+      <path d="M16,48 L36,48" fill="none" stroke={ink} strokeWidth={SW * 0.6} strokeLinecap="round" opacity={0.2} />
 
       {/* fan lines */}
-      <SketchPath d="M58,38 Q82,20 100,16" fill="none" stroke={ink} strokeWidth="1" opacity={0.25} />
-      <SketchPath d="M58,54 L100,54" fill="none" stroke={ink} strokeWidth="1" opacity={0.25} />
-      <SketchPath d="M58,68 Q82,86 100,90" fill="none" stroke={ink} strokeWidth="1" opacity={0.25} />
+      <Sline x1={48} y1={30} x2={102} y2={14} ink={ink} op={0.25} />
+      <Sline x1={48} y1={40} x2={102} y2={40} ink={ink} op={0.25} />
+      <Sline x1={48} y1={50} x2={102} y2={66} ink={ink} op={0.25} />
 
-      {/* leadership — presentation deck */}
-      <rect x="104" y="4" width="68" height="44" rx="4" fill="none" stroke={ink} strokeWidth="1.4" opacity={0.5} />
-      <rect x="112" y="10" width="26" height="4" rx="1" fill={ink} opacity={0.45} />
-      {[20,26].map(y=><line key={y} x1="112" y1={y} x2="160" y2={y} stroke={ink} strokeWidth="0.8" opacity={0.15} />)}
-      {/* chart bars */}
-      {[0,1,2,3].map(i=><rect key={i} x={114+i*12} y={38-8-i*4} width="8" height={8+i*4} rx="1" fill={ink} opacity={0.15+i*0.06} />)}
-      <text x="138" y="58" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.45}>business case</text>
+      {/* three outputs — visually distinct shapes */}
+      <Sbox x={106} y={4} w={46} h={22} ink={ink} op={0.45} />
+      <Label x={129} y={18} ink={ink} op={0.65}>leaders</Label>
 
-      {/* industry — article */}
-      <rect x="104" y="36" width="68" height="40" rx="4" fill="none" stroke={ink} strokeWidth="1.4" opacity={0.5} />
-      <rect x="112" y="42" width="32" height="4" rx="1" fill={ink} opacity={0.45} />
-      {[52,58,64].map(y=><line key={y} x1="112" y1={y} x2={158-y%3*4} y2={y} stroke={ink} strokeWidth="0.8" opacity={0.15} />)}
-      <text x="138" y="88" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.45}>framework article</text>
+      <Scircle cx={129} cy={40} r={12} ink={ink} op={0.45} />
+      <Label x={129} y={43} ink={ink} op={0.65}>peers</Label>
 
-      {/* hiring — first-person letter */}
-      <rect x="104" y="68" width="68" height="38" rx="4" fill="none" stroke={ink} strokeWidth="1.4" opacity={0.5} />
-      <text x="112" y="78" fontFamily={MONO} fontSize="7" fill={ink} opacity={0.35}>Dear —</text>
-      {[84,90].map(y=><line key={y} x1="112" y1={y} x2="160" y2={y} stroke={ink} strokeWidth="0.8" opacity={0.15} />)}
-      <text x="152" y="100" fontFamily={MONO} fontSize="7" fill={ink} opacity={0.3}>— Ujjal</text>
-      <text x="210" y="42" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.45}>leadership</text>
-      <text x="210" y="74" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.45}>industry</text>
-      <text x="210" y="100" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.45}>hiring</text>
+      <path d="M108,58 L150,58 L138,74 L118,74 Z"
+        fill="none" stroke={ink} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round" opacity={0.45} />
+      <Label x={129} y={69} ink={ink} op={0.65}>hiring</Label>
 
-      {/* labels connecting */}
-      <SketchPath d="M172,26 L200,38" fill="none" stroke={ink} strokeWidth="0.7" opacity={0.2} />
-      <SketchPath d="M172,56 L200,70" fill="none" stroke={ink} strokeWidth="0.7" opacity={0.2} />
-      <SketchPath d="M172,88 L200,96" fill="none" stroke={ink} strokeWidth="0.7" opacity={0.2} />
+      <Label x={168} y={18} ink={ink} op={0.35}>deck</Label>
+      <Label x={168} y={43} ink={ink} op={0.35}>article</Label>
+      <Label x={168} y={69} ink={ink} op={0.35}>letter</Label>
     </svg>
   );
 }
