@@ -130,20 +130,91 @@ function VisualReduce({ink}:{ink:string}) {
 }
 function VisualLoop({ink}:{ink:string}) {
   return (
-    <svg viewBox="0 0 260 100" width="100%" style={{maxWidth:260}}>
-      {([["build",32],["ship",108],["learn",184]] as [string,number][]).map(([l,x])=>(<g key={l}><circle cx={x} cy="38" r="16" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.5} /><text x={x} y="42" textAnchor="middle" fontFamily={MONO} fontSize="9" fill={ink} opacity={0.8}>{l}</text></g>))}
-      <SketchPath d="M48,38 L92,38 M124,38 L168,38" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.35} />
-      <SketchPath d="M200,54 C200,86 32,86 32,54" fill="none" stroke={ink} strokeWidth="1.2" strokeDasharray="4 3" opacity={0.3} />
-      <SketchPath d="M36,58 L32,54 L38,50" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.3} />
+    <svg viewBox="0 0 280 110" width="100%" style={{maxWidth:280}}>
+      {/* v1 — rough build: code editor */}
+      <rect x="6" y="8" width="62" height="48" rx="4" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.4} />
+      <line x1="6" y1="20" x2="68" y2="20" stroke={ink} strokeWidth="0.8" opacity={0.25} />
+      <rect x="12" y="10" width="8" height="6" rx="1.5" fill={ink} opacity={0.25} />
+      <rect x="24" y="10" width="8" height="6" rx="1.5" fill={ink} opacity={0.2} />
+      {[26,34,42].map(y=><line key={y} x1="14" y1={y} x2={46+y%3*4} y2={y} stroke={ink} strokeWidth="1" opacity={0.2} />)}
+      <text x="37" y="70" textAnchor="middle" fontFamily={MONO} fontSize="8" fill={ink} opacity={0.5}>v1 · build</text>
+
+      {/* arrow */}
+      <SketchPath d="M74,32 L92,32" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.3} />
+      <SketchPath d="M88,28 L94,32 L88,36" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.3} />
+
+      {/* v2 — live: browser with green dot */}
+      <rect x="100" y="8" width="72" height="48" rx="4" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.5} />
+      <line x1="100" y1="22" x2="172" y2="22" stroke={ink} strokeWidth="0.8" opacity={0.25} />
+      <rect x="108" y="12" width="40" height="6" rx="3" fill={ink} opacity={0.15} />
+      <circle cx="162" cy="15" r="3" fill={ink} opacity={0.7} />
+      <text x="164" y="16" textAnchor="middle" fontFamily={MONO} fontSize="4.5" fill={ink==="//fff"?"#0C0C0C":"#fff"} opacity={0.9}>●</text>
+      {/* user avatars viewing */}
+      {[118,132,146].map((x,i)=><circle key={i} cx={x} cy="38" r="6" fill="none" stroke={ink} strokeWidth="1" opacity={0.3+i*0.08} />)}
+      {/* feedback bubble */}
+      <rect x="114" y="42" width="38" height="10" rx="5" fill={ink} fillOpacity={0.1} stroke={ink} strokeWidth="0.8" opacity={0.35} />
+      <text x="136" y="70" textAnchor="middle" fontFamily={MONO} fontSize="8" fill={ink} opacity={0.5}>v2 · live</text>
+
+      {/* arrow */}
+      <SketchPath d="M178,32 L196,32" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.3} />
+      <SketchPath d="M192,28 L198,32 L192,36" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.3} />
+
+      {/* v3 — refined: clean card */}
+      <rect x="204" y="8" width="62" height="48" rx="4" fill="none" stroke={ink} strokeWidth="1.8" opacity={0.65} />
+      <line x1="204" y1="22" x2="266" y2="22" stroke={ink} strokeWidth="0.8" opacity={0.25} />
+      <rect x="212" y="28" width="38" height="5" rx="1.5" fill={ink} opacity={0.5} />
+      <rect x="212" y="38" width="46" height="4" rx="1" fill={ink} opacity={0.2} />
+      <rect x="212" y="46" width="30" height="4" rx="1" fill={ink} opacity={0.15} />
+      <text x="235" y="70" textAnchor="middle" fontFamily={MONO} fontSize="8" fill={ink} opacity={0.5}>v3 · refined</text>
+
+      {/* loop-back */}
+      <SketchPath d="M235,76 C235,100 37,100 37,76" fill="none" stroke={ink} strokeWidth="1.2" strokeDasharray="5 3" opacity={0.25} />
+      <SketchPath d="M41,80 L37,76 L43,72" fill="none" stroke={ink} strokeWidth="1.2" opacity={0.25} />
+      <text x="136" y="98" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.35}>repeat</text>
     </svg>
   );
 }
 function VisualFanout({ink}:{ink:string}) {
   return (
-    <svg viewBox="0 0 260 100" width="100%" style={{maxWidth:260}}>
-      <circle cx="36" cy="50" r="18" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.55} />
-      <text x="36" y="54" textAnchor="middle" fontFamily={MONO} fontSize="9" fill={ink} opacity={0.7}>rationale</text>
-      {([["leadership",180,18],["industry",180,50],["hiring",180,82]] as [string,number,number][]).map(([l,x,y])=>(<g key={l}><SketchPath d={`M54,50 Q${(x+54)/2},${y} ${x-30},${y}`} fill="none" stroke={ink} strokeWidth="1" opacity={0.3} /><rect x={x-28} y={y-10} width={72} height={20} rx="4" fill="none" stroke={ink} strokeWidth="1.4" opacity={0.5} /><text x={x+8} y={y+4} textAnchor="middle" fontFamily={MONO} fontSize="9" fill={ink} opacity={0.7}>{l}</text></g>))}
+    <svg viewBox="0 0 280 110" width="100%" style={{maxWidth:280}}>
+      {/* source doc — rationale */}
+      <rect x="6" y="20" width="52" height="68" rx="4" fill="none" stroke={ink} strokeWidth="1.5" opacity={0.55} />
+      <rect x="14" y="28" width="28" height="5" rx="1.5" fill={ink} opacity={0.5} />
+      {[40,48,56,64,72].map(y=><line key={y} x1="14" y1={y} x2={42-y%3*2} y2={y} stroke={ink} strokeWidth="0.9" opacity={0.2} />)}
+      <text x="32" y="100" textAnchor="middle" fontFamily={MONO} fontSize="8" fill={ink} opacity={0.45}>one rationale</text>
+
+      {/* fan lines */}
+      <SketchPath d="M58,38 Q82,20 100,16" fill="none" stroke={ink} strokeWidth="1" opacity={0.25} />
+      <SketchPath d="M58,54 L100,54" fill="none" stroke={ink} strokeWidth="1" opacity={0.25} />
+      <SketchPath d="M58,68 Q82,86 100,90" fill="none" stroke={ink} strokeWidth="1" opacity={0.25} />
+
+      {/* leadership — presentation deck */}
+      <rect x="104" y="4" width="68" height="44" rx="4" fill="none" stroke={ink} strokeWidth="1.4" opacity={0.5} />
+      <rect x="112" y="10" width="26" height="4" rx="1" fill={ink} opacity={0.45} />
+      {[20,26].map(y=><line key={y} x1="112" y1={y} x2="160" y2={y} stroke={ink} strokeWidth="0.8" opacity={0.15} />)}
+      {/* chart bars */}
+      {[0,1,2,3].map(i=><rect key={i} x={114+i*12} y={38-8-i*4} width="8" height={8+i*4} rx="1" fill={ink} opacity={0.15+i*0.06} />)}
+      <text x="138" y="58" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.45}>business case</text>
+
+      {/* industry — article */}
+      <rect x="104" y="36" width="68" height="40" rx="4" fill="none" stroke={ink} strokeWidth="1.4" opacity={0.5} />
+      <rect x="112" y="42" width="32" height="4" rx="1" fill={ink} opacity={0.45} />
+      {[52,58,64].map(y=><line key={y} x1="112" y1={y} x2={158-y%3*4} y2={y} stroke={ink} strokeWidth="0.8" opacity={0.15} />)}
+      <text x="138" y="88" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.45}>framework article</text>
+
+      {/* hiring — first-person letter */}
+      <rect x="104" y="68" width="68" height="38" rx="4" fill="none" stroke={ink} strokeWidth="1.4" opacity={0.5} />
+      <text x="112" y="78" fontFamily={MONO} fontSize="7" fill={ink} opacity={0.35}>Dear —</text>
+      {[84,90].map(y=><line key={y} x1="112" y1={y} x2="160" y2={y} stroke={ink} strokeWidth="0.8" opacity={0.15} />)}
+      <text x="152" y="100" fontFamily={MONO} fontSize="7" fill={ink} opacity={0.3}>— Ujjal</text>
+      <text x="210" y="42" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.45}>leadership</text>
+      <text x="210" y="74" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.45}>industry</text>
+      <text x="210" y="100" textAnchor="middle" fontFamily={MONO} fontSize="7.5" fill={ink} opacity={0.45}>hiring</text>
+
+      {/* labels connecting */}
+      <SketchPath d="M172,26 L200,38" fill="none" stroke={ink} strokeWidth="0.7" opacity={0.2} />
+      <SketchPath d="M172,56 L200,70" fill="none" stroke={ink} strokeWidth="0.7" opacity={0.2} />
+      <SketchPath d="M172,88 L200,96" fill="none" stroke={ink} strokeWidth="0.7" opacity={0.2} />
     </svg>
   );
 }
