@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -392,33 +392,55 @@ function ExperimentCard({ ex }:{ ex:typeof EXPERIMENTS[0] }) {
 }
 
 function PhotoSlot({ label, span, h }:{ label:string; span:string; h:number }) {
-  const [open, setOpen] = useState(false);
+  return (
+    <div style={{
+      gridColumn:span, height:h, border:"2.5px dashed rgba(12,12,12,0.2)", borderRadius:10,
+      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+      gap:8, background:"rgba(12,12,12,0.03)",
+    }}>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(12,12,12,0.35)" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
+      <span style={{ fontFamily:SANS, fontSize:14, fontWeight:500, color:"#0C0C0C", opacity:0.45 }}>{label}</span>
+      <span style={{ fontFamily:MONO, fontSize:9, color:"#0C0C0C", opacity:0.25 }}>add via Notion</span>
+    </div>
+  );
+}
+
+function PhotoLightbox({ src, onClose }: { src: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div onClick={onClose} style={{
+      position:"fixed", inset:0, zIndex:9999, background:"rgba(12,12,12,0.92)", backdropFilter:"blur(10px)",
+      display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", padding:32,
+    }}>
+      <img src={src} alt="" style={{ maxWidth:"90vw", maxHeight:"85vh", borderRadius:10, objectFit:"contain" }} onClick={e => e.stopPropagation()} />
+    </div>
+  );
+}
+
+function ClickablePhotos({ html }: { html: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const imgs = containerRef.current.querySelectorAll("img");
+    imgs.forEach(img => {
+      img.style.cursor = "pointer";
+      img.style.transition = "transform 0.2s ease, box-shadow 0.2s ease";
+      img.addEventListener("mouseenter", () => { img.style.transform = "scale(1.01)"; img.style.boxShadow = "0 8px 32px rgba(0,0,0,0.15)"; });
+      img.addEventListener("mouseleave", () => { img.style.transform = ""; img.style.boxShadow = ""; });
+      img.addEventListener("click", () => { setLightboxSrc(img.src); });
+    });
+  }, [html]);
+
   return (
     <>
-      <button onClick={() => setOpen(true)} style={{
-        gridColumn:span, height:h, border:"2.5px dashed rgba(26,10,46,0.2)", borderRadius:10,
-        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-        gap:8, background:"rgba(26,10,46,0.03)", cursor:"pointer", transition:"border-color 0.2s, background 0.2s",
-      }} onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(26,10,46,0.45)";e.currentTarget.style.background="rgba(26,10,46,0.06)";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(26,10,46,0.2)";e.currentTarget.style.background="rgba(26,10,46,0.03)";}}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(26,10,46,0.35)" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
-        <span style={{ fontFamily:SANS, fontSize:14, fontWeight:500, color:"#0C0C0C", opacity:0.45 }}>{label}</span>
-        <span style={{ fontFamily:MONO, fontSize:9, color:"#0C0C0C", opacity:0.25 }}>click to expand</span>
-      </button>
-      {open && (
-        <div onClick={() => setOpen(false)} style={{
-          position:"fixed", inset:0, zIndex:9999, background:"rgba(26,10,46,0.88)", backdropFilter:"blur(10px)",
-          display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", cursor:"pointer", gap:24, padding:40,
-        }}>
-          <div style={{ width:"min(80vw,600px)", aspectRatio:"4/3", border:"3px dashed rgba(255,255,255,0.25)", borderRadius:14, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,background:"rgba(255,255,255,0.04)" }}>
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
-            <span style={{ fontFamily:SANS, fontSize:20, fontWeight:500, color:"rgba(255,255,255,0.5)" }}>{label}</span>
-            <span style={{ fontFamily:MONO, fontSize:11, color:"rgba(255,255,255,0.3)", maxWidth:300, textAlign:"center", lineHeight:1.7 }}>
-              Drop photos inside the Notion page for this section and they appear here.
-            </span>
-          </div>
-          <span style={{ fontFamily:MONO, fontSize:10, color:"rgba(255,255,255,0.3)", letterSpacing:"1px" }}>click anywhere to close</span>
-        </div>
-      )}
+      <div ref={containerRef} className="prose-ujjal btc-photos" dangerouslySetInnerHTML={{ __html: html }} />
+      {lightboxSrc && <PhotoLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
     </>
   );
 }
@@ -509,7 +531,7 @@ export default function BehindContent({ offScreenHtml }: { offScreenHtml?: strin
       <section style={{ padding:"80px clamp(16px,4vw,60px)", background:"#E8DCC8" }} className="btc-kraft">
         <SectionTag text="Off Screen" bg="#FF5F6B" color="#fff" tilt="-1deg" />
 {offScreenHtml ? (
-          <div className="prose-ujjal btc-photos" dangerouslySetInnerHTML={{ __html: offScreenHtml }} />
+          <ClickablePhotos html={offScreenHtml} />
         ) : (
           <>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:16 }}>
