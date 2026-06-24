@@ -120,7 +120,7 @@ export default function SlitDoor() {
       <div style={{
         position: "absolute", inset: 0,
         zIndex: 1,
-        background: "#1a0a2e",
+        background: "#0C0C0C",
         display: "flex", alignItems: "center", justifyContent: "center",
         overflow: "hidden",
       }}>
