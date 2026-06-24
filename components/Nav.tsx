@@ -10,9 +10,8 @@ function MailIcon()     { return <svg width="14" height="14" viewBox="0 0 24 24"
 
 const MONO = "'DM Mono', monospace";
 const NAV_LINKS = [
-  { label: "Work",    href: "/work",    tip: "Projects"     },
-  { label: "Process", href: "/process", tip: "How I think"  },
-  { label: "Think",   href: "/think",   tip: "Writing"      },
+  { label: "Work",  href: "/work",  tip: "Projects" },
+  { label: "Think", href: "/think", tip: "Writing"  },
   { label: "About", href: "/about", tip: "About me" },
 ] as const;
 const NAV_COLORS = ["var(--c-red)", "var(--c-teal)", "var(--c-blue)"] as const;

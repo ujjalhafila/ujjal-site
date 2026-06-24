@@ -9,8 +9,7 @@ import ViewWorkBtn from "../components/ViewWorkBtn";
 import ThinkSpaceBtn from "../components/ThinkSpaceBtn";
 import CountUp from "../components/CountUp";
 import { getFeaturedWork, getFeaturedThink, getActiveCta } from "../lib/notion";
-import ProcessCta from "../components/ProcessCta";
-import WildSideGate from "../components/WildSideGate";
+import SlitDoor from "../components/SlitDoor";
 
 export const dynamic = "force-dynamic";
 
@@ -88,8 +87,6 @@ export default async function Home() {
         minHeight:"calc(100vh - 52px)",
         position:"relative",
       }} className="hero-grid">
-
-        <WildSideGate />
 
         {/* Portrait column */}
         <div style={{
@@ -277,8 +274,8 @@ export default async function Home() {
         </section>
       )}
 
-      {/* ── HOW I THINK — CTA into /process ─────────────────────────── */}
-      <ProcessCta />
+      {/* ── HOW I THINK — slit door into /behind-the-curtain ──────── */}
+      <SlitDoor />
 
       {/* ── THINK SPACE ───────────────────────────────────────────────── */}
       <section style={{ borderBottom:"1px solid var(--rule)" }} aria-label="Think space">
