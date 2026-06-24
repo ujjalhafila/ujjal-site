@@ -778,3 +778,53 @@ input:focus, textarea:focus { border-color: var(--rule2); outline: none; }
   .pv .pv-grain { animation: none !important; transform: none; opacity: 1; }
   .pv .pv-pulse, .pv .pv-van { animation: none !important; }
 }
+
+/* ── Wild Side ───────────────────────────────────────────────────────────── */
+/* crack glow */
+@keyframes crackGlow { 0%,100%{opacity:0.22} 50%{opacity:0.55} }
+/* tunnel wipe */
+@keyframes tunnelIn  { from{clip-path:circle(0% at var(--cx,50%) var(--cy,50%))} to{clip-path:circle(150% at var(--cx,50%) var(--cy,50%))} }
+@keyframes tunnelOut { from{clip-path:circle(150% at 50% 50%)} to{clip-path:circle(0% at 50% 50%)} }
+/* pop-art halftone shimmer */
+@keyframes dotPulse  { 0%,100%{opacity:0.18} 50%{opacity:0.32} }
+/* comic panel bounce */
+@keyframes panelIn   { from{opacity:0;transform:rotate(var(--tilt,-2deg)) scale(0.88) translateY(28px)} to{opacity:1;transform:rotate(var(--tilt,-2deg)) scale(1) translateY(0)} }
+/* sketch scribble on */
+@keyframes drawOn    { from{stroke-dashoffset:1200} to{stroke-dashoffset:0} }
+/* sticky wiggle */
+@keyframes wiggle    { 0%,100%{transform:rotate(-2deg)} 50%{transform:rotate(2.5deg)} }
+/* ink stamp */
+@keyframes stamp     { 0%{opacity:0;transform:scale(2.2)} 60%{opacity:1;transform:scale(0.95)} 80%{transform:scale(1.05)} 100%{transform:scale(1)} }
+/* easter egg bop */
+@keyframes bop       { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+.ws-tunnel { animation: tunnelIn 0.72s cubic-bezier(0.7,0,0.3,1) forwards; }
+.ws-exit   { animation: tunnelOut 0.55s cubic-bezier(0.7,0,0.3,1) forwards; }
+
+.ws-panel {
+  opacity:0;
+  animation: panelIn 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.ws-draw {
+  stroke-dasharray:1200;
+  stroke-dashoffset:1200;
+  animation: drawOn 1.8s ease forwards;
+}
+.ws-stamp { animation: stamp 0.45s cubic-bezier(0.22,1,0.36,1) forwards; }
+.ws-wiggle { animation: wiggle 3.2s ease-in-out infinite; }
+.ws-bop    { animation: bop 2.4s ease-in-out infinite; }
+
+/* risograph grain overlay */
+.ws-grain::before {
+  content:"";
+  position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;mix-blend-mode:overlay;opacity:0.55;
+}
+.ws-dots::after {
+  content:"";
+  position:absolute;inset:0;
+  background-image: radial-gradient(circle, currentColor 1.4px, transparent 1.4px);
+  background-size: 14px 14px;
+  pointer-events:none;opacity:0.06;z-index:0;
+}

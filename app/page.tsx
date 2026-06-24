@@ -10,6 +10,7 @@ import ThinkSpaceBtn from "../components/ThinkSpaceBtn";
 import CountUp from "../components/CountUp";
 import { getFeaturedWork, getFeaturedThink, getActiveCta } from "../lib/notion";
 import ProcessCta from "../components/ProcessCta";
+import WildSideGate from "../components/WildSideGate";
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +86,10 @@ export default async function Home() {
         display:"grid", gridTemplateColumns:"1fr 1fr",
         borderBottom:"1px solid var(--rule)", paddingTop:"52px",
         minHeight:"calc(100vh - 52px)",
+        position:"relative",
       }} className="hero-grid">
+
+        <WildSideGate />
 
         {/* Portrait column */}
         <div style={{
