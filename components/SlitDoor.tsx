@@ -137,18 +137,16 @@ export default function SlitDoor() {
         {/* the word that's revealed */}
         <h2 style={{
           fontFamily: SANS, fontWeight: 900,
-          fontSize: "clamp(3rem,9vw,8rem)",
-          lineHeight: 0.9, letterSpacing: "-3px",
-          color: "#FFE03A",
+          fontSize: "clamp(2.4rem,7vw,6rem)",
+          lineHeight: 0.92, letterSpacing: "-3px",
+          color: "#fff",
           textAlign: "center",
           opacity: opening ? 1 : 0.6,
           transition: "opacity 0.3s ease 0.2s",
           zIndex: 2, position: "relative",
         }}>
-          BEHIND THE<br />
-          <span style={{ WebkitTextStroke: "2px #FFE03A", WebkitTextFillColor: "transparent" }}>
-            CURTAIN
-          </span>
+          The way I<br />
+          <span style={{ color: "#FFE03A" }}>see</span> things
         </h2>
 
         {/* floating process words */}
